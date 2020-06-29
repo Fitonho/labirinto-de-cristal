@@ -74,23 +74,33 @@ var Tela = /** @class */ (function () {
         blockDOM.appendChild(playerSprite);
     };
     Tela.prototype.move = function (direction) {
+        var _a;
         var nextPos = [this.playerPos[0], this.playerPos[1]];
+        var blockBehind;
         switch (direction) {
             case side.north:
-                if (nextPos[0] > 0)
+                if (nextPos[0] > 0) {
                     nextPos[0] -= 1;
+                    blockBehind = [nextPos[0] - 1, nextPos[1]];
+                }
                 break;
             case side.west:
-                if (nextPos[1] > 0)
+                if (nextPos[1] > 0) {
                     nextPos[1] -= 1;
+                    blockBehind = [nextPos[0], nextPos[1] - 1];
+                }
                 break;
             case side.south:
-                if (nextPos[0] < M - 1)
+                if (nextPos[0] < M - 1) {
                     nextPos[0] += 1;
+                    blockBehind = [nextPos[0] + 1, nextPos[1]];
+                }
                 break;
             case side.east:
-                if (nextPos[1] < N - 1)
+                if (nextPos[1] < N - 1) {
                     nextPos[1] += 1;
+                    blockBehind = [nextPos[0], nextPos[1] + 1];
+                }
                 break;
         }
         if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
@@ -99,8 +109,12 @@ var Tela = /** @class */ (function () {
             this.playerPos = [nextPos[0], nextPos[1]];
         }
         else {
-            //TODO empurrar bloco
-            //TODO checar se bloco atrás do bloco a ser empurrado não é da mesma cor
+            if (this.matriz[nextPos[0]][nextPos[1]].color == this.playerColor &&
+                this.matriz[blockBehind[0]][blockBehind[1]].color != this.playerColor) {
+                _a = [this.matriz[nextPos[0]][nextPos[1]].color, this.matriz[blockBehind[0]][blockBehind[1]].color], this.matriz[blockBehind[0]][blockBehind[1]].color = _a[0], this.matriz[nextPos[0]][nextPos[1]].color = _a[1];
+                this.playerPos = [nextPos[0], nextPos[1]];
+            }
+            //TODO lidar com empurrar blocos com portais e blocos de evento
         }
         tela.paint();
     };
