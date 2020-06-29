@@ -9,8 +9,8 @@ enum wallState {
     portal = 1
 }
 enum colors {
-    black = 'rgb( 0, 0, 0)',
-    white = 'rgb( 255, 255, 255)',
+    black = '#000000',
+    white = '#ffffff',
     player = 'magenta',
     endOfLevel = 'grey',
     portal = 'blue'
@@ -32,9 +32,8 @@ class Block {
 const M = 9;
 const N = 9;
 let rows = document.querySelectorAll(".row");
-let playerSprite = document.createElement("img");
-playerSprite.src = 'images/player.png';
-playerSprite.style.width = '150%'
+let playerSprite = document.createElement("div");
+playerSprite.classList.add("player")
 
 
 class Tela {
@@ -43,6 +42,7 @@ class Tela {
     public canMoveOn: colors
     constructor(level: Function) {
         this.playerPos = level(this.matriz);
+        playerSprite.style.backgroundColor = invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color)
         this.canMoveOn = this.matriz[this.playerPos[0]][this.playerPos[1]].color;
     }
 
@@ -134,7 +134,20 @@ tela.paint();
 
 document.addEventListener('keypress', (event) => {
     'wsda'.split('').forEach((key, index) => {
-        if (key == event.key)
+        console.log(key + " pressed");
+        if (key == event.key){
             tela.move(<side>index);
+        }
     })
 });
+
+function invertColor(hexTripletColor:string) {
+    var color:any = hexTripletColor;
+    color = color.substring(1); // remove #
+    color = parseInt(color, 16); // convert to integer
+    color = 0xFFFFFF ^ color; // invert three bytes
+    color = color.toString(16); // convert to hex
+    color = ("000000" + color).slice(-6); // pad with leading zeros
+    color = "#" + color; // prepend #
+    return color;
+}
