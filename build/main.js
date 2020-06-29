@@ -124,10 +124,9 @@ function level3(matriz) {
 }
 var tela = new Tela(level3);
 tela.paint();
-// tela.gameLoop();
 document.addEventListener('keypress', function (event) {
+    console.log(event.key + " pressed");
     'wsda'.split('').forEach(function (key, index) {
-        console.log(key + " pressed");
         if (key == event.key) {
             tela.move(index);
         }

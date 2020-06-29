@@ -130,11 +130,10 @@ function level3(matriz: Block[][]) {
 
 let tela = new Tela(level3);
 tela.paint();
-// tela.gameLoop();
 
 document.addEventListener('keypress', (event) => {
+    console.log(event.key + " pressed");
     'wsda'.split('').forEach((key, index) => {
-        console.log(key + " pressed");
         if (key == event.key){
             tela.move(<side>index);
         }
