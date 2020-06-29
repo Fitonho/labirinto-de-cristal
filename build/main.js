@@ -110,6 +110,7 @@ var Tela = /** @class */ (function () {
         }
         else {
             if (this.matriz[nextPos[0]][nextPos[1]].color == this.playerColor &&
+                0 <= blockBehind[0] && blockBehind[0] < M && 0 <= blockBehind[1] && blockBehind[1] < N &&
                 this.matriz[blockBehind[0]][blockBehind[1]].color != this.playerColor) {
                 _a = [this.matriz[nextPos[0]][nextPos[1]].color, this.matriz[blockBehind[0]][blockBehind[1]].color], this.matriz[blockBehind[0]][blockBehind[1]].color = _a[0], this.matriz[nextPos[0]][nextPos[1]].color = _a[1];
                 this.playerPos = [nextPos[0], nextPos[1]];
@@ -117,6 +118,9 @@ var Tela = /** @class */ (function () {
             //TODO lidar com empurrar blocos com portais e blocos de evento
         }
         tela.paint();
+        if (this.matriz[this.playerPos[0]][this.playerPos[1]].event == BlockEvent.endOfLevel) {
+            alert('nível completo!');
+        }
     };
     return Tela;
 }());
