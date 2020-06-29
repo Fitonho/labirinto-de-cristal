@@ -1,8 +1,8 @@
 {
     "compilerOptions": {
-      "target": "es6",
+      "target": "es5",
+      "module": "commonjs",
       "outDir": "./build",
-      "sourceRoot": "../src",
       "lib" : ["ES2017","DOM"],
       "sourceMap": true
     }
