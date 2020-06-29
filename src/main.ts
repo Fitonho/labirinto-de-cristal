@@ -7,7 +7,7 @@ tela.paint();
 
 document.addEventListener('keypress', (event) => {
     console.log(event.key + " pressed");
-    ['w','s','d','a'].forEach((key, index) => {
+    'wsda'.split('').forEach((key, index) => {
         if (key == event.key) {
             tela.move(<side>index);
         }
