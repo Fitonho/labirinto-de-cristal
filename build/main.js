@@ -40,8 +40,8 @@ var Tela = /** @class */ (function () {
     function Tela(level) {
         this.matriz = [];
         this.playerPos = level(this.matriz);
-        playerSprite.style.backgroundColor = invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
-        this.canMoveOn = this.matriz[this.playerPos[0]][this.playerPos[1]].color;
+        this.playerColor = invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
+        playerSprite.style.backgroundColor = this.playerColor;
     }
     Tela.prototype.paint = function () {
         var blockDOM;
@@ -70,8 +70,8 @@ var Tela = /** @class */ (function () {
             }
         }
         blockDOM = rows[this.playerPos[0]].children[this.playerPos[1]];
+        playerSprite.style.backgroundColor = this.playerColor;
         blockDOM.appendChild(playerSprite);
-        // blockDOM.style.backgroundColor = colors.player;
     };
     Tela.prototype.move = function (direction) {
         var nextPos = [this.playerPos[0], this.playerPos[1]];
@@ -93,9 +93,9 @@ var Tela = /** @class */ (function () {
                     nextPos[1] += 1;
                 break;
         }
-        if (this.matriz[nextPos[0]][nextPos[1]].color == this.canMoveOn ||
+        if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
             this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
-            this.canMoveOn = this.matriz[nextPos[0]][nextPos[1]].color;
+            this.playerColor = invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
             this.playerPos = [nextPos[0], nextPos[1]];
         }
         else {
