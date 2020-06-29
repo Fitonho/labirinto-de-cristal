@@ -1,0 +1,11 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Launch Firefox Debug Mode",
+            "command": "C:\\'Program Files'\\'Firefox Developer Edition'\\firefox.exe -start-debugger-server",
+            "type": "shell",
+            "group": "build"
+        }
+    ]
+}
