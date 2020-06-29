@@ -1,43 +1,18 @@
-enum side {
-    north = 0,
-    south,
-    east,
-    west
-}
-enum wallState {
-    none = 0,
-    portal = 1
-}
-enum colors {
-    black = '#000000',
-    white = '#ffffff',
-    player = 'magenta',
-    endOfLevel = 'grey',
-    portal = 'blue'
-}
-enum BlockEvent {
-    endOfLevel = 1
-}
-class Block {
+import {Block,colors,side,wallState,BlockEvent} from './block.js'
 
-    walls: wallState[] = [];
-    event: BlockEvent;
+const M = 9;
+const N = 9;
+let rows = document.querySelectorAll(".row");
+let playerSprite = document.createElement("div");
+playerSprite.classList.add("player")
 
-    constructor(
-        public color: colors
-    ) { this.walls = [0, 0, 0, 0] };
-
-}
-
-
-
-class Tela {
+export class Tela {
     public matriz: Block[][] = [];
     public playerPos: [number, number];
     public playerColor: colors;
     constructor(level: Function) {
         this.playerPos = level(this.matriz);
-        this.playerColor = invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
+        this.playerColor = this.invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
         playerSprite.style.backgroundColor = this.playerColor;
     }
 
@@ -103,7 +78,7 @@ class Tela {
         }
         if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
             this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
-                this.playerColor = invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
+                this.playerColor = this.invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
                 this.playerPos = [nextPos[0], nextPos[1]];
         }
         else {
@@ -116,56 +91,20 @@ class Tela {
             }
             //TODO lidar com empurrar blocos com portais e blocos de evento
         }
-        tela.paint();
+        this.paint();
         if(this.matriz[this.playerPos[0]][this.playerPos[1]].event == BlockEvent.endOfLevel){
             alert('nível completo!')
         }
     }
-}
 
-function level3(matriz: Block[][]) {
-    for (let i = 0; i < M; i++) {
-        matriz[i] = [];
-        for (let j = 0; j < N; j++) {
-            if (j % 2)
-                matriz[i][j] = new Block(colors.white);
-            else
-                matriz[i][j] = new Block(colors.black);
-        }
+    invertColor(hexTripletColor:string) {
+        var color:any = hexTripletColor;
+        color = color.substring(1); // remove #
+        color = parseInt(color, 16); // convert to integer
+        color = 0xFFFFFF ^ color; // invert three bytes
+        color = color.toString(16); // convert to hex
+        color = ("000000" + color).slice(-6); // pad with leading zeros
+        color = "#" + color; // prepend #
+        return color;
     }
-    matriz[4][1].walls[side.east] = wallState.portal;
-    matriz[4][2].walls[side.west] = wallState.portal;
-    matriz[0][6].event = BlockEvent.endOfLevel;
-    matriz[0][6].color = colors.endOfLevel;
-
-    return [8, 2];
 }
-
-document.addEventListener('keypress', (event) => {
-    console.log(event.key + " pressed");
-    'wsda'.split('').forEach((key, index) => {
-        if (key == event.key){
-            tela.move(<side>index);
-        }
-    })
-});
-
-function invertColor(hexTripletColor:string) {
-    var color:any = hexTripletColor;
-    color = color.substring(1); // remove #
-    color = parseInt(color, 16); // convert to integer
-    color = 0xFFFFFF ^ color; // invert three bytes
-    color = color.toString(16); // convert to hex
-    color = ("000000" + color).slice(-6); // pad with leading zeros
-    color = "#" + color; // prepend #
-    return color;
-}
-
-const M = 9;
-const N = 9;
-let rows = document.querySelectorAll(".row");
-let playerSprite = document.createElement("div");
-playerSprite.classList.add("player")
-
-let tela = new Tela(level3);
-tela.paint();
