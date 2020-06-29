@@ -31,11 +31,6 @@ var Block = /** @class */ (function () {
     ;
     return Block;
 }());
-var M = 9;
-var N = 9;
-var rows = document.querySelectorAll(".row");
-var playerSprite = document.createElement("div");
-playerSprite.classList.add("player");
 var Tela = /** @class */ (function () {
     function Tela(level) {
         this.matriz = [];
@@ -140,8 +135,6 @@ function level3(matriz) {
     matriz[0][6].color = colors.endOfLevel;
     return [8, 2];
 }
-var tela = new Tela(level3);
-tela.paint();
 document.addEventListener('keypress', function (event) {
     console.log(event.key + " pressed");
     'wsda'.split('').forEach(function (key, index) {
@@ -160,4 +153,11 @@ function invertColor(hexTripletColor) {
     color = "#" + color; // prepend #
     return color;
 }
+var M = 9;
+var N = 9;
+var rows = document.querySelectorAll(".row");
+var playerSprite = document.createElement("div");
+playerSprite.classList.add("player");
+var tela = new Tela(level3);
+tela.paint();
 //# sourceMappingURL=main.js.map

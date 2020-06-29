@@ -29,11 +29,6 @@ class Block {
 
 }
 
-const M = 9;
-const N = 9;
-let rows = document.querySelectorAll(".row");
-let playerSprite = document.createElement("div");
-playerSprite.classList.add("player")
 
 
 class Tela {
@@ -146,9 +141,6 @@ function level3(matriz: Block[][]) {
     return [8, 2];
 }
 
-let tela = new Tela(level3);
-tela.paint();
-
 document.addEventListener('keypress', (event) => {
     console.log(event.key + " pressed");
     'wsda'.split('').forEach((key, index) => {
@@ -168,3 +160,12 @@ function invertColor(hexTripletColor:string) {
     color = "#" + color; // prepend #
     return color;
 }
+
+const M = 9;
+const N = 9;
+let rows = document.querySelectorAll(".row");
+let playerSprite = document.createElement("div");
+playerSprite.classList.add("player")
+
+let tela = new Tela(level3);
+tela.paint();
