@@ -17,3 +17,23 @@
     margin-top: 10px;
     margin-left: 11px;
   }
+
+#diamond {
+    margin: 3px auto auto auto;
+    width: 0;
+    height: 0;
+    border: 20px solid transparent;
+    border-bottom-color: white;
+    position: relative;
+    top: -20px;
+  }
+#diamond:after {
+    content: '';
+    position: absolute;
+    left: -20px;
+    top: 20px;
+    width: 0;
+    height: 0;
+    border: 20px solid transparent;
+    border-top-color: white;
+  }
