@@ -1,5 +1,5 @@
 import {Tela} from './tela.js'
-import {level3} from './levels.js'
+import {level3, level4} from './levels.js'
 import {side} from './block.js'
 
 document.addEventListener('keypress', (event) => {
@@ -11,5 +11,5 @@ document.addEventListener('keypress', (event) => {
     })
 });
 
-let tela = new Tela(level3);
+let tela = new Tela(level4);
 tela.paint();
