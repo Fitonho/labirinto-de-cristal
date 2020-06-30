@@ -4,6 +4,8 @@ const N = 9;
 let rows = document.querySelectorAll(".row");
 let playerSprite = document.createElement("div");
 playerSprite.classList.add("player");
+let endOfLevel = document.createElement("div");
+endOfLevel.setAttribute("id", "diamond");
 export class Tela {
     constructor(level) {
         this.matriz = [];
@@ -35,6 +37,11 @@ export class Tela {
                         }
                     }
                 });
+                if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
+                    document.styleSheets[1].cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
+                    document.styleSheets[1].cssRules[3].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
+                    blockDOM.appendChild(endOfLevel);
+                }
             }
         }
         blockDOM = rows[this.playerPos[0]].children[this.playerPos[1]];
@@ -72,12 +79,15 @@ export class Tela {
         }
         if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
             this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
-            this.playerColor = this.invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
+            if (this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
+                this.playerColor = this.invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
+            }
             this.playerPos = [nextPos[0], nextPos[1]];
         }
         else {
             if (this.matriz[nextPos[0]][nextPos[1]].color == this.playerColor &&
                 0 <= blockBehind[0] && blockBehind[0] < M && 0 <= blockBehind[1] && blockBehind[1] < N &&
+                this.matriz[blockBehind[0]][blockBehind[1]].event != BlockEvent.endOfLevel &&
                 this.matriz[blockBehind[0]][blockBehind[1]].color != this.playerColor) {
                 [this.matriz[blockBehind[0]][blockBehind[1]].color, this.matriz[nextPos[0]][nextPos[1]].color] = [this.matriz[nextPos[0]][nextPos[1]].color, this.matriz[blockBehind[0]][blockBehind[1]].color];
                 this.playerPos = [nextPos[0], nextPos[1]];
