@@ -20,60 +20,60 @@ export function level_teste(matriz: Block[][]) {
 }
 
 export function level_1(matriz:Block[][]) {
-    let rowSize = 10;
-    let colSize = 9;
+    let rowSize = 9;
+    let colSize = 10;
     for (let i = 0; i < rowSize; i++){
         matriz[i]=[];
         for (let j = 0; j < colSize; j++){
             matriz[i][j] = new Block(colors.white);
         }
     } 
-    let list = [1,2,3,4,5,6,7,8]; 'Coluna_1'
+    let list = [1,2,3,4,5,6,7,8]; //Coluna_1
     for (let i of list){
         matriz[i][1] = new Block(colors.black);
     }
-    list = [1,8]; 'Coluna_2'
+    list = [1,8]; //Coluna_2
     for(let i of list){
         matriz[i][2] = new Block(colors.black);
     }
-    list = [1,3,4,5,6,8]; 'Coluna_3'
+    list = [1,3,4,5,6,8]; //Coluna_3'
     for(let i of list){
         matriz[i][3] = new Block(colors.black);
     }
-    list = [1,3,6,8]; 'Coluna_4'
+    list = [1,3,6,8]; //Coluna_4'
     for(let i of list){
         matriz[i][4] = new Block(colors.black);
     }
-    list = [1,3,4,6,8]; 'Coluna_5'
+    list = [1,3,4,6,8]; //Coluna_5'
     for(let i of list){
         matriz[i][5] = new Block(colors.black);
     }
-    list = [1,6,8]; 'Coluna_6'
+    list = [1,6,8]; //Coluna_6'
     for(let i of list){
         matriz[i][6] = new Block(colors.black);
     }
-    list = [1,2,3,4,5,6,8]; 'Coluna_7'
+    list = [1,2,3,4,5,6,8]; //Coluna_7'
     for(let i of list){
         matriz[i][7] = new Block(colors.black);
     } 
-    list = [8]; 'Coluna_8'
+    list = [8]; //Coluna_8'
     for(let i of list){
         matriz[i][8] = new Block(colors.black);
     }
-    list = [0,1,2,3,4,5,6,7,8]; 'Coluna_9'
+    list = [0,1,2,3,4,5,6,7,8]; //Coluna_9'
     for(let i of list){
         matriz[i][9] = new Block(colors.black);
     }
     matriz[4][5].walls[side.west] = wallState.portal;
     matriz[4][4].walls[side.east] = wallState.portal;
-    matriz[0][8].event = BlockEvent.endOfLevel;
+    matriz[8][8].event = BlockEvent.endOfLevel;
 
-    return [8][0];
+    return [8,0];
 }
 
 export function level_2(matriz:Block[][]) {
-    let rowSize = 10;
-    let colSize = 9;
+    let rowSize = 9;
+    let colSize = 10;
     for (let i = 0; i < rowSize; i++){
         matriz[i]=[];
         for (let j = 0; j < colSize; j++){
