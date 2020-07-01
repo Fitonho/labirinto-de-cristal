@@ -43,8 +43,8 @@ export class Tela {
                     }
                 })
                 if(this.matriz[i][j].event == BlockEvent.endOfLevel){
-                    (<CSSStyleRule>document.styleSheets[1].cssRules[4]).style.borderTopColor = this.invertColor(this.matriz[i][j].color);
-                    (<CSSStyleRule>document.styleSheets[1].cssRules[3]).style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
+                    (<any>document.styleSheets[1]).cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
+                    (<any>document.styleSheets[1]).cssRules[3].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
                     blockDOM.appendChild(endOfLevel);   
                 }
             }
