@@ -17,8 +17,8 @@ export function level_teste(matriz) {
     return [8, 2];
 }
 export function level_1(matriz) {
-    let rowSize = 10;
-    let colSize = 9;
+    let colSize = 10;
+    let rowSize = 9;
     for (let i = 0; i < rowSize; i++) {
         matriz[i] = [];
         for (let j = 0; j < colSize; j++) {
@@ -73,7 +73,7 @@ export function level_1(matriz) {
     matriz[4][5].walls[side.west] = wallState.portal;
     matriz[4][4].walls[side.east] = wallState.portal;
     matriz[0][8].event = BlockEvent.endOfLevel;
-    return [8][0];
+    return [8, 0];
 }
 export function level_2(matriz) {
     let rowSize = 10;
@@ -132,7 +132,7 @@ export function level_2(matriz) {
     matriz[4][5].walls[side.west] = wallState.portal;
     matriz[4][4].walls[side.east] = wallState.portal;
     matriz[0][8].event = BlockEvent.endOfLevel;
-    return [8][0];
+    return [8, 0];
 }
 export function level_3(matriz) {
     let rowSize = 9;
