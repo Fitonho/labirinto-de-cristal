@@ -1,9 +1,9 @@
 export var side;
 (function (side) {
-    side[side["north"] = 0] = "north";
-    side[side["south"] = 1] = "south";
-    side[side["east"] = 2] = "east";
-    side[side["west"] = 3] = "west";
+    side[side["Top"] = 0] = "Top";
+    side[side["Bottom"] = 1] = "Bottom";
+    side[side["Right"] = 2] = "Right";
+    side[side["Left"] = 3] = "Left";
 })(side || (side = {}));
 export var wallState;
 (function (wallState) {
@@ -14,9 +14,8 @@ export var colors;
 (function (colors) {
     colors["black"] = "#000000";
     colors["white"] = "#ffffff";
-    colors["player"] = "magenta";
-    colors["endOfLevel"] = "grey";
     colors["portal"] = "blue";
+    colors["wall"] = "grey";
 })(colors || (colors = {}));
 export var BlockEvent;
 (function (BlockEvent) {

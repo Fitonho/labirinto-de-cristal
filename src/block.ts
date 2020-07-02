@@ -1,8 +1,8 @@
 export enum side {
-    north = 0,
-    south,
-    east,
-    west
+    Top = 0,
+    Bottom,
+    Right,
+    Left
 }
 export enum wallState {
     none = 0,
@@ -11,9 +11,8 @@ export enum wallState {
 export enum colors {
     black = '#000000',
     white = '#ffffff',
-    player = 'magenta',
-    endOfLevel = 'grey',
-    portal = 'blue'
+    portal = 'blue',
+    wall = 'grey'
 }
 export enum BlockEvent {
     endOfLevel = 1
