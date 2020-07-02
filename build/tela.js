@@ -16,13 +16,12 @@ function printGrid(rowSize, colSize) {
 }
 export class Tela {
     constructor(level) {
-        this.M = 9;
-        this.N = 9;
         this.playerSprite = document.createElement("div");
         this.endOfLevel = document.createElement("div");
         this.matriz = [];
         this.playerPos = level(this.matriz);
         printGrid(this.matriz.length, this.matriz[0].length);
+        [this.M, this.N] = [this.matriz.length, this.matriz[0].length];
         this.rows = document.querySelectorAll(".row-size");
         this.playerSprite.classList.add("player");
         this.endOfLevel.setAttribute("id", "diamond");
@@ -36,22 +35,7 @@ export class Tela {
                 blockDOM = this.rows[i].children[j];
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
                 this.matriz[i][j].walls.forEach((wall, index) => {
-                    if (wall != 0) {
-                        switch (index) {
-                            case side.north:
-                                blockDOM.style.borderTopColor = colors.portal;
-                                break;
-                            case side.south:
-                                blockDOM.style.borderBottomColor = colors.portal;
-                                break;
-                            case side.east:
-                                blockDOM.style.borderRightColor = colors.portal;
-                                break;
-                            case side.west:
-                                blockDOM.style.borderLeftColor = colors.portal;
-                                break;
-                        }
-                    }
+                    blockDOM.style[`border${Object.keys(side)[index + 4]}Color`] = (wall != 0) ? colors.portal : colors.wall;
                 });
                 if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
                     document.styleSheets[1].cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
@@ -68,25 +52,25 @@ export class Tela {
         let nextPos = [this.playerPos[0], this.playerPos[1]];
         let blockBehind;
         switch (direction) {
-            case side.north:
+            case side.Top:
                 if (nextPos[0] > 0) {
                     nextPos[0] -= 1;
                     blockBehind = [nextPos[0] - 1, nextPos[1]];
                 }
                 break;
-            case side.west:
+            case side.Left:
                 if (nextPos[1] > 0) {
                     nextPos[1] -= 1;
                     blockBehind = [nextPos[0], nextPos[1] - 1];
                 }
                 break;
-            case side.south:
+            case side.Bottom:
                 if (nextPos[0] < this.M - 1) {
                     nextPos[0] += 1;
                     blockBehind = [nextPos[0] + 1, nextPos[1]];
                 }
                 break;
-            case side.east:
+            case side.Right:
                 if (nextPos[1] < this.N - 1) {
                     nextPos[1] += 1;
                     blockBehind = [nextPos[0], nextPos[1] + 1];
