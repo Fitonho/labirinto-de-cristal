@@ -20,8 +20,8 @@ export function level_teste(matriz: Block[][]) {
 }
 
 export function level_1(matriz:Block[][]) {
-    let rowSize = 9;
     let colSize = 10;
+    let rowSize = 9;
     for (let i = 0; i < rowSize; i++){
         matriz[i]=[];
         for (let j = 0; j < colSize; j++){
@@ -72,8 +72,8 @@ export function level_1(matriz:Block[][]) {
 }
 
 export function level_2(matriz:Block[][]) {
-    let rowSize = 9;
-    let colSize = 10;
+    let rowSize = 10;
+    let colSize = 9;
     for (let i = 0; i < rowSize; i++){
         matriz[i]=[];
         for (let j = 0; j < colSize; j++){
@@ -120,7 +120,7 @@ export function level_2(matriz:Block[][]) {
     matriz[4][4].walls[side.east] = wallState.portal;
     matriz[0][8].event = BlockEvent.endOfLevel;
 
-    return [8][0];
+    return [8,8];
 }
 
 export function level_3(matriz:Block[][]) {
@@ -196,8 +196,10 @@ export function level_4(matriz:Block[][]) {
     for ( let i of list) {
         matriz[i][4] = new Block(colors.black);
     }
-    matriz[5][4].walls[side.north] = wallState.portal;
-    matriz[4][4].walls[side.south] = wallState.portal;
+    matriz[8][1].walls[side.east] = wallState.portal;
+    matriz[8][6].walls[side.east] = wallState.portal;
+    matriz[8][2].walls[side.west] = wallState.portal;
+    matriz[8][7].walls[side.west] = wallState.portal;
     matriz[0][4].event = BlockEvent.endOfLevel;
 
     return [8,4];
