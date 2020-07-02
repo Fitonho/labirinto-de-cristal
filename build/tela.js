@@ -1,23 +1,39 @@
 import { colors, side, wallState, BlockEvent } from './block.js';
-const M = 9;
-const N = 9;
-let rows = document.querySelectorAll(".row");
-let playerSprite = document.createElement("div");
-playerSprite.classList.add("player");
-let endOfLevel = document.createElement("div");
-endOfLevel.setAttribute("id", "diamond");
+function printGrid(rowSize, colSize) {
+    let c = document.querySelector(".container");
+    for (let i = 0; i < rowSize; i++) {
+        let row = document.createElement("div");
+        row.classList.add("row");
+        row.classList.add("row-size");
+        for (let j = 0; j < colSize; j++) {
+            let col = document.createElement("div");
+            col.classList.add("col-sm");
+            col.classList.add("block-size");
+            row.appendChild(col);
+        }
+        c.appendChild(row);
+    }
+}
 export class Tela {
     constructor(level) {
+        this.M = 9;
+        this.N = 9;
+        this.playerSprite = document.createElement("div");
+        this.endOfLevel = document.createElement("div");
         this.matriz = [];
         this.playerPos = level(this.matriz);
+        printGrid(this.matriz.length, this.matriz[0].length);
+        this.rows = document.querySelectorAll(".row");
+        this.playerSprite.classList.add("player");
+        this.endOfLevel.setAttribute("id", "diamond");
         this.playerColor = this.invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
-        playerSprite.style.backgroundColor = this.playerColor;
+        this.playerSprite.style.backgroundColor = this.playerColor;
     }
     paint() {
         let blockDOM;
-        for (let i = 0; i < rows.length; i++) {
-            for (let j = 0; j < rows[i].children.length; j++) {
-                blockDOM = rows[i].children[j];
+        for (let i = 0; i < this.rows.length; i++) {
+            for (let j = 0; j < this.rows[i].children.length; j++) {
+                blockDOM = this.rows[i].children[j];
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
                 this.matriz[i][j].walls.forEach((wall, index) => {
                     if (wall != 0) {
@@ -40,13 +56,13 @@ export class Tela {
                 if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
                     document.styleSheets[1].cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
                     document.styleSheets[1].cssRules[3].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
-                    blockDOM.appendChild(endOfLevel);
+                    blockDOM.appendChild(this.endOfLevel);
                 }
             }
         }
-        blockDOM = rows[this.playerPos[0]].children[this.playerPos[1]];
-        playerSprite.style.backgroundColor = this.playerColor;
-        blockDOM.appendChild(playerSprite);
+        blockDOM = this.rows[this.playerPos[0]].children[this.playerPos[1]];
+        this.playerSprite.style.backgroundColor = this.playerColor;
+        blockDOM.appendChild(this.playerSprite);
     }
     move(direction) {
         let nextPos = [this.playerPos[0], this.playerPos[1]];
@@ -65,13 +81,13 @@ export class Tela {
                 }
                 break;
             case side.south:
-                if (nextPos[0] < M - 1) {
+                if (nextPos[0] < this.M - 1) {
                     nextPos[0] += 1;
                     blockBehind = [nextPos[0] + 1, nextPos[1]];
                 }
                 break;
             case side.east:
-                if (nextPos[1] < N - 1) {
+                if (nextPos[1] < this.N - 1) {
                     nextPos[1] += 1;
                     blockBehind = [nextPos[0], nextPos[1] + 1];
                 }
@@ -86,7 +102,7 @@ export class Tela {
         }
         else {
             if (this.matriz[nextPos[0]][nextPos[1]].color == this.playerColor &&
-                0 <= blockBehind[0] && blockBehind[0] < M && 0 <= blockBehind[1] && blockBehind[1] < N &&
+                0 <= blockBehind[0] && blockBehind[0] < this.M && 0 <= blockBehind[1] && blockBehind[1] < this.N &&
                 this.matriz[blockBehind[0]][blockBehind[1]].event != BlockEvent.endOfLevel &&
                 this.matriz[blockBehind[0]][blockBehind[1]].color != this.playerColor) {
                 [this.matriz[blockBehind[0]][blockBehind[1]].color, this.matriz[nextPos[0]][nextPos[1]].color] = [this.matriz[nextPos[0]][nextPos[1]].color, this.matriz[blockBehind[0]][blockBehind[1]].color];

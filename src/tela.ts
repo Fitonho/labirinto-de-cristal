@@ -1,32 +1,52 @@
-import {Block,colors,side,wallState,BlockEvent} from './block.js'
+import { Block, colors, side, wallState, BlockEvent } from './block.js'
 
-const M = 9;
-const N = 9;
-let rows = document.querySelectorAll(".row");
-let playerSprite = document.createElement("div");
-playerSprite.classList.add("player")
-let endOfLevel = document.createElement("div");
-endOfLevel.setAttribute("id","diamond");
+
+
+function printGrid(rowSize: number, colSize: number) {
+    let c = document.querySelector(".container");
+    for (let i = 0; i < rowSize; i++) {
+        let row = document.createElement("div");
+        row.classList.add("row");
+        row.classList.add("row-size")
+        for (let j = 0; j < colSize; j++) {
+            let col = document.createElement("div");
+            col.classList.add("col-sm");
+            col.classList.add("block-size");
+            row.appendChild(col);
+        }
+        c.appendChild(row);
+    }
+}
 
 export class Tela {
+    M = 9;
+    N = 9;
+    rows:NodeListOf<Element>;
+    playerSprite = document.createElement("div");
+    endOfLevel = document.createElement("div");
+
     public matriz: Block[][] = [];
     public playerPos: [number, number];
     public playerColor: colors;
     constructor(level: Function) {
         this.playerPos = level(this.matriz);
+        printGrid(this.matriz.length, this.matriz[0].length);
+        this.rows = document.querySelectorAll(".row");
+        this.playerSprite.classList.add("player");
+        this.endOfLevel.setAttribute("id", "diamond");
         this.playerColor = this.invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
-        playerSprite.style.backgroundColor = this.playerColor;
+        this.playerSprite.style.backgroundColor = this.playerColor;
     }
 
     paint() {
-        let blockDOM:HTMLElement;
-        for (let i = 0; i < rows.length; i++) {
-            for (let j = 0; j < rows[i].children.length; j++) {
-                blockDOM = (<HTMLElement>rows[i].children[j])
+        let blockDOM: HTMLElement;
+        for (let i = 0; i < this.rows.length; i++) {
+            for (let j = 0; j < this.rows[i].children.length; j++) {
+                blockDOM = (<HTMLElement>this.rows[i].children[j])
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
                 this.matriz[i][j].walls.forEach((wall, index) => {
                     if (wall != 0) {
-                        switch(<side>index){
+                        switch (<side>index) {
                             case side.north:
                                 blockDOM.style.borderTopColor = colors.portal;
                                 break;
@@ -42,73 +62,73 @@ export class Tela {
                         }
                     }
                 })
-                if(this.matriz[i][j].event == BlockEvent.endOfLevel){
+                if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
                     (<any>document.styleSheets[1]).cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
                     (<any>document.styleSheets[1]).cssRules[3].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
-                    blockDOM.appendChild(endOfLevel);   
+                    blockDOM.appendChild(this.endOfLevel);
                 }
             }
         }
-        blockDOM = (<HTMLElement>rows[this.playerPos[0]].children[this.playerPos[1]])
-        playerSprite.style.backgroundColor = this.playerColor;
-        blockDOM.appendChild(playerSprite);
+        blockDOM = (<HTMLElement>this.rows[this.playerPos[0]].children[this.playerPos[1]])
+        this.playerSprite.style.backgroundColor = this.playerColor;
+        blockDOM.appendChild(this.playerSprite);
     }
 
     move(direction: side) {
         let nextPos = [this.playerPos[0], this.playerPos[1]];
-        let blockBehind:[number,number];
+        let blockBehind: [number, number];
         switch (direction) {
             case side.north:
-                if (nextPos[0] > 0){
+                if (nextPos[0] > 0) {
                     nextPos[0] -= 1
-                    blockBehind = [nextPos[0]-1,nextPos[1]];
+                    blockBehind = [nextPos[0] - 1, nextPos[1]];
                 }
                 break;
             case side.west:
-                if (nextPos[1] > 0){
+                if (nextPos[1] > 0) {
                     nextPos[1] -= 1
-                    blockBehind = [nextPos[0],nextPos[1]-1];
+                    blockBehind = [nextPos[0], nextPos[1] - 1];
                 }
                 break;
             case side.south:
-                if (nextPos[0] < M - 1){
+                if (nextPos[0] < this.M - 1) {
                     nextPos[0] += 1
-                    blockBehind = [nextPos[0]+1,nextPos[1]];
+                    blockBehind = [nextPos[0] + 1, nextPos[1]];
                 }
                 break;
             case side.east:
-                if (nextPos[1] < N - 1){
+                if (nextPos[1] < this.N - 1) {
                     nextPos[1] += 1
-                    blockBehind = [nextPos[0],nextPos[1]+1];
+                    blockBehind = [nextPos[0], nextPos[1] + 1];
                 }
                 break;
         }
         if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
             this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
-            if(this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal){
+            if (this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
                 this.playerColor = this.invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
             }
             this.playerPos = [nextPos[0], nextPos[1]];
         }
         else {
-            
-            if(this.matriz[nextPos[0]][nextPos[1]].color == this.playerColor && 
-                0<=blockBehind[0] && blockBehind[0]<M && 0<=blockBehind[1] && blockBehind[1]<N &&
+
+            if (this.matriz[nextPos[0]][nextPos[1]].color == this.playerColor &&
+                0 <= blockBehind[0] && blockBehind[0] < this.M && 0 <= blockBehind[1] && blockBehind[1] < this.N &&
                 this.matriz[blockBehind[0]][blockBehind[1]].event != BlockEvent.endOfLevel &&
-                this.matriz[blockBehind[0]][blockBehind[1]].color != this.playerColor){
-                    [this.matriz[blockBehind[0]][blockBehind[1]].color,this.matriz[nextPos[0]][nextPos[1]].color] = [this.matriz[nextPos[0]][nextPos[1]].color,this.matriz[blockBehind[0]][blockBehind[1]].color];
-                    this.playerPos = [nextPos[0], nextPos[1]];
+                this.matriz[blockBehind[0]][blockBehind[1]].color != this.playerColor) {
+                [this.matriz[blockBehind[0]][blockBehind[1]].color, this.matriz[nextPos[0]][nextPos[1]].color] = [this.matriz[nextPos[0]][nextPos[1]].color, this.matriz[blockBehind[0]][blockBehind[1]].color];
+                this.playerPos = [nextPos[0], nextPos[1]];
             }
             //TODO lidar com empurrar blocos com portais e blocos de evento
         }
         this.paint();
-        if(this.matriz[this.playerPos[0]][this.playerPos[1]].event == BlockEvent.endOfLevel){
+        if (this.matriz[this.playerPos[0]][this.playerPos[1]].event == BlockEvent.endOfLevel) {
             alert('nível completo!')
         }
     }
 
-    invertColor(hexTripletColor:string) {
-        var color:any = hexTripletColor;
+    invertColor(hexTripletColor: string) {
+        var color: any = hexTripletColor;
         color = color.substring(1); // remove #
         color = parseInt(color, 16); // convert to integer
         color = 0xFFFFFF ^ color; // invert three bytes
