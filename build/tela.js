@@ -1,6 +1,6 @@
 import { colors, side, wallState, BlockEvent } from './block.js';
 function printGrid(rowSize, colSize) {
-    let c = document.querySelector(".container");
+    let c = document.querySelector("#board");
     for (let i = 0; i < rowSize; i++) {
         let row = document.createElement("div");
         row.classList.add("row");
@@ -23,7 +23,7 @@ export class Tela {
         this.matriz = [];
         this.playerPos = level(this.matriz);
         printGrid(this.matriz.length, this.matriz[0].length);
-        this.rows = document.querySelectorAll(".row");
+        this.rows = document.querySelectorAll(".row-size");
         this.playerSprite.classList.add("player");
         this.endOfLevel.setAttribute("id", "diamond");
         this.playerColor = this.invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);

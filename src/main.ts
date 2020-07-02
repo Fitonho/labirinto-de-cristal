@@ -1,5 +1,5 @@
 import {Tela} from './tela.js'
-import {level_teste, level_1, level_2, level_3, level_4} from './levels.js'
+import {level_teste, level_3, level_4} from './levels.js'
 import {side} from './block.js'
 
 document.addEventListener('keypress', (event) => {
