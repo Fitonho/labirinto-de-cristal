@@ -1,5 +1,9 @@
 import {Tela} from './tela.js'
+<<<<<<< HEAD
 import {Levels} from './levels.js'
+=======
+import {level_teste, level_3, level_4, level_5} from './levels.js'
+>>>>>>> b3bc1b5e6382a7084a134ff8b801f78e977a35f4
 import {side} from './block.js'
 
 let levels = new Levels;
