@@ -1,5 +1,5 @@
 import { Tela } from './tela.js';
-import { level_4 } from './levels.js';
+import { level_5 } from './levels.js';
 document.addEventListener('keypress', (event) => {
     console.log(event.key + " pressed");
     'wsda'.split('').forEach((key, index) => {
@@ -8,6 +8,6 @@ document.addEventListener('keypress', (event) => {
         }
     });
 });
-let tela = new Tela(level_4);
+let tela = new Tela(level_5);
 tela.paint();
 //# sourceMappingURL=main.js.map
