@@ -9,6 +9,22 @@ function paintMatrix(mg: number[][], cores: colors[], matriz: Block[][]) {
     }
 }
 
+export function level_teste_empurrar(matriz:Block[][]){
+    let mg =[
+        [0,0,0,1,0,0,0],
+        [0,0,0,1,0,0,0],
+        [0,0,0,1,0,0,0],
+        [0,0,0,1,0,0,0]
+    ];
+    paintMatrix(mg,[colors.black,colors.white],matriz);
+    matriz[0][3].event = BlockEvent.endOfLevel
+    matriz[2][3].walls[side.Left] = wallState.portal
+    matriz[1][4].walls[side.Left] = wallState.portal
+    matriz[3][3].walls[side.Right] = wallState.portal
+
+    return [0,0]
+}
+
 export function level_teste(matriz: Block[][]) {
 
     let mg =[ 
@@ -24,8 +40,8 @@ export function level_teste(matriz: Block[][]) {
     
     paintMatrix(mg, [colors.black, colors.white], matriz);
 
-    matriz[4][1].walls[side.east] = wallState.portal;
-    matriz[4][2].walls[side.west] = wallState.portal;
+    matriz[4][1].walls[side.Right] = wallState.portal;
+    matriz[4][2].walls[side.Left] = wallState.portal;
     matriz[0][6].event = BlockEvent.endOfLevel;
 
     return [8, 2];
@@ -68,8 +84,8 @@ export function level_3(matriz: Block[][]) {
     for (let i of list) {
         matriz[i][4] = new Block(colors.black);
     }
-    matriz[5][4].walls[side.north] = wallState.portal;
-    matriz[4][4].walls[side.south] = wallState.portal;
+    matriz[5][4].walls[side.Top] = wallState.portal;
+    matriz[4][4].walls[side.Bottom] = wallState.portal;
     matriz[0][4].event = BlockEvent.endOfLevel;
 
     return [8, 4];
@@ -108,10 +124,10 @@ export function level_4(matriz: Block[][]) {
     for (let i of list) {
         matriz[i][4] = new Block(colors.black);
     }
-    matriz[8][1].walls[side.east] = wallState.portal;
-    matriz[8][6].walls[side.east] = wallState.portal;
-    matriz[8][2].walls[side.west] = wallState.portal;
-    matriz[8][7].walls[side.west] = wallState.portal;
+    matriz[8][1].walls[side.Right] = wallState.portal;
+    matriz[8][6].walls[side.Right] = wallState.portal;
+    matriz[8][2].walls[side.Left] = wallState.portal;
+    matriz[8][7].walls[side.Left] = wallState.portal;
     matriz[0][4].event = BlockEvent.endOfLevel;
 
     return [8, 4];
