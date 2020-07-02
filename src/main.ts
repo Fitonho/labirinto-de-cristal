@@ -11,5 +11,5 @@ document.addEventListener('keypress', (event) => {
     })
 });
 
-let tela = new Tela(level_4);
+let tela = new Tela(level_teste);
 tela.paint();
