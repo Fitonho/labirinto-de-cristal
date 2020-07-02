@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +9,35 @@
     <link rel="stylesheet" href="index.css">
     <title>Document</title>
 </head>
+
 <body>
-    <div id='board'class="container">
+    <div class="container">
+        <div class='row'>
+            <div class='col'>
+                <div id='board' class="container"></div>
+            </div>
+        </div>
+        <div class='row'>
+            <hr>
+        </div>
+        <div class='row'>
+            <div class='col'>
+                <!-- <form> -->
+                    <div class="form-group">
+                        <div class='row'>
+                            <div class='col-3'><select id='levelSelection' class="form-control" name='selectedLevel'>
+                            </select></div>
+                            <div class='col-4'>
+                                <button id='selectLevelButton' type="button" class="btn btn-primary">Select Level</button>
+                            </div>
+                        </div>
+                        
+                    </div>
+                <!-- </form> -->
+            </div>
+        </div>
     </div>
     <script src="build/main.js" type="module"></script>
 </body>
+
 </html>

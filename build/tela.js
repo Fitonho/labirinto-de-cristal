@@ -27,6 +27,7 @@ export class Tela {
         this.endOfLevel.setAttribute("id", "diamond");
         this.playerColor = this.invertColor(this.matriz[this.playerPos[0]][this.playerPos[1]].color);
         this.playerSprite.style.backgroundColor = this.playerColor;
+        this.paint();
     }
     paint() {
         let blockDOM;
