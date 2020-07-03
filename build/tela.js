@@ -5,6 +5,7 @@ function printGrid(rowSize, colSize) {
         let row = document.createElement("div");
         row.classList.add("row");
         row.classList.add("row-size");
+        row.style.width = `${50 * colSize}px`;
         for (let j = 0; j < colSize; j++) {
             let col = document.createElement("div");
             col.classList.add("col-sm");
@@ -36,7 +37,7 @@ export class Tela {
                 blockDOM = this.rows[i].children[j];
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
                 this.matriz[i][j].walls.forEach((wall, index) => {
-                    blockDOM.style[`border${Object.keys(side)[index + 4]}Color`] = (wall != 0) ? colors.portal : colors.wall;
+                    blockDOM.style[`border${Object.keys(side)[index + 4]}`] = (wall != 0) ? `3px solid ${colors.portal}` : '';
                 });
                 if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
                     document.styleSheets[1].cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
