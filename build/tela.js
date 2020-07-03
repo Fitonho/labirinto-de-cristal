@@ -40,8 +40,8 @@ export class Tela {
                     blockDOM.style[`border${Object.keys(side)[index + 4]}`] = (wall != 0) ? `3px solid ${colors.portal}` : '';
                 });
                 if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
-                    document.styleSheets[1].cssRules[4].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
-                    document.styleSheets[1].cssRules[3].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
+                    document.styleSheets[1].cssRules[3].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
+                    document.styleSheets[1].cssRules[2].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
                     blockDOM.appendChild(this.endOfLevel);
                 }
             }
