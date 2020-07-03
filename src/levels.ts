@@ -1,6 +1,13 @@
 import { Block, colors, side, wallState, BlockEvent } from './block.js'
 
-
+function paintMatrix(mg: number[][], cores: colors[], matriz: Block[][]) {
+    for (let i = 0; i < mg.length; i++) {
+        matriz[i] = [];
+        for (let j = 0; j < mg[0].length; j++) {
+            matriz[i][j] = new Block(cores[mg[i][j]])
+        }
+    }
+}
 
 export class Levels {
 
@@ -154,7 +161,7 @@ export class Levels {
     level_6(matriz: Block[][]) {
 
         let mg = [
-            [1,0,1,1,1,1,0,1],
+            [1,1,0,1,1,1,0,1],
             [1,0,0,1,1,1,0,0],
             [1,0,0,1,1,1,1,1],
             [1,1,0,0,0,1,0,1],
@@ -178,14 +185,28 @@ export class Levels {
             
         return[7, 0];    
     }
-}
 
-function paintMatrix(mg: number[][], cores: colors[], matriz: Block[][]) {
-    for (let i = 0; i < mg.length; i++) {
-        matriz[i] = [];
-        for (let j = 0; j < mg[0].length; j++) {
-            matriz[i][j] = new Block(cores[mg[i][j]])
-        }
+    level_7(matriz: Block[][]){
+        let mg = [
+            [0,0,1,1,1,1,0,0],
+            [0,0,1,1,1,1,0,0],
+            [1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,0,1,1],
+            [1,1,1,1,1,1,1,1],
+            [1,1,1,0,1,0,1,0],
+            [0,0,1,1,1,1,1,1],
+            [0,0,1,1,1,0,1,0]];
+        
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+
+        matriz[7][7].event = BlockEvent.endOfLevel;
+
+        matriz[6][0].walls[side.Top] = wallState.portal;
+        matriz[7][2].walls[side.Left] = wallState.portal;
+
+        return [7, 0];
     }
 }
+
+
 

@@ -1,4 +1,12 @@
 import { Block, colors, side, wallState, BlockEvent } from './block.js';
+function paintMatrix(mg, cores, matriz) {
+    for (let i = 0; i < mg.length; i++) {
+        matriz[i] = [];
+        for (let j = 0; j < mg[0].length; j++) {
+            matriz[i][j] = new Block(cores[mg[i][j]]);
+        }
+    }
+}
 export class Levels {
     level_teste_empurrar(matriz) {
         let mg = [
@@ -132,7 +140,7 @@ export class Levels {
     }
     level_6(matriz) {
         let mg = [
-            [1, 0, 1, 1, 1, 1, 0, 1],
+            [1, 1, 0, 1, 1, 1, 0, 1],
             [1, 0, 0, 1, 1, 1, 0, 0],
             [1, 0, 0, 1, 1, 1, 1, 1],
             [1, 1, 0, 0, 0, 1, 0, 1],
@@ -153,13 +161,22 @@ export class Levels {
         matriz[0][7].event = BlockEvent.endOfLevel;
         return [7, 0];
     }
-}
-function paintMatrix(mg, cores, matriz) {
-    for (let i = 0; i < mg.length; i++) {
-        matriz[i] = [];
-        for (let j = 0; j < mg[0].length; j++) {
-            matriz[i][j] = new Block(cores[mg[i][j]]);
-        }
+    level_7(matriz) {
+        let mg = [
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 0, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 0, 1, 0, 1, 0],
+            [0, 0, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 0, 1, 0]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[7][7].event = BlockEvent.endOfLevel;
+        matriz[6][0].walls[side.Top] = wallState.portal;
+        matriz[7][2].walls[side.Left] = wallState.portal;
+        return [7, 0];
     }
 }
 //# sourceMappingURL=levels.js.map
