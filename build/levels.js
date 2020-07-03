@@ -116,18 +116,18 @@ export class Levels {
         let mg = [
             [0, 1, 0, 1, 0, 1, 1, 1, 0],
             [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 0, 0, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 0, 0, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 0],
             [1, 1, 1, 0, 1, 0, 0, 0, 0],
             [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 1, 1, 1, 1, 1, 1],
-            [0, 0, 1, 0, 0, 0, 1, 0, 0],
-            [0, 1, 1, 1, 0, 1, 1, 0, 0]
+            [0, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 0, 0, 1, 1, 0, 0],
+            [0, 1, 1, 1, 0, 1, 1, 0, 1]
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
         matriz[8][0].walls[side.Right] = wallState.portal;
         matriz[8][1].walls[side.Left] = wallState.portal;
-        matriz[0][5].event = BlockEvent.endOfLevel;
+        matriz[0][6].event = BlockEvent.endOfLevel;
         return [0, 3];
     }
     level_6(matriz) {
