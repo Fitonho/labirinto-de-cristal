@@ -211,5 +211,24 @@ export class Levels {
         matriz[7][7].event = BlockEvent.endOfLevel;
         return [0, 0];
     }
+    level_10(matriz) {
+        let mg = [
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[0][6].walls[side.Right] = wallState.portal;
+        matriz[1][7].walls[side.Top] = wallState.portal;
+        matriz[7][0].walls[side.Top] = wallState.portal;
+        matriz[7][0].walls[side.Right] = wallState.portal;
+        matriz[0][0].event = BlockEvent.endOfLevel;
+        return [7, 7];
+    }
 }
 //# sourceMappingURL=levels.js.map
