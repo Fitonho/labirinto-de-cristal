@@ -81,38 +81,18 @@ export class Levels {
         return [8, 4];
     }
     level_4(matriz) {
-        let rowSize = 9;
-        let colSize = 9;
-        for (let i = 0; i < rowSize; i++) {
-            matriz[i] = [];
-            for (let j = 0; j < colSize; j++) {
-                matriz[i][j] = new Block(colors.white);
-            }
-        }
-        let list = [1, 2, 3, 4, 6, 8];
-        for (let i of list) {
-            matriz[i][0] = new Block(colors.black);
-            matriz[i][8] = new Block(colors.black);
-        }
-        list = [1, 2, 3, 4, 8];
-        for (let i of list) {
-            matriz[i][1] = new Block(colors.black);
-            matriz[i][7] = new Block(colors.black);
-        }
-        list = [0, 4, 5, 6, 7];
-        for (let i of list) {
-            matriz[i][2] = new Block(colors.black);
-            matriz[i][6] = new Block(colors.black);
-        }
-        list = [0, 4, 5, 6, 7];
-        for (let i of list) {
-            matriz[i][3] = new Block(colors.black);
-            matriz[i][5] = new Block(colors.black);
-        }
-        list = [2, 4, 5, 7];
-        for (let i of list) {
-            matriz[i][4] = new Block(colors.black);
-        }
+        let mg = [
+            [1, 1, 0, 0, 1, 0, 0, 1, 1],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 1, 1, 0, 1, 1, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 0, 0, 0, 0, 0, 1, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0],
+            [1, 1, 0, 0, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
         matriz[8][1].walls[side.Right] = wallState.portal;
         matriz[8][6].walls[side.Right] = wallState.portal;
         matriz[8][2].walls[side.Left] = wallState.portal;
