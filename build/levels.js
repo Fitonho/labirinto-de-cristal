@@ -41,7 +41,24 @@ export class Levels {
         return [8, 2];
     }
     //level_1(matriz: Block[][])
-    //level_2(matriz: Block[][])
+    level_2(matriz) {
+        let mg = [
+            [1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+            [1, 0, 0, 0, 0, 0, 1, 0, 1, 0],
+            [1, 0, 1, 1, 1, 1, 0, 0, 1, 0],
+            [1, 0, 1, 0, 0, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 1, 1, 0, 1, 0],
+            [1, 0, 1, 0, 0, 0, 0, 0, 1, 0],
+            [1, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+            [1, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[4][4].walls[side.Right] = wallState.portal;
+        matriz[4][5].walls[side.Left] = wallState.portal;
+        matriz[0][9].event = BlockEvent.endOfLevel;
+        return [8, 0];
+    }
     level_3(matriz) {
         let mg = [
             [0, 0, 1, 0, 0, 0, 1, 0, 0],
