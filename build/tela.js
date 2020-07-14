@@ -15,6 +15,13 @@ function printGrid(rowSize, colSize) {
         c.appendChild(row);
     }
 }
+function invertDirection(direction) {
+    direction = direction + 2;
+    if (direction > 3) {
+        direction = direction - 4;
+    }
+    return direction;
+}
 export class Tela {
     constructor(level) {
         this.playerSprite = document.createElement("div");
@@ -81,9 +88,9 @@ export class Tela {
         }
         //if(destino.cor != player.cor || posAtual.parede[direção] == portal )
         if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
-            this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
+            this.matriz[nextPos[0]][nextPos[1]].walls[invertDirection(direction)] == wallState.portal) {
             //if(posAtual.parede[direção] == portal )
-            if (this.matriz[this.playerPos[0]][this.playerPos[1]].walls[direction] == wallState.portal) {
+            if (this.matriz[nextPos[0]][nextPos[1]].walls[invertDirection(direction)] == wallState.portal) {
                 this.playerColor = this.invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
             }
             this.playerPos = [nextPos[0], nextPos[1]];

@@ -21,7 +21,7 @@ document.querySelector("#selectLevelButton").addEventListener('click',(event)=>{
 
 document.addEventListener('keypress', (event) => {
     console.log(event.key + " pressed");
-    'wsda'.split('').forEach((key, index) => {
+    'wdsa'.split('').forEach((key, index) => {
         if (key == event.key){
             tela.move(<side>index);
         }

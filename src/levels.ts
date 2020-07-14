@@ -21,8 +21,8 @@ export class Levels {
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
         matriz[0][3].event = BlockEvent.endOfLevel
+        matriz[1][3].walls[side.Right] = wallState.portal
         matriz[2][3].walls[side.Left] = wallState.portal
-        matriz[1][4].walls[side.Left] = wallState.portal
         matriz[3][3].walls[side.Right] = wallState.portal
 
         return [0, 0]
@@ -74,8 +74,6 @@ export class Levels {
         return [8, 0];
     } 
 	
-	
-
     level_2(matriz: Block[][]){
         
         let mg = [
