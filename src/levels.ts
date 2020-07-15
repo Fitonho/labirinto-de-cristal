@@ -73,9 +73,7 @@ export class Levels {
         
         return [8, 0];
     } 
-	
-	
-
+		
     level_2(matriz: Block[][]){
         
         let mg = [
@@ -135,7 +133,7 @@ export class Levels {
             [1, 1, 0, 0, 0, 0, 0, 1, 1],
             [0, 0, 1, 1, 1, 1, 1, 0, 0]];
     
-    paintMatrix(mg, [colors.black, colors.white], matriz);
+        paintMatrix(mg, [colors.black, colors.white], matriz);
 
         matriz[8][1].walls[side.Right] = wallState.portal;
         matriz[8][6].walls[side.Right] = wallState.portal;
