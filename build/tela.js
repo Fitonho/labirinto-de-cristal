@@ -15,12 +15,39 @@ function printGrid(rowSize, colSize) {
         c.appendChild(row);
     }
 }
-function invertDirection(direction) {
+function invertSide(direction) {
     direction = direction + 2;
     if (direction > 3) {
         direction = direction - 4;
     }
     return direction;
+}
+function invertPotals(matriz, nextPos) {
+    for (let i = 0; i < matriz.length; i++) {
+        for (let j = 0; j < matriz[0].length; j++) {
+            if (matriz[i][j].color == matriz[nextPos[0]][nextPos[1]].color) {
+                for (let k = 0; k < 4; k++) {
+                    if (matriz[i][j].walls[k] == wallState.portal) {
+                        matriz[i][j].walls[k] = wallState.none;
+                        switch (k) {
+                            case side.Top:
+                                matriz[i - 1][j].walls[side.Bottom] = wallState.portal;
+                                break;
+                            case side.Bottom:
+                                matriz[i + 1][j].walls[side.Top] = wallState.portal;
+                                break;
+                            case side.Right:
+                                matriz[i][j + 1].walls[side.Left] = wallState.portal;
+                                break;
+                            case side.Left:
+                                matriz[i][j - 1].walls[side.Right] = wallState.portal;
+                                break;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
 export class Tela {
     constructor(level) {
@@ -88,10 +115,11 @@ export class Tela {
         }
         //if(destino.cor != player.cor || posAtual.parede[direção] == portal )
         if (this.matriz[nextPos[0]][nextPos[1]].color != this.playerColor ||
-            this.matriz[nextPos[0]][nextPos[1]].walls[invertDirection(direction)] == wallState.portal) {
+            this.matriz[nextPos[0]][nextPos[1]].walls[invertSide(direction)] == wallState.portal) {
             //if(posAtual.parede[direção] == portal )
-            if (this.matriz[nextPos[0]][nextPos[1]].walls[invertDirection(direction)] == wallState.portal) {
+            if (this.matriz[nextPos[0]][nextPos[1]].walls[invertSide(direction)] == wallState.portal) {
                 this.playerColor = this.invertColor(this.matriz[nextPos[0]][nextPos[1]].color);
+                invertPotals(this.matriz, nextPos);
             }
             this.playerPos = [nextPos[0], nextPos[1]];
         }
