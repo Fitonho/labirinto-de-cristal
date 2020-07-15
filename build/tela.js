@@ -28,19 +28,30 @@ function invertPotals(matriz, nextPos) {
             if (matriz[i][j].color == matriz[nextPos[0]][nextPos[1]].color) {
                 for (let k = 0; k < 4; k++) {
                     if (matriz[i][j].walls[k] == wallState.portal) {
-                        matriz[i][j].walls[k] = wallState.none;
                         switch (k) {
                             case side.Top:
-                                matriz[i - 1][j].walls[side.Bottom] = wallState.portal;
+                                if (i > 0) {
+                                    matriz[i - 1][j].walls[side.Bottom] = wallState.portal;
+                                    matriz[i][j].walls[k] = wallState.none;
+                                }
                                 break;
                             case side.Bottom:
-                                matriz[i + 1][j].walls[side.Top] = wallState.portal;
-                                break;
-                            case side.Right:
-                                matriz[i][j + 1].walls[side.Left] = wallState.portal;
+                                if (i + 1 < matriz.length) {
+                                    matriz[i + 1][j].walls[side.Top] = wallState.portal;
+                                    matriz[i][j].walls[k] = wallState.none;
+                                }
                                 break;
                             case side.Left:
-                                matriz[i][j - 1].walls[side.Right] = wallState.portal;
+                                if (j > 0) {
+                                    matriz[i][j - 1].walls[side.Right] = wallState.portal;
+                                    matriz[i][j].walls[k] = wallState.none;
+                                }
+                                break;
+                            case side.Right:
+                                if (j + 1 < matriz[0].length) {
+                                    matriz[i][j + 1].walls[side.Left] = wallState.portal;
+                                    matriz[i][j].walls[k] = wallState.none;
+                                }
                                 break;
                         }
                     }
