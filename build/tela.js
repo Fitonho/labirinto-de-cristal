@@ -1,4 +1,4 @@
-import { colors, side, wallState, BlockEvent } from './block.js';
+import { side, wallState, BlockEvent } from './block.js';
 function printGrid(rowSize, colSize) {
     let c = document.querySelector("#board");
     for (let i = 0; i < rowSize; i++) {
@@ -28,32 +28,29 @@ function invertPotals(matriz, nextPos) {
             if (matriz[i][j].color == matriz[nextPos[0]][nextPos[1]].color) {
                 for (let k = 0; k < 4; k++) {
                     if (matriz[i][j].walls[k] == wallState.portal) {
+                        let newBlock = [];
                         switch (k) {
                             case side.Top:
-                                if (i > 0) {
-                                    matriz[i - 1][j].walls[side.Bottom] = wallState.portal;
-                                    matriz[i][j].walls[k] = wallState.none;
-                                }
+                                newBlock = [i - 1, j];
                                 break;
                             case side.Bottom:
-                                if (i + 1 < matriz.length) {
-                                    matriz[i + 1][j].walls[side.Top] = wallState.portal;
-                                    matriz[i][j].walls[k] = wallState.none;
-                                }
+                                newBlock = [i + 1, j];
                                 break;
                             case side.Left:
-                                if (j > 0) {
-                                    matriz[i][j - 1].walls[side.Right] = wallState.portal;
-                                    matriz[i][j].walls[k] = wallState.none;
-                                }
+                                newBlock = [i, j - 1];
                                 break;
                             case side.Right:
-                                if (j + 1 < matriz[0].length) {
-                                    matriz[i][j + 1].walls[side.Left] = wallState.portal;
-                                    matriz[i][j].walls[k] = wallState.none;
-                                }
+                                newBlock = [i, j + 1];
                                 break;
                         }
+                        if (newBlock[0] >= 0 && newBlock[0] < matriz.length
+                            && newBlock[1] >= 0 && newBlock[1] < matriz[0].length) {
+                            if (matriz[newBlock[0]][newBlock[1]].color != matriz[i][j].color) {
+                                matriz[newBlock[0]][newBlock[1]].walls[invertSide(k)] = wallState.portal;
+                            }
+                            matriz[i][j].walls[k] = wallState.none;
+                        }
+                        //invertendo portal
                     }
                 }
             }
@@ -82,7 +79,8 @@ export class Tela {
                 blockDOM = this.rows[i].children[j];
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
                 this.matriz[i][j].walls.forEach((wall, index) => {
-                    blockDOM.style[`border${Object.keys(side)[index + 4]}`] = (wall != 0) ? `3px solid ${colors.portal}` : '';
+                    blockDOM.style[`border${Object.keys(side)[index + 4]}`] = (wall != 0) ?
+                        `3px dotted ${this.invertColor(this.matriz[i][j].color)}` : `3px solid ${this.invertColor(this.matriz[i][j].color)}`;
                 });
                 if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
                     document.styleSheets[1].cssRules[1].style.borderTopColor = this.invertColor(this.matriz[i][j].color);

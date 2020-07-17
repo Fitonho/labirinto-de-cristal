@@ -49,9 +49,11 @@ function invertPotals( matriz: Block[][], nextPos: number[]){
                                     newBlock =[i, j + 1];
                                 break;
                         }
-                        if(newBlock[0] > 0 && newBlock[0] < matriz.length
-                        && newBlock[1] > 0 && newBlock[1] < matriz[0].length){
-                            if (matriz[newBlock[0]][newBlock[1]].color == matriz[i][j].color){
+                        if(newBlock[0] >= 0 && newBlock[0] < matriz.length
+                        && newBlock[1] >= 0 && newBlock[1] < matriz[0].length
+                        ){
+                            if (matriz[newBlock[0]][newBlock[1]].color != matriz[i][j].color
+                                ){
                                 matriz[newBlock[0]][newBlock[1]].walls[invertSide(k)] = wallState.portal;
                             }
                         matriz[i][j].walls[k] = wallState.none;
@@ -94,7 +96,8 @@ export class Tela {
                 blockDOM = (<HTMLElement>this.rows[i].children[j])
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
                 this.matriz[i][j].walls.forEach((wall, index) => {
-                    blockDOM.style[`border${Object.keys(side)[index+4]}`] = (wall != 0) ? `3px solid ${colors.portal}` : ''
+                    blockDOM.style[`border${Object.keys(side)[index+4]}`] = (wall != 0) ? 
+                    `3px dotted ${this.invertColor(this.matriz[i][j].color)}` : `3px solid ${this.invertColor(this.matriz[i][j].color)}`
                 })
                 if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
                     (<any>document.styleSheets[1]).cssRules[1].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
