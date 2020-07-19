@@ -24,9 +24,22 @@ function invertSide(direction: number){
     if (direction > 3){
         direction = direction - 4;
     }
-
     return direction;
 }
+
+function findAdjacent( i: number, j: number, wallside: number){
+        switch(wallside){
+            case side.Top: 
+                return  [i - 1, j];                                
+            case side.Bottom:
+                return  [i + 1, j];
+            case side.Left:
+                 return [i, j - 1]
+            case side.Right:
+                 return [i, j + 1];
+        }
+}
+
 
 function invertPotals( matriz: Block[][], nextPos: number[]){
     for (let i = 0; i < matriz.length; i++) {
@@ -34,24 +47,12 @@ function invertPotals( matriz: Block[][], nextPos: number[]){
             if (matriz[i][j].color == matriz[nextPos[0]][nextPos[1]].color){
                 for (let k = 0; k < 4; k++){
                     if(matriz[i][j].walls[k] == wallState.portal){
-                        let newBlock : number [] = [];
-                        switch(k){
-                            case side.Top: 
-                                    newBlock = [i - 1, j];                                
-                                break;
-                            case side.Bottom:
-                                    newBlock = [i + 1, j];
-                                break;
-                            case side.Left:
-                                    newBlock = [i, j - 1];
-                                break;
-                            case side.Right:
-                                    newBlock =[i, j + 1];
-                                break;
-                        }
-                        if(newBlock[0] > 0 && newBlock[0] < matriz.length
-                        && newBlock[1] > 0 && newBlock[1] < matriz[0].length){
-                            if (matriz[newBlock[0]][newBlock[1]].color == matriz[i][j].color){
+                        let newBlock : number[] = findAdjacent(i,j,k);
+                        if(newBlock[0] >= 0 && newBlock[0] < matriz.length
+                        && newBlock[1] >= 0 && newBlock[1] < matriz[0].length
+                        ){
+                            if (matriz[newBlock[0]][newBlock[1]].color != matriz[i][j].color
+                                ){
                                 matriz[newBlock[0]][newBlock[1]].walls[invertSide(k)] = wallState.portal;
                             }
                         matriz[i][j].walls[k] = wallState.none;
@@ -93,14 +94,21 @@ export class Tela {
             for (let j = 0; j < this.rows[i].children.length; j++) {
                 blockDOM = (<HTMLElement>this.rows[i].children[j])
                 blockDOM.style.backgroundColor = this.matriz[i][j].color;
-                this.matriz[i][j].walls.forEach((wall, index) => {
-                    blockDOM.style[`border${Object.keys(side)[index+4]}`] = (wall != 0) ? `3px solid ${colors.portal}` : ''
-                })
-                if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
-                    (<any>document.styleSheets[1]).cssRules[1].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
-                    (<any>document.styleSheets[1]).cssRules[0].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
-                    blockDOM.appendChild(this.endOfLevel);
-                }
+                if (this.matriz[i][j].color == this.playerColor){
+                    this.matriz[i][j].walls.forEach((wall, index) => {
+                    blockDOM.style[`border${Object.keys(side)[index+4]}`] = (wall != 0) ? 
+                        `3px dotted ${this.invertColor((this.matriz[i][j].color))}` : `3px solid ${this.invertColor(this.matriz[i][j].color)}`
+                    })}
+                else{
+                    this.matriz[i][j].walls.forEach((walls, index) => {
+                        blockDOM.style[`border${Object.keys(side)[index+4]}`] = `3px solid ${(this.matriz[i][j].color)}` 
+                        
+                    })}
+                    if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
+                        document.styleSheets[1].cssRules[1].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
+                        document.styleSheets[1].cssRules[0].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
+                        blockDOM.appendChild(this.endOfLevel);
+                    }
             }
         }
         blockDOM = (<HTMLElement>this.rows[this.playerPos[0]].children[this.playerPos[1]])
