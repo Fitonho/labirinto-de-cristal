@@ -110,19 +110,24 @@ export class Levels {
     }
     level_5(matriz) {
         let mg = [
-            [0, 1, 0, 1, 0, 1, 1, 1, 0],
-            [0, 0, 1, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 0, 0, 0, 0, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 0],
-            [1, 1, 1, 0, 1, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 1, 1, 1, 1, 1, 1, 1, 1],
-            [0, 0, 1, 0, 0, 1, 1, 0, 0],
-            [0, 1, 1, 1, 0, 1, 1, 0, 1]
+            [0, 1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 1, 1, 1, 1, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [0, 0, 1, 0, 1, 0, 1, 0, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1, 0]
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
-        matriz[8][0].walls[side.Right] = wallState.portal;
-        matriz[0][6].event = BlockEvent.endOfLevel;
+        matriz[7][5].walls[side.Left] = wallState.portal;
+        matriz[7][3].walls[side.Right] = wallState.portal;
+        matriz[8][2].walls[side.Right] = wallState.portal;
+        matriz[8][2].walls[side.Left] = wallState.portal;
+        matriz[8][6].walls[side.Left] = wallState.portal;
+        matriz[8][6].walls[side.Right] = wallState.portal;
+        matriz[0][5].event = BlockEvent.endOfLevel;
         return [0, 3];
     }
     level_6(matriz) {

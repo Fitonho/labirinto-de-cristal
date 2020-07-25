@@ -101,13 +101,13 @@ export class Tela {
                     })}
                 else{
                     this.matriz[i][j].walls.forEach((walls, index) => {
-                        blockDOM.style[`border${Object.keys(side)[index+4]}`] = `3px solid ${(this.matriz[i][j].color)}` 
-                        
+                        blockDOM.style[`border${Object.keys(side)[index+4]}`] = `3px solid ${(this.matriz[i][j].color)}`     
                     })}
-                    if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
-                        document.styleSheets[1].cssRules[1].style.borderTopColor = this.invertColor(this.matriz[i][j].color);
-                        document.styleSheets[1].cssRules[0].style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
-                        blockDOM.appendChild(this.endOfLevel);
+
+                if (this.matriz[i][j].event == BlockEvent.endOfLevel) {
+                    (<any>document.styleSheets[1].cssRules[1]).style.borderTopColor = this.invertColor(this.matriz[i][j].color);
+                    (<any>document.styleSheets[1].cssRules[0]).style.borderBottomColor = this.invertColor(this.matriz[i][j].color);
+                    blockDOM.appendChild(this.endOfLevel);
                     }
             }
         }
