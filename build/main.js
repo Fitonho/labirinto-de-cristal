@@ -17,11 +17,11 @@ document.querySelector("#selectLevelButton").addEventListener('click', (event) =
 });
 document.addEventListener('keypress', (event) => {
     console.log(event.key + " pressed");
-    'wsda'.split('').forEach((key, index) => {
+    'wdsa'.split('').forEach((key, index) => {
         if (key == event.key) {
             tela.move(index);
         }
     });
 });
-let tela = new Tela(levels.level_teste_empurrar);
+let tela = new Tela(levels.level_1);
 //# sourceMappingURL=main.js.map
