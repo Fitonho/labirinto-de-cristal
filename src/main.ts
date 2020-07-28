@@ -28,4 +28,4 @@ document.addEventListener('keypress', (event) => {
     })
 });
 
-let tela = new Tela(levels.level_teste_empurrar);
+let tela = new Tela(levels.level_1);

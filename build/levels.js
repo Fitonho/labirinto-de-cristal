@@ -8,37 +8,6 @@ function paintMatrix(mg, cores, matriz) {
     }
 }
 export class Levels {
-    level_teste_empurrar(matriz) {
-        let mg = [
-            [0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0],
-            [0, 0, 0, 1, 0, 0, 0]
-        ];
-        paintMatrix(mg, [colors.black, colors.white], matriz);
-        matriz[0][3].event = BlockEvent.endOfLevel;
-        matriz[1][3].walls[side.Right] = wallState.portal;
-        matriz[2][3].walls[side.Left] = wallState.portal;
-        matriz[3][3].walls[side.Right] = wallState.portal;
-        return [0, 0];
-    }
-    level_teste(matriz) {
-        let mg = [
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0]
-        ];
-        paintMatrix(mg, [colors.black, colors.white], matriz);
-        matriz[4][2].walls[side.Left] = wallState.portal;
-        matriz[0][6].event = BlockEvent.endOfLevel;
-        return [8, 2];
-    }
     level_1(matriz) {
         let mg = [
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
@@ -92,6 +61,23 @@ export class Levels {
     }
     level_4(matriz) {
         let mg = [
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [1, 1, 0, 0, 0, 0, 0, 1, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 1, 1, 1, 1, 1, 1],
+            [0, 1, 0, 0, 1, 0, 0, 1, 0],
+            [1, 1, 0, 0, 1, 0, 0, 1, 1]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[4][4].walls[side.Bottom] = wallState.portal;
+        matriz[0][4].event = BlockEvent.endOfLevel;
+        return [8, 4];
+    }
+    level_5(matriz) {
+        let mg = [
             [1, 1, 0, 0, 1, 0, 0, 1, 1],
             [0, 0, 1, 1, 1, 1, 1, 0, 0],
             [0, 0, 1, 1, 0, 1, 1, 0, 0],
@@ -108,17 +94,35 @@ export class Levels {
         matriz[0][4].event = BlockEvent.endOfLevel;
         return [8, 4];
     }
-    level_5(matriz) {
+    level_6(matriz) {
         let mg = [
-            [0, 1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 1, 0, 0, 1, 0, 0, 1, 1],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 1, 1, 0, 1, 1, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0, 0],
+            [1, 1, 0, 0, 0, 0, 0, 1, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 1, 0, 0, 0, 0, 0, 1, 1],
+            [0, 0, 1, 1, 1, 1, 1, 0, 0]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[8][1].walls[side.Right] = wallState.portal;
+        matriz[8][7].walls[side.Left] = wallState.portal;
+        matriz[0][4].event = BlockEvent.endOfLevel;
+        return [8, 4];
+    }
+    level_7(matriz) {
+        let mg = [
+            [0, 1, 0, 1, 0, 1, 1, 0, 0],
             [0, 0, 1, 0, 0, 0, 1, 0, 0],
             [1, 1, 1, 0, 0, 0, 1, 1, 1],
-            [1, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1],
             [1, 0, 1, 1, 1, 1, 1, 0, 1],
             [1, 0, 0, 0, 0, 0, 0, 0, 1],
             [1, 1, 1, 0, 0, 0, 1, 1, 1],
             [0, 0, 1, 0, 1, 0, 1, 0, 0],
-            [0, 1, 0, 1, 0, 1, 0, 1, 0]
+            [0, 1, 0, 1, 1, 1, 0, 1, 0]
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
         matriz[8][2].walls[side.Right] = wallState.portal;
@@ -128,26 +132,67 @@ export class Levels {
         matriz[0][5].event = BlockEvent.endOfLevel;
         return [0, 3];
     }
-    level_6(matriz) {
+    level_8(matriz) {
         let mg = [
-            [1, 1, 0, 1, 1, 1, 0, 1],
-            [1, 0, 0, 1, 1, 1, 0, 0],
-            [1, 0, 0, 1, 1, 1, 1, 1],
-            [1, 1, 0, 0, 0, 1, 0, 1],
-            [1, 1, 0, 0, 0, 0, 1, 1],
-            [1, 1, 0, 0, 0, 0, 1, 0],
-            [0, 0, 1, 1, 0, 1, 1, 1],
-            [1, 0, 1, 1, 0, 0, 1, 0]
+            [0, 1, 0, 1, 0, 1, 1, 0, 0],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 0, 0, 1, 0, 0, 0, 1],
+            [1, 0, 1, 0, 1, 0, 1, 0, 1],
+            [1, 0, 0, 0, 0, 0, 0, 0, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [0, 0, 1, 0, 1, 0, 1, 0, 0],
+            [0, 1, 0, 1, 1, 1, 0, 1, 0]
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
-        matriz[6][0].walls[side.Top] = wallState.portal;
-        matriz[6][0].walls[side.Bottom] = wallState.portal;
-        matriz[7][1].walls[side.Left] = wallState.portal;
-        matriz[7][1].walls[side.Right] = wallState.portal;
-        matriz[0][7].event = BlockEvent.endOfLevel;
-        return [7, 0];
+        matriz[8][2].walls[side.Right] = wallState.portal;
+        matriz[8][2].walls[side.Left] = wallState.portal;
+        matriz[8][6].walls[side.Left] = wallState.portal;
+        matriz[8][6].walls[side.Right] = wallState.portal;
+        matriz[0][5].event = BlockEvent.endOfLevel;
+        return [0, 3];
     }
-    level_7(matriz) {
+    level_9(matriz) {
+        let mg = [
+            [0, 0, 1, 1, 0, 1, 1, 0, 0],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 1],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [0, 1, 0, 1, 0, 1, 0, 1, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 1, 1, 0, 1, 0, 1, 1, 1],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[0][7].walls[side.Bottom] = wallState.portal;
+        matriz[8][7].walls[side.Left] = wallState.portal;
+        matriz[0][1].walls[side.Right] = wallState.portal;
+        matriz[8][1].walls[side.Top] = wallState.portal;
+        matriz[0][3].event = BlockEvent.endOfLevel;
+        return [0, 5];
+    }
+    level_10(matriz) {
+        let mg = [
+            [0, 0, 1, 1, 0, 1, 1, 0, 0],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 0, 1, 0, 0, 0, 1, 0, 1],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [0, 1, 0, 1, 1, 1, 0, 1, 0],
+            [0, 0, 0, 1, 1, 1, 0, 0, 0],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [1, 1, 1, 0, 0, 0, 1, 1, 1],
+            [0, 0, 1, 0, 0, 0, 1, 0, 0]
+        ];
+        paintMatrix(mg, [colors.black, colors.white], matriz);
+        matriz[0][7].walls[side.Bottom] = wallState.portal;
+        matriz[8][7].walls[side.Left] = wallState.portal;
+        matriz[0][1].walls[side.Right] = wallState.portal;
+        matriz[8][1].walls[side.Top] = wallState.portal;
+        matriz[0][3].event = BlockEvent.endOfLevel;
+        return [0, 5];
+    }
+    level_11(matriz) {
         let mg = [
             [0, 0, 1, 1, 1, 1, 0, 0],
             [0, 0, 1, 1, 1, 1, 0, 0],
@@ -164,46 +209,42 @@ export class Levels {
         matriz[7][7].event = BlockEvent.endOfLevel;
         return [7, 0];
     }
-    level_8(matriz) {
+    level_12(matriz) {
         let mg = [
-            [1, 1, 0, 1, 0, 1, 0, 1],
-            [1, 0, 0, 1, 1, 1, 0, 0],
-            [0, 1, 0, 0, 1, 0, 0, 1],
+            [0, 0, 1, 1, 1, 1, 0, 0],
+            [0, 0, 1, 1, 1, 1, 1, 0],
+            [1, 1, 1, 1, 1, 1, 1, 1],
             [1, 1, 1, 0, 1, 0, 1, 1],
-            [0, 1, 0, 1, 0, 1, 0, 1],
-            [0, 1, 0, 1, 0, 1, 0, 1],
-            [1, 0, 1, 0, 0, 0, 1, 0],
-            [0, 1, 1, 0, 1, 0, 1, 1]
+            [1, 1, 1, 1, 1, 1, 1, 1],
+            [1, 1, 1, 0, 1, 0, 1, 1],
+            [0, 1, 1, 1, 1, 1, 1, 1],
+            [0, 0, 1, 1, 1, 1, 1, 0]
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
         matriz[2][0].walls[side.Top] = wallState.portal;
-        matriz[1][7].walls[side.Bottom] = wallState.portal;
-        matriz[3][3].walls[side.Bottom] = wallState.portal;
-        matriz[4][4].walls[side.Top] = wallState.portal;
-        matriz[7][0].event = BlockEvent.endOfLevel;
-        return [0, 7];
+        matriz[7][2].walls[side.Left] = wallState.portal;
+        matriz[7][7].event = BlockEvent.endOfLevel;
+        return [7, 0];
     }
-    level_9(matriz) {
+    level_13(matriz) {
         let mg = [
-            [1, 1, 1, 0, 1, 1, 0, 1],
-            [0, 0, 0, 1, 0, 0, 1, 1],
-            [0, 0, 1, 1, 0, 0, 1, 0],
-            [0, 0, 1, 0, 0, 1, 0, 1],
-            [1, 1, 1, 1, 0, 0, 1, 0],
-            [0, 0, 0, 1, 0, 0, 0, 1],
-            [1, 0, 0, 1, 0, 0, 0, 1],
-            [1, 1, 1, 1, 1, 1, 1, 0]
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0],
+            [1, 0, 1, 0, 1, 0, 1, 0]
         ];
         paintMatrix(mg, [colors.black, colors.white], matriz);
-        matriz[3][1].walls[side.Bottom] = wallState.portal;
-        matriz[3][3].walls[side.Left] = wallState.portal;
-        matriz[4][7].walls[side.Top] = wallState.portal;
-        matriz[5][4].walls[side.Left] = wallState.portal;
-        matriz[6][4].walls[side.Left] = wallState.portal;
-        matriz[7][7].event = BlockEvent.endOfLevel;
-        return [0, 0];
+        matriz[0][1].walls[side.Left] = wallState.portal;
+        matriz[8][7].walls[side.Right] = wallState.portal;
+        matriz[0][8].event = BlockEvent.endOfLevel;
+        return [8, 0];
     }
-    level_10(matriz) {
+    level_14(matriz) {
         let mg = [
             [1, 0, 1, 0, 1, 0, 1, 0],
             [0, 1, 0, 1, 0, 1, 0, 1],
