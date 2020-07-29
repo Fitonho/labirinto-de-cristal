@@ -300,10 +300,10 @@ export class Levels {
         paintMatrix(mg, [colors.black, colors.white], matriz);
 
         matriz[0][1].walls[side.Left] = wallState.portal;
-        matriz[8][7].walls[side.Right] = wallState.portal;
-        matriz[0][8].event = BlockEvent.endOfLevel;
+        matriz[7][6].walls[side.Right] = wallState.portal;
+        matriz[0][7].event = BlockEvent.endOfLevel;
 
-        return [8, 0];
+        return [7, 0];
     }
     
     level_14(matriz:Block[][]){
