@@ -294,7 +294,6 @@ export class Levels {
             [ 1, 0, 1, 0, 1, 0, 1, 0],
             [ 1, 0, 1, 0, 1, 0, 1, 0],
             [ 1, 0, 1, 0, 1, 0, 1, 0],
-            [ 1, 0, 1, 0, 1, 0, 1, 0],
             [ 1, 0, 1, 0, 1, 0, 1, 0]];
 
         paintMatrix(mg, [colors.black, colors.white], matriz);
