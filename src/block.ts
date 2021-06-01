@@ -1,7 +1,7 @@
 export enum side {
     Top = 0,
-    Bottom,
     Right,
+    Bottom,
     Left
 }
 export enum wallState {

@@ -1,8 +1,8 @@
 export var side;
 (function (side) {
     side[side["Top"] = 0] = "Top";
-    side[side["Bottom"] = 1] = "Bottom";
-    side[side["Right"] = 2] = "Right";
+    side[side["Right"] = 1] = "Right";
+    side[side["Bottom"] = 2] = "Bottom";
     side[side["Left"] = 3] = "Left";
 })(side || (side = {}));
 export var wallState;
