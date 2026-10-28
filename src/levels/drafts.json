@@ -1,0 +1,310 @@
+[
+  {
+    "version": 1,
+    "id": "draft-01",
+    "chapter": "drafts",
+    "order": 1,
+    "grid": [
+      "w w w w w w w w w B",
+      "w b b b b b b b w b",
+      "w b w w w w w b w b",
+      "w b w b b b w b w b",
+      "w b w b w b w b w b",
+      "w b w b w w w b w b",
+      "w b w b b b b b w b",
+      "w b w w w w w w w b",
+      "w b b b b b b b b b"
+    ],
+    "start": [8, 0],
+    "doors": [
+      [4, 5, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-02",
+    "chapter": "drafts",
+    "order": 2,
+    "grid": [
+      "w w w w w w w w w B",
+      "w b b b b b w b w b",
+      "w b w w w w b b w b",
+      "w b w b b b w b w b",
+      "w b w b w b w b w b",
+      "w b w b w w w b w b",
+      "w b w b b b b b w b",
+      "w b w w w w w w w b",
+      "w b b b b b b b b b"
+    ],
+    "start": [8, 0],
+    "doors": [
+      [4, 5, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-03",
+    "chapter": "drafts",
+    "order": 3,
+    "grid": [
+      "b b w b B b w b b",
+      "b b b w w w b b b",
+      "w w w w w w w w w",
+      "w w b b b b b w w",
+      "w w w b b b w w w",
+      "w w w w w w w w w",
+      "w w w w w w w w w",
+      "b w b b w b b w b",
+      "w w b b w b b w w"
+    ],
+    "start": [8, 4],
+    "doors": [
+      [4, 4, "down"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-04",
+    "chapter": "drafts",
+    "order": 4,
+    "grid": [
+      "w w w b B b w w w",
+      "b b b w w w b b b",
+      "b b w w w w w b b",
+      "w w b b b b b w w",
+      "w w w b b b w w w",
+      "w w w w w w w w w",
+      "w w w w w w w w w",
+      "b w b b w b b w b",
+      "w w b b w b b w w"
+    ],
+    "start": [8, 4],
+    "doors": [
+      [4, 4, "down"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-05",
+    "chapter": "drafts",
+    "order": 5,
+    "grid": [
+      "w w b b W b b w w",
+      "b b w w w w w b b",
+      "b b w w b w w b b",
+      "b b w w w w w b b",
+      "b b b b b b b b b",
+      "w w b b b b b w w",
+      "b w b b w b b w b",
+      "w w b b b b b w w",
+      "b b w w w w w b b"
+    ],
+    "start": [8, 4],
+    "doors": [
+      [8, 1, "right"],
+      [8, 7, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-06",
+    "chapter": "drafts",
+    "order": 6,
+    "grid": [
+      "w w b b W b b w w",
+      "b b w w w w w b b",
+      "b b w w b w w b b",
+      "b b w w w w w b b",
+      "b b b b b b b b b",
+      "w w b b b b b w w",
+      "w b b b w b b b w",
+      "w w b b b b b w w",
+      "b b w w w w w b b"
+    ],
+    "start": [8, 4],
+    "doors": [
+      [8, 1, "right"],
+      [8, 7, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-07",
+    "chapter": "drafts",
+    "order": 7,
+    "grid": [
+      "b w b w b W w b b",
+      "b b w b b b w b b",
+      "w w w b b b w w w",
+      "w b b b w b b b w",
+      "w b w w w w w b w",
+      "w b b b b b b b w",
+      "w w w b b b w w w",
+      "b b w b w b w b b",
+      "b w b w w w b w b"
+    ],
+    "start": [0, 3],
+    "doors": [
+      [8, 2, "right"],
+      [8, 2, "left"],
+      [8, 6, "right"],
+      [8, 6, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-08",
+    "chapter": "drafts",
+    "order": 8,
+    "grid": [
+      "b w b w b W w b b",
+      "b b w b b b w b b",
+      "w w w b b b w w w",
+      "w b b b w b b b w",
+      "w b w b w b w b w",
+      "w b b b b b b b w",
+      "w w w b b b w w w",
+      "b b w b w b w b b",
+      "b w b w w w b w b"
+    ],
+    "start": [0, 3],
+    "doors": [
+      [8, 2, "right"],
+      [8, 2, "left"],
+      [8, 6, "right"],
+      [8, 6, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-09",
+    "chapter": "drafts",
+    "order": 9,
+    "grid": [
+      "b b w W b w w b b",
+      "w w w b b b w w w",
+      "w b w b b b w b w",
+      "b b b w w w b b b",
+      "b w b w b w b w b",
+      "b b b w w w b b b",
+      "w w w b b b w w w",
+      "w w w b w b w w w",
+      "b b w b b b w b b"
+    ],
+    "start": [0, 5],
+    "doors": [
+      [0, 1, "right"],
+      [0, 7, "down"],
+      [8, 1, "up"],
+      [8, 7, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-10",
+    "chapter": "drafts",
+    "order": 10,
+    "grid": [
+      "b b w W b w w b b",
+      "w w w b b b w w w",
+      "w b w b b b w b w",
+      "b b b w w w b b b",
+      "b w b w w w b w b",
+      "b b b w w w b b b",
+      "w w w b b b w w w",
+      "w w w b b b w w w",
+      "b b w b b b w b b"
+    ],
+    "start": [0, 5],
+    "doors": [
+      [0, 1, "right"],
+      [0, 7, "down"],
+      [8, 1, "up"],
+      [8, 7, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-11",
+    "chapter": "drafts",
+    "order": 11,
+    "grid": [
+      "b b w w w w b b",
+      "b b w w w w b b",
+      "w w w w w w w w",
+      "w w w b w b w w",
+      "w w w w w w w w",
+      "w w w b w b w w",
+      "b b w w w w w w",
+      "b b w w w w w B"
+    ],
+    "start": [7, 0],
+    "doors": [
+      [2, 0, "up"],
+      [7, 2, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-12",
+    "chapter": "drafts",
+    "order": 12,
+    "grid": [
+      "b b w w w w b b",
+      "b b w w w w w b",
+      "w w w w w w w w",
+      "w w w b w b w w",
+      "w w w w w w w w",
+      "w w w b w b w w",
+      "b w w w w w w w",
+      "b b w w w w w B"
+    ],
+    "start": [7, 0],
+    "doors": [
+      [2, 0, "up"],
+      [7, 2, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-13",
+    "chapter": "drafts",
+    "order": 13,
+    "grid": [
+      "w b w b w b w B",
+      "w b w b w b w b",
+      "w b w b w b w b",
+      "w b w b w b w b",
+      "w b w b w b w b",
+      "w b w b w b w b",
+      "w b w b w b w b",
+      "w b w b w b w b"
+    ],
+    "start": [7, 0],
+    "doors": [
+      [0, 1, "left"],
+      [7, 6, "right"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "draft-14",
+    "chapter": "drafts",
+    "order": 14,
+    "grid": [
+      "W b w b w b w b",
+      "b w b w b w b w",
+      "w b w b w b w b",
+      "b w b w b w b w",
+      "w b w b w b w b",
+      "b w b w b w b w",
+      "w b w b w b w b",
+      "b w b w b w b w"
+    ],
+    "start": [7, 7],
+    "doors": [
+      [0, 7, "left"],
+      [7, 0, "up"]
+    ]
+  }
+]

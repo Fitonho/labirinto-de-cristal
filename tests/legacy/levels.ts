@@ -1,4 +1,4 @@
-import { Block, colors, side, wallState, BlockEvent } from './block.js'
+import { Block, colors, side, wallState, BlockEvent } from './block'
 
 function paintMatrix(mg: number[][], cores: colors[], matriz: Block[][]) {
     for (let i = 0; i < mg.length; i++) {

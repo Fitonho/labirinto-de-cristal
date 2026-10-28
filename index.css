@@ -1,37 +1,97 @@
+:root {
+  --page: #f4f4f2;
+  --ink: #1d1d1f;
+  --quiet: #6b6b70;
+  --accent: #2f6fd6;
+  --black: #000000;
+  --white: #ffffff;
+}
 
-#diamond {
-  margin: 3px auto auto auto;
-  width: 0;
-  height: 0;
-  border: 20px solid transparent;
-  border-bottom-color: white;
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--page);
+  color: var(--ink);
+  font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+main {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 16px;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+h1 { font-size: 1.4rem; margin: 0 0 12px; }
+
+/* The board fills the width on phones and caps tiles at 56px on big screens. */
+#board {
+  --tile-size: min(56px, calc((100vw - 32px) / var(--column-count)), calc(65vh / var(--row-count)));
+  display: grid;
+  grid-template-columns: repeat(var(--column-count), var(--tile-size));
+  grid-template-rows: repeat(var(--row-count), var(--tile-size));
+  width: max-content;
+  margin: 0 auto;
+  touch-action: none;
+  user-select: none;
+}
+
+.tile {
   position: relative;
-  top: -20px;
+  display: grid;
+  place-items: center;
+  border: 3px solid transparent;
 }
-
-#diamond:after {
-  content: '';
-  position: absolute;
-  left: -20px;
-  top: 20px;
-  width: 0;
-  height: 0;
-  border: 20px solid transparent;
-  border-top-color: white;
-}
-
-.block-size{
-    height: 50px;
-    width: 50px;
-    padding: 0px;
-    border: 0px solid grey;
-}
+.tile.black { background: var(--black); border-color: var(--black); }
+.tile.white { background: var(--white); border-color: var(--white); }
+/* Tiles in the player's colour are solid and get an outline; doors are dotted. */
+.tile.solid.black { border-color: var(--white); }
+.tile.solid.white { border-color: var(--black); }
 
 .player {
-    height: 25px;
-    width: 25px;
-    border-radius: 50%;
-    margin-top: 10px;
-    margin-left: 11px;
-  }
+  width: 50%;
+  height: 50%;
+  border-radius: 50%;
+  position: absolute;
+}
+.player.black { background: var(--black); box-shadow: 0 0 0 1px var(--white); }
+.player.white { background: var(--white); box-shadow: 0 0 0 1px var(--black); }
 
+/* The crystal is drawn in the colour the player needs to be to reach it. */
+.diamond {
+  width: 56%;
+  height: 56%;
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+}
+.diamond.black { background: var(--black); }
+.diamond.white { background: var(--white); }
+
+#status { text-align: center; margin: 12px 0; color: var(--quiet); }
+#status.won { color: var(--accent); font-weight: 600; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+select, button {
+  font: inherit;
+  padding: 8px 12px;
+  border: 1px solid #c8c8cc;
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ink);
+}
+button { cursor: pointer; }
+button.link { border: none; background: none; color: var(--accent); padding: 0; }
+
+.help { text-align: center; color: var(--quiet); font-size: 0.85rem; margin-top: 16px; }

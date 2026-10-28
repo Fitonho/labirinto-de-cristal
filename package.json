@@ -2,9 +2,18 @@
   "name": "labirinto-de-cristal",
   "private": true,
   "scripts": {
-    "build": "tsc && node scripts/copy-site.mjs"
+    "build": "tsc && node scripts/build.mjs",
+    "test": "vitest run",
+    "typecheck": "tsc",
+    "solve": "node scripts/solve.mjs"
   },
   "devDependencies": {
-    "typescript": "5.6.3"
+    "@types/node": "22.10.1",
+    "esbuild": "0.24.0",
+    "typescript": "5.6.3",
+    "vitest": "2.1.8"
+  },
+  "dependencies": {
+    "@reduxjs/toolkit": "2.3.0"
   }
 }
