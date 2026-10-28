@@ -18,13 +18,16 @@ const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   bump: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid),
 };
 
-/** Milliseconds of vibration, or a pattern of pause, vibration, pause, vibration. */
+/**
+ * Milliseconds of vibration, or a pattern of pause, vibration, pause, vibration.
+ * Many Android motors need about 40 ms to spin up, so shorter pulses are never felt.
+ */
 const ANDROID_VIBRATIONS_BY_CUE_KIND: Record<HapticCueKind, number | number[]> = {
-  win: [0, 40, 80, 60],
-  door: 45,
-  crystal: 25,
-  push: 20,
-  bump: 35,
+  win: [0, 60, 80, 80],
+  door: 80,
+  crystal: 50,
+  push: 40,
+  bump: 60,
 };
 
 function play(kind: HapticCueKind) {
