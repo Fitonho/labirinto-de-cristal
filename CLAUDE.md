@@ -18,7 +18,7 @@ A small push-and-flip puzzle game in TypeScript. You are a piece of one colour o
 - `src/levels/`: levels as JSON (`drafts.json`, `samples.json`), listed in menu order by `index.ts`. Grid rows use `b` / `w`, uppercase for a crystal; doors are `[row, column, side]`.
 - `app/`: Expo Router screens. `_layout.tsx` creates the store; `index.tsx` is the game screen.
 - `src/state/`: the Redux Toolkit store (`store.ts`), which calls the engine, and the dev logger (`logger.ts`). No React Native imports, so Vitest tests them.
-- `src/ui/`: React Native components (`Board`, `Tile`, `LevelPicker`) and their pure helpers: `boardLayout.ts` (door edges, tile size), `commands.ts` (keys and swipes), `i18n.ts` (PT/EN text), `theme.ts` (the only place with colour codes).
+- `src/ui/`: React Native components (`Board`, `Box`, `Crystal`, `LevelPicker`) and their pure helpers: `boardLayout.ts` (floor colour, box shape, door edges, tile size), `commands.ts` (keys and swipes), `i18n.ts` (PT/EN text), `theme.ts` (the only place with colour codes).
 - `src/tools/solver.ts`: breadth-first solver on top of the engine.
 - `tests/`: engine, store, UI helper and comparison tests. Tests import only pure TypeScript, never React Native components. `tests/legacy/` is a verbatim copy of the original rules and levels, kept only so `compare.test.ts` can check the engine against them. Don't edit or restyle it.
 
@@ -29,6 +29,7 @@ Specs live outside the repo, in the project files: `specs/portal-spec.md` and `s
 - Doors are stored on edges (`{ row, column, side: 'right' | 'down' }`), not on tiles. Their two sides always have different colours, so only one side can be pushed at a time. A pushed tile carries the doors on its four edges, including the one on its leading edge. The tile that slides back carries none. A flip moves no doors.
 - A push is refused if, afterwards, any door would have the same colour on both sides or would face off the board (portal rule 6). Nothing can be pushed onto a crystal, but a crystal tile can itself be pushed.
 - A push swaps whole tiles: the tile layer moves (colour, crystal), and a future board layer (pads, holes, walls) must stay put.
+- The board draws in layers: the floor is one rectangle, boxes (tiles in the player's colour) sit on it inset by `EDGE_WIDTH`, so the floor between them is their outline. Don't go back to per-tile borders; they left seams on phones.
 - Colours are game values (`'black' | 'white'`). Hex codes belong only in `src/ui/theme.ts`.
 - Winning sets `status: 'won'` once every crystal is collected, and further moves are blocked.
 - New mechanics go into the engine as a new tile kind, tile property, door kind or win condition, never as a branch in the renderer. Bump `LevelData.version` when the level format changes.

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { loadLevel } from '../src/core';
-import { doorSidesByTileIndex, MAX_TILE_SIZE, tileSizeFor } from '../src/ui/boardLayout';
+import { boxInsets, doorSidesByTileIndex, floorColour, isBox, MAX_TILE_SIZE, tileSizeFor } from '../src/ui/boardLayout';
+import { EDGE_WIDTH } from '../src/ui/theme';
 import { swipeDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
 import { levelById } from './helpers';
@@ -18,6 +19,19 @@ describe('board layout', () => {
     const state = loadLevel(levelById('sample-b'));
     const flippedState = { ...state, player: { ...state.player, colour: 'black' as const } };
     expect(doorSidesByTileIndex(flippedState).get(2)).toEqual(['right']);
+  });
+
+  it('draws the floor in the colour the player is not, and boxes in the player colour', () => {
+    const state = loadLevel(levelById('sample-b'));
+    expect(floorColour(state)).toBe('black');
+    expect(state.tiles.filter((tile) => isBox(state, tile)).every((tile) => tile.colour === 'white')).toBe(true);
+    const flippedState = { ...state, player: { ...state.player, colour: 'black' as const } };
+    expect(floorColour(flippedState)).toBe('white');
+  });
+
+  it('insets a box from its cell except on its door sides', () => {
+    expect(boxInsets([])).toEqual({ top: EDGE_WIDTH, right: EDGE_WIDTH, bottom: EDGE_WIDTH, left: EDGE_WIDTH });
+    expect(boxInsets(['left', 'down'])).toEqual({ top: EDGE_WIDTH, right: EDGE_WIDTH, bottom: 0, left: 0 });
   });
 
   it('fits tiles to the screen and caps them', () => {
