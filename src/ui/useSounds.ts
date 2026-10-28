@@ -1,7 +1,7 @@
 // Plays the last move's sound. Phones use expo-audio: each sound has one
 // player, loaded at start and rewound before every play, mixing with the
 // player's own music and following the iPhone's silent switch. The web uses
-// Web Audio (see webSounds.ts), because expo-audio's web players start late.
+// Web Audio (see webSounds.web.ts), because expo-audio's web players start late.
 // The files come from scripts/make-sounds.mjs.
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import { useEffect, useRef } from 'react';
