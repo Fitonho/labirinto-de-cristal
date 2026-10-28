@@ -1,7 +1,14 @@
 # Production deploys from master; every other branch and PR gets its own preview URL.
+# The site is the Expo app's web export.
 [build]
   command = "npm run build"
   publish = "dist"
 
 [build.environment]
   NODE_VERSION = "22"
+
+# One-page app: every path loads index.html and Expo Router picks the screen.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200

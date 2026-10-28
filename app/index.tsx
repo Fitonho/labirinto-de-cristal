@@ -1,7 +1,7 @@
 // The game screen: board, move counter, level picker, undo, restart and the
 // language switch. All game changes go through the Redux store.
-import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { levels } from '../src/levels/index';
@@ -31,6 +31,10 @@ export default function GameScreen() {
     [dispatch],
   );
   useKeyboardCommands(run, !pickerVisible);
+  useEffect(() => {
+    // Screen readers and translators on the web read the page language.
+    if (Platform.OS === 'web') document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
+  }, [language]);
 
   const tileSize = tileSizeFor(state, Math.min(screenWidth, 640), screenHeight);
   const moveText = `${t(language, 'moves')}: ${state.moveCount}${level.par ? ` (${t(language, 'par')} ${level.par})` : ''}`;

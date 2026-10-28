@@ -2,13 +2,20 @@
 // support for every screen.
 import { getLocales } from 'expo-localization';
 import { Stack } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Provider } from 'react-redux';
+import { levels } from '../src/levels/index';
+import { logger, logging } from '../src/state/logger';
 import { createStore } from '../src/state/store';
 import { languageForLocale } from '../src/ui/i18n';
 
+// ?debug in the page address turns logging on, even on the production site.
+if (Platform.OS === 'web' && new URLSearchParams(window.location.search).has('debug')) logging.enabled = true;
+
 export default function RootLayout() {
+  useEffect(() => logger.info('started', { levels: levels.length }), []);
   const [store] = useState(() => createStore(languageForLocale(getLocales()[0]?.languageTag)));
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

@@ -2,6 +2,8 @@
   "name": "labirinto-de-cristal",
   "private": true,
   "scripts": {
+    "start": "expo start",
+    "web": "expo start --web",
     "build": "tsc && node scripts/build.mjs",
     "test": "vitest run",
     "typecheck": "tsc",
