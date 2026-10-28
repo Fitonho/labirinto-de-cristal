@@ -11,6 +11,8 @@ const strings = {
     par: 'meta',
     won: 'Nível completo!',
     help: 'Setas ou WASD para mover, deslize no celular. Z desfaz, R recomeça.',
+    chooseLevel: 'Escolha um nível',
+    close: 'Fechar',
     language: 'English',
     'chapter.drafts': 'Rascunhos',
     'chapter.samples': 'Exemplos',
@@ -24,6 +26,8 @@ const strings = {
     par: 'par',
     won: 'Level complete!',
     help: 'Arrows or WASD to move, swipe on a phone. Z undoes, R restarts.',
+    chooseLevel: 'Choose a level',
+    close: 'Close',
     language: 'Português',
     'chapter.drafts': 'Drafts',
     'chapter.samples': 'Samples',
@@ -36,10 +40,8 @@ export function t(language: Language, key: StringKey): string {
   return strings[language][key];
 }
 
-export function defaultLanguage(): Language {
-  try {
-    return navigator.language.toLowerCase().startsWith('pt') ? 'pt' : 'en';
-  } catch {
-    return 'pt';
-  }
+/** Portuguese for any Portuguese locale tag (pt, pt-BR, pt-PT), English otherwise. */
+export function languageForLocale(localeTag: string | undefined): Language {
+  if (!localeTag) return 'pt';
+  return localeTag.toLowerCase().startsWith('pt') ? 'pt' : 'en';
 }
