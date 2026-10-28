@@ -1,21 +1,15 @@
-// Console logging that is only on in dev builds, or with ?debug in the URL.
-// The engine never logs; the web shell logs actions and the events they cause.
+// Console logging that is on in dev builds and Netlify previews; the web page
+// also switches it on for ?debug. The engine never logs; the store logs actions
+// and the events they cause.
 
 declare const __DEV__: boolean;
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
 const levelsInOrder: Level[] = ['debug', 'info', 'warn', 'error'];
 
-function debugFromUrl(): boolean {
-  try {
-    return new URLSearchParams(location.search).has('debug');
-  } catch {
-    return false;
-  }
-}
-
 export const logging = {
-  enabled: (typeof __DEV__ !== 'undefined' && __DEV__) || debugFromUrl(),
+  // Expo inlines EXPO_PUBLIC_ variables at build time; scripts/build.mjs sets this one.
+  enabled: (typeof __DEV__ !== 'undefined' && __DEV__) || process.env.EXPO_PUBLIC_DEBUG_LOGS === 'true',
   level: 'debug' as Level,
 };
 

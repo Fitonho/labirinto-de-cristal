@@ -14,7 +14,8 @@ import {
 } from '../core';
 import { levels } from '../levels/index';
 import { logger } from './logger';
-import type { Language } from './i18n';
+
+export type Language = 'pt' | 'en';
 
 export interface GameSlice {
   levelIndex: number;

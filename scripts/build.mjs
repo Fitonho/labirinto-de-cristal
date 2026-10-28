@@ -1,18 +1,14 @@
-// Bundles the web game into dist/, which Netlify publishes.
-import { build } from 'esbuild';
-import { cpSync, rmSync } from 'node:fs';
+// Exports the Expo app as a static web site into dist/, which Netlify publishes.
+// Kept as a script so the environment variables work the same on Windows.
+import { execSync } from 'node:child_process';
 
-rmSync('dist', { recursive: true, force: true });
-await build({
-  entryPoints: ['src/web/main.ts'],
-  bundle: true,
-  format: 'esm',
-  target: 'es2020',
-  sourcemap: true,
-  outfile: 'dist/main.js',
-  // Logging is on everywhere except Netlify's production deploy (and ?debug turns it on there).
-  define: { __DEV__: String(process.env.CONTEXT !== 'production') },
+execSync('npx expo export --platform web --output-dir dist', {
+  stdio: 'inherit',
+  env: {
+    ...process.env,
+    EXPO_OFFLINE: '1', // the export needs nothing from Expo's servers
+    EXPO_NO_TELEMETRY: '1',
+    // Logging is on everywhere except Netlify's production deploy (and ?debug turns it on there).
+    EXPO_PUBLIC_DEBUG_LOGS: String(process.env.CONTEXT !== 'production'),
+  },
 });
-for (const staticFile of ['index.html', 'index.css']) {
-  cpSync(staticFile, `dist/${staticFile}`);
-}
