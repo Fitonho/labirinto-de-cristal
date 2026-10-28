@@ -121,10 +121,10 @@ function wavFile(samples) {
 
 /** One file per sound cue kind in src/ui/sounds.ts. */
 const samplesBySoundName = {
-  step: render(0.09, (samples) => addThump(samples, 160, 115, 0.02, 0.2, 7), 0.16, 700),
-  push: render(0.24, (samples) => addThump(samples, 120, 70, 0.06, 0.25, 11), 0.55, 600),
+  step: render(0.09, (samples) => addThump(samples, 160, 115, 0.02, 0.2, 7), 0.24, 700),
+  push: render(0.24, (samples) => addThump(samples, 120, 70, 0.06, 0.25, 11), 0.72, 600),
   bump: render(0.18, (samples) => addThump(samples, 80, 45, 0.04, 0.3, 23), 0.55, 450),
-  door: render(0.5, addSweep, 0.45, 1800),
+  door: render(0.5, addSweep, 0.32, 1800),
   crystal: render(0.9, (samples) => addBell(samples, 0, 1318.5, 1), 0.45, 2500),
   win: render(
     1.5,
@@ -132,7 +132,7 @@ const samplesBySoundName = {
       [1046.5, 1318.5, 1568, 2093].forEach((frequency, noteIndex) =>
         addBell(samples, noteIndex * 0.09, frequency, 1 - noteIndex * 0.12),
       ),
-    0.55,
+    0.42,
     3000,
   ),
 };
