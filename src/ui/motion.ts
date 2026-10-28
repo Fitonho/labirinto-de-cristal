@@ -1,6 +1,7 @@
 // Pure helpers that turn a move's engine events into how the board moves:
-// whether pieces slide to their new places or jump there, and which piece
-// bumps when a move goes nowhere. No React here, so Vitest tests it.
+// whether pieces slide to their new places or jump there, whether the board
+// flips, and which piece bumps when a move goes nowhere. No React here, so
+// Vitest tests it.
 import { tileAt, type Direction, type GameEvent, type GameState } from '../core';
 
 /** How long a slide to the next tile takes, in milliseconds. */
@@ -11,6 +12,12 @@ export const BUMP_BACK_DURATION = 90;
 /** How far a bump goes, as a share of the tile size. */
 export const PLAYER_BUMP_DISTANCE = 0.2;
 export const BOX_BUMP_DISTANCE = 0.08;
+/**
+ * A flip first grows the old boxes into full tiles, then swaps the floor and
+ * player colours, then shrinks the new boxes out of their full tiles.
+ */
+export const FLIP_GROW_DURATION = 90;
+export const FLIP_SHRINK_DURATION = 150;
 
 export interface Bump {
   direction: Direction;
@@ -19,6 +26,7 @@ export interface Bump {
 
 export interface BoardMotion {
   slides: boolean; // false after undo, restart or a new level: everything jumps into place
+  flips: boolean; // the player went through a door, so boxes and floor trade places
   bump: Bump | null;
 }
 
@@ -28,16 +36,17 @@ export type PieceId = 'player' | number;
 /** `state` is the state after the move, which is unchanged when the move went nowhere. */
 export function motionFor(events: GameEvent[], state: GameState): BoardMotion {
   const slides = events.some((event) => event.type === 'moved');
+  const flips = events.some((event) => event.type === 'flipped');
   for (const event of events) {
     if (event.type === 'blocked' && event.reason === 'edge') {
-      return { slides, bump: { direction: event.direction, boxTileId: null } };
+      return { slides, flips, bump: { direction: event.direction, boxTileId: null } };
     }
     if (event.type === 'pushRefused') {
       const direction = directionBetween(state.player, event.at);
-      if (direction) return { slides, bump: { direction, boxTileId: tileAt(state, event.at).id } };
+      if (direction) return { slides, flips, bump: { direction, boxTileId: tileAt(state, event.at).id } };
     }
   }
-  return { slides, bump: null };
+  return { slides, flips, bump: null };
 }
 
 /** The way this piece bumps, if it bumps at all. The player bumps whenever anything does. */
