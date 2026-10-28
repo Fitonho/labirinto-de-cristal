@@ -65,7 +65,7 @@ export type PushRefusal = 'edge' | 'goal' | 'ownColour' | 'door';
 
 export type GameEvent =
   | { type: 'moved'; from: Cell; to: Cell }
-  | { type: 'blocked'; reason: BlockReason }
+  | { type: 'blocked'; reason: BlockReason; direction: Direction } // the way the player tried to go
   | { type: 'pushed'; tileId: number; from: Cell; to: Cell }
   | { type: 'pushRefused'; reason: PushRefusal; at: Cell }
   | { type: 'flipped'; colour: Colour; door: Door }

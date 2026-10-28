@@ -46,7 +46,7 @@ describe('walking and pushing', () => {
     expect(movedDown.events).toEqual([{ type: 'moved', from: { row: 0, column: 0 }, to: { row: 1, column: 0 } }]);
     const blockedAtEdge = move(startState, 'up');
     expect(blockedAtEdge.state).toBe(startState);
-    expect(blockedAtEdge.events).toEqual([{ type: 'blocked', reason: 'edge' }]);
+    expect(blockedAtEdge.events).toEqual([{ type: 'blocked', reason: 'edge', direction: 'up' }]);
   });
 
   it('pushes a tile of your colour onto floor and steps into its place', () => {
@@ -127,7 +127,7 @@ describe('winning', () => {
     const result = move(move(state, 'right').state, 'down');
     expect(result.state.status).toBe('won');
     expect(result.events.map((event) => event.type)).toEqual(['moved', 'collected', 'won']);
-    expect(move(result.state, 'up').events).toEqual([{ type: 'blocked', reason: 'won' }]);
+    expect(move(result.state, 'up').events).toEqual([{ type: 'blocked', reason: 'won', direction: 'up' }]);
   });
 
   it('can win by stepping through a door onto the goal', () => {
