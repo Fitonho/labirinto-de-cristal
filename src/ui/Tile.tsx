@@ -18,6 +18,7 @@ interface TileProps {
   solid: boolean; // the player's colour, so it blocks and can be pushed
   doorSides: Direction[];
   showCrystal: boolean;
+  overlap: number; // drawn this much past its right and bottom edges, under the next tile
 }
 
 /** How long the solid outline takes to fade in or out when the player flips colour. */
@@ -26,13 +27,13 @@ const OUTLINE_FADE_MILLISECONDS = 250;
 const fillInsetKeys = { up: 'top', right: 'right', down: 'bottom', left: 'left' } as const;
 
 /** The fill covers the tile except an outline band; door sides have no band, their dots are drawn on top. */
-function fillInsets(doorSides: Direction[]) {
-  const insets = { top: EDGE_WIDTH, right: EDGE_WIDTH, bottom: EDGE_WIDTH, left: EDGE_WIDTH };
-  for (const doorSide of doorSides) insets[fillInsetKeys[doorSide]] = 0;
+function fillInsets(doorSides: Direction[], overlap: number) {
+  const insets = { top: EDGE_WIDTH, right: EDGE_WIDTH + overlap, bottom: EDGE_WIDTH + overlap, left: EDGE_WIDTH };
+  for (const doorSide of doorSides) insets[fillInsetKeys[doorSide]] -= EDGE_WIDTH;
   return insets;
 }
 
-export function Tile({ tile, size, left, top, solid, doorSides, showCrystal }: TileProps) {
+export function Tile({ tile, size, left, top, solid, doorSides, showCrystal, overlap }: TileProps) {
   // 0 paints the outline band in the tile's own colour, 1 in the outline colour; a flip fades between them.
   const outlineProgress = useSharedValue(solid ? 1 : 0);
   useEffect(() => {
@@ -47,8 +48,8 @@ export function Tile({ tile, size, left, top, solid, doorSides, showCrystal }: T
   const doorStyle = useAnimatedStyle(() => ({ opacity: outlineProgress.value }));
 
   return (
-    <Animated.View testID={`tile-${tile.id}`} style={[{ position: 'absolute', left, top, width: size, height: size }, outlineStyle]}>
-      <View style={[styles.layer, fillInsets(doorSides), { backgroundColor: fillColour }]} />
+    <Animated.View testID={`tile-${tile.id}`} style={[{ position: 'absolute', left, top, width: size + overlap, height: size + overlap }, outlineStyle]}>
+      <View style={[styles.layer, fillInsets(doorSides, overlap), { backgroundColor: fillColour }]} />
       {doorSides.length > 0 && (
         <Animated.View style={[styles.layer, doorStyle]}>
           <Svg width={size} height={size}>

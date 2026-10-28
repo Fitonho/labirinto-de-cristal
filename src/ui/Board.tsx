@@ -1,7 +1,7 @@
 // Draws a GameState: tiles, doors, crystals and the player. Reads the state
 // only; swipes on the board are turned into commands for the screen.
 import { useMemo } from 'react';
-import { View } from 'react-native';
+import { PixelRatio, View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import { opposite, type GameState } from '../core';
 import { doorSidesByTileIndex } from './boardLayout';
@@ -25,13 +25,16 @@ export function Board({ state, tileSize, onCommand }: BoardProps) {
     },
   });
 
+  // Each tile reaches one screen pixel under its right and lower neighbours, so
+  // rounding tile positions to pixels can never leave a gap between them.
+  const overlap = 1 / PixelRatio.get();
   const playerSize = tileSize / 2;
   return (
     <GestureDetector gesture={swipe}>
       <View
         testID="board"
         accessibilityLabel="board"
-        style={{ width: tileSize * state.columnCount, height: tileSize * state.rowCount }}
+        style={{ width: tileSize * state.columnCount, height: tileSize * state.rowCount, overflow: 'hidden' }}
       >
         {state.tiles.map((tile, tileIndex) => (
           <Tile
@@ -43,6 +46,7 @@ export function Board({ state, tileSize, onCommand }: BoardProps) {
             solid={tile.colour === state.player.colour}
             doorSides={doorSides.get(tileIndex) ?? []}
             showCrystal={Boolean(tile.goal) && !state.collectedGoalIds.includes(tile.id)}
+            overlap={overlap}
           />
         ))}
         <View
