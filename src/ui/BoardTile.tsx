@@ -4,14 +4,18 @@
 // the floor colour, invisible on the floor layer. Drawing every tile lets a
 // flip turn boxes into floor and back. A box's doors are glowing seams just
 // outside it, and they and its crystal move with it when it slides.
+//
+// Phones redraw every tile on a flip, so a tile without doors is a plain
+// rounded view that only scales; just the few door tiles need an SVG outline.
+import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedProps, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import Svg, { Path } from 'react-native-svg';
 import { opposite, type Direction, type Tile } from '../core';
 import { boxOutline, seamFrame, seamPath } from './boardLayout';
 import { Crystal } from './Crystal';
-import { BOX_BUMP_DISTANCE, type BoardMotion } from './motion';
-import { SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_WIDTH, seamColour, tileColours } from './theme';
+import { BOX_BUMP_DISTANCE, bumpDirectionFor, type BoardMotion } from './motion';
+import { BOX_CORNER_RADIUS, BOX_INSET, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_WIDTH, seamColour, tileColours } from './theme';
 import { useAnimatedPosition } from './useAnimatedPosition';
 import { useBoxAmount } from './useBoxAmount';
 
@@ -29,7 +33,36 @@ interface BoardTileProps {
   motion: BoardMotion;
 }
 
-export function BoardTile({ tile, size, left, top, doorSides, isBox, isDrawnAbove, showCrystal, motion }: BoardTileProps) {
+/**
+ * Most tiles neither move, bump nor flip on a given move, so they skip
+ * rendering; the motion only matters to the ones it touches.
+ */
+function drawsTheSame(previous: BoardTileProps, next: BoardTileProps): boolean {
+  const motionTouchesTile = next.motion.flips || bumpDirectionFor(next.motion, next.tile.id) !== null;
+  return (
+    !motionTouchesTile &&
+    previous.tile === next.tile &&
+    previous.size === next.size &&
+    previous.left === next.left &&
+    previous.top === next.top &&
+    previous.isBox === next.isBox &&
+    previous.isDrawnAbove === next.isDrawnAbove &&
+    previous.showCrystal === next.showCrystal &&
+    previous.doorSides.join() === next.doorSides.join()
+  );
+}
+
+export const BoardTile = memo(function BoardTile({
+  tile,
+  size,
+  left,
+  top,
+  doorSides,
+  isBox,
+  isDrawnAbove,
+  showCrystal,
+  motion,
+}: BoardTileProps) {
   const positionStyle = useAnimatedPosition({
     left,
     top,
@@ -38,20 +71,50 @@ export function BoardTile({ tile, size, left, top, doorSides, isBox, isDrawnAbov
     bumpDistance: size * BOX_BUMP_DISTANCE,
   });
   const boxAmount = useBoxAmount(isBox, motion);
-  const outlineProps = useAnimatedProps(() => ({ d: boxOutline(size, doorSides, boxAmount.value) }));
   return (
     <Animated.View
       testID={isBox ? `box-${tile.id}` : `floor-${tile.id}`}
       style={[{ position: 'absolute', width: size, height: size, zIndex: isDrawnAbove ? 2 : 0 }, positionStyle]}
     >
-      <Svg width={size} height={size} style={styles.fill}>
-        <AnimatedPath animatedProps={outlineProps} fill={tileColours[tile.colour]} />
-      </Svg>
+      {doorSides.length > 0 ? (
+        <FlaredShape size={size} doorSides={doorSides} colour={tileColours[tile.colour]} boxAmount={boxAmount} />
+      ) : (
+        <RoundedShape size={size} colour={tileColours[tile.colour]} boxAmount={boxAmount} />
+      )}
       {doorSides.map((doorSide) => (
         <DoorSeam key={doorSide} side={doorSide} size={size} boxAmount={boxAmount} />
       ))}
       {showCrystal && <Crystal size={size} colour={opposite(tile.colour)} />}
     </Animated.View>
+  );
+}, drawsTheSame);
+
+interface ShapeProps {
+  size: number;
+  colour: string;
+  boxAmount: SharedValue<number>;
+}
+
+/** A tile without doors: a square that scales down into a rounded box. */
+function RoundedShape({ size, colour, boxAmount }: ShapeProps) {
+  const shapeStyle = useAnimatedStyle(() => {
+    const scale = 1 - 2 * BOX_INSET * boxAmount.value;
+    // The radius is drawn before scaling, so it is set larger to end up the right size.
+    return { transform: [{ scale }], borderRadius: (size * BOX_CORNER_RADIUS * boxAmount.value) / scale };
+  });
+  return <Animated.View style={[styles.fill, { width: size, height: size, backgroundColor: colour }, shapeStyle]} />;
+}
+
+/** A tile with doors: its door sides reach the cell edge and curve out into it, so it needs an SVG outline. */
+function FlaredShape({ size, doorSides, colour, boxAmount }: ShapeProps & { doorSides: Direction[] }) {
+  // The board builds new arrays on every move; keeping the same one avoids rebuilding the animation.
+  const doorSidesKey = doorSides.join();
+  const steadyDoorSides = useMemo(() => doorSides, [doorSidesKey]);
+  const outlineProps = useAnimatedProps(() => ({ d: boxOutline(size, steadyDoorSides, boxAmount.value) }));
+  return (
+    <Svg width={size} height={size} style={styles.fill}>
+      <AnimatedPath animatedProps={outlineProps} fill={colour} />
+    </Svg>
   );
 }
 
