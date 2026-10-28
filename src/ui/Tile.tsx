@@ -1,7 +1,9 @@
 // One board tile: its colour, the outline that marks it as solid, dotted door
 // edges and its crystal. Drawn with react-native-svg so it looks the same on
 // phones and the web.
-import { View } from 'react-native';
+import { useEffect } from 'react';
+import { StyleSheet, View } from 'react-native';
+import Animated, { useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import Svg, { Line, Polygon } from 'react-native-svg';
 import { opposite, type Colour, type Direction, type Tile as TileData } from '../core';
 import { EDGE_WIDTH, tileColours } from './theme';
@@ -16,16 +18,32 @@ interface TileProps {
   showCrystal: boolean;
 }
 
+/** How long the solid outline takes to fade in or out when the player flips colour. */
+const OUTLINE_FADE_MILLISECONDS = 250;
+
 export function Tile({ tile, size, left, top, solid, doorSides, showCrystal }: TileProps) {
+  // Every tile keeps its outline; only its opacity changes, so a flip fades it.
+  const outlineOpacity = useSharedValue(solid ? 1 : 0);
+  useEffect(() => {
+    outlineOpacity.value = withTiming(solid ? 1 : 0, { duration: OUTLINE_FADE_MILLISECONDS });
+  }, [solid, outlineOpacity]);
+  const outlineStyle = useAnimatedStyle(() => ({ opacity: outlineOpacity.value }));
+
   return (
     <View
       testID={`tile-${tile.id}`}
       style={{ position: 'absolute', left, top, width: size, height: size, backgroundColor: tileColours[tile.colour] }}
     >
-      <Svg width={size} height={size}>
-        {solid && <TileOutline size={size} colour={opposite(tile.colour)} doorSides={doorSides} />}
-        {showCrystal && <Crystal size={size} colour={opposite(tile.colour)} />}
-      </Svg>
+      <Animated.View style={[StyleSheet.absoluteFill, outlineStyle]}>
+        <Svg width={size} height={size}>
+          <TileOutline size={size} colour={opposite(tile.colour)} doorSides={doorSides} />
+        </Svg>
+      </Animated.View>
+      {showCrystal && (
+        <Svg width={size} height={size} style={StyleSheet.absoluteFill}>
+          <Crystal size={size} colour={opposite(tile.colour)} />
+        </Svg>
+      )}
     </View>
   );
 }
