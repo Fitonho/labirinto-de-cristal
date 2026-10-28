@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { loadLevel } from '../src/core';
+import { loadLevel, move } from '../src/core';
 import { boxInsets, doorSidesByTileIndex, floorColour, isBox, MAX_TILE_SIZE, tileSizeFor } from '../src/ui/boardLayout';
 import { EDGE_WIDTH } from '../src/ui/theme';
 import { swipeDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
-import { levelById } from './helpers';
+import { bumpDirectionFor, bumpOffset, motionFor } from '../src/ui/motion';
+import { customLevelState, levelById } from './helpers';
 
 describe('board layout', () => {
   it('draws a door on the tile in the player colour', () => {
@@ -63,5 +64,52 @@ describe('input and language', () => {
     expect(languageForLocale('pt-PT')).toBe('pt');
     expect(languageForLocale('en-US')).toBe('en');
     expect(languageForLocale(undefined)).toBe('pt');
+  });
+});
+
+describe('board motion', () => {
+  // Player is white (stands on black). Black is floor, white blocks.
+  const startState = customLevelState(['b w b b', 'b b b W'], [0, 0]);
+
+  it('slides the player and the pushed box after a push', () => {
+    const { state, events } = move(startState, 'right');
+    const motion = motionFor(events, state);
+    expect(motion).toEqual({ slides: true, bump: null });
+    expect(bumpDirectionFor(motion, 'player')).toBeNull();
+  });
+
+  it('jumps into place when there are no events, as after undo or restart', () => {
+    expect(motionFor([], startState)).toEqual({ slides: false, bump: null });
+  });
+
+  it('bumps only the player at the board edge', () => {
+    const { state, events } = move(startState, 'up');
+    const motion = motionFor(events, state);
+    expect(motion).toEqual({ slides: false, bump: { direction: 'up', boxTileId: null } });
+    expect(bumpDirectionFor(motion, 'player')).toBe('up');
+  });
+
+  it('bumps the player and the refused box toward it', () => {
+    // Pushing right: the white tile has another white tile behind it.
+    const blockedState = customLevelState(['b w w b', 'b b b W'], [0, 0]);
+    const { state, events } = move(blockedState, 'right');
+    expect(events).toEqual([{ type: 'pushRefused', reason: 'ownColour', at: { row: 0, column: 1 } }]);
+    const motion = motionFor(events, state);
+    const refusedBoxId = state.tiles[1].id;
+    expect(motion.bump).toEqual({ direction: 'right', boxTileId: refusedBoxId });
+    expect(bumpDirectionFor(motion, refusedBoxId)).toBe('right');
+    expect(bumpDirectionFor(motion, 'player')).toBe('right');
+    expect(bumpDirectionFor(motion, state.tiles[2].id)).toBeNull();
+  });
+
+  it('does not bump after the level is won', () => {
+    const wonState = { ...startState, status: 'won' as const };
+    const { state, events } = move(wonState, 'up');
+    expect(motionFor(events, state)).toEqual({ slides: false, bump: null });
+  });
+
+  it('offsets a bump in its direction', () => {
+    expect(bumpOffset('left', 5)).toEqual({ offsetLeft: -5, offsetTop: 0 });
+    expect(bumpOffset('down', 5)).toEqual({ offsetLeft: 0, offsetTop: 5 });
   });
 });

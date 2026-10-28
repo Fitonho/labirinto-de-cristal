@@ -1,25 +1,30 @@
 // Draws a GameState in layers: the floor as one rectangle with the crystals
 // that lie on it, then the boxes (tiles in the player's colour) with their
 // doors and crystals, then the player. Reads the state only; swipes on the
-// board are turned into commands for the screen.
+// board are turned into commands for the screen. The last action's engine
+// events decide whether boxes and the player slide, jump or bump.
 import { useMemo } from 'react';
 import { View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import { opposite, type GameState } from '../core';
+import { opposite, type GameEvent, type GameState } from '../core';
 import { Box } from './Box';
 import { doorSidesByTileIndex, floorColour, isBox } from './boardLayout';
 import { swipeDirection, type Command } from './commands';
 import { Crystal } from './Crystal';
+import { motionFor } from './motion';
+import { Player } from './Player';
 import { tileColours } from './theme';
 
 interface BoardProps {
   state: GameState;
+  events: GameEvent[]; // what the last action caused; empty after undo, restart or a new level
   tileSize: number;
   onCommand: (command: Command) => void;
 }
 
-export function Board({ state, tileSize, onCommand }: BoardProps) {
+export function Board({ state, events, tileSize, onCommand }: BoardProps) {
   const doorSides = useMemo(() => doorSidesByTileIndex(state), [state]);
+  const motion = useMemo(() => motionFor(events, state), [events, state]);
   const swipe = usePanGesture({
     runOnJS: true,
     onDeactivate: (panEvent) => {
@@ -36,7 +41,6 @@ export function Board({ state, tileSize, onCommand }: BoardProps) {
     const tile = state.tiles[tileIndex];
     return Boolean(tile.goal) && !state.collectedGoalIds.includes(tile.id);
   };
-  const playerSize = tileSize / 2;
   return (
     <GestureDetector gesture={swipe}>
       <View
@@ -69,22 +73,16 @@ export function Board({ state, tileSize, onCommand }: BoardProps) {
               {...cellPosition(tileIndex)}
               doorSides={doorSides.get(tileIndex) ?? []}
               showCrystal={showsCrystal(tileIndex)}
+              motion={motion}
             />
           ) : null,
         )}
-        <View
-          testID="player"
-          style={{
-            position: 'absolute',
-            left: state.player.column * tileSize + (tileSize - playerSize) / 2,
-            top: state.player.row * tileSize + (tileSize - playerSize) / 2,
-            width: playerSize,
-            height: playerSize,
-            borderRadius: playerSize / 2,
-            backgroundColor: tileColours[state.player.colour],
-            borderWidth: 1,
-            borderColor: tileColours[opposite(state.player.colour)],
-          }}
+        <Player
+          colour={state.player.colour}
+          tileSize={tileSize}
+          left={state.player.column * tileSize}
+          top={state.player.row * tileSize}
+          motion={motion}
         />
       </View>
     </GestureDetector>

@@ -16,7 +16,7 @@ import { useKeyboardCommands } from '../src/ui/useKeyboardCommands';
 
 export default function GameScreen() {
   const dispatch = useDispatch();
-  const { history, language, levelIndex } = useSelector((rootState: RootState) => rootState.game);
+  const { history, events, language, levelIndex } = useSelector((rootState: RootState) => rootState.game);
   const state = history.present;
   const level = levels[levelIndex];
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -55,7 +55,7 @@ export default function GameScreen() {
           </Pressable>
         </View>
         <View style={styles.boardArea}>
-          <Board state={state} tileSize={tileSize} onCommand={run} />
+          <Board state={state} events={events} tileSize={tileSize} onCommand={run} />
         </View>
         <Text accessibilityLiveRegion="polite" style={[styles.status, won && styles.wonStatus]}>
           {won ? `${t(language, 'won')} ${moveText}` : moveText}

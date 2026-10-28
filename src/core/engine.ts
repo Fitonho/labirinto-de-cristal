@@ -4,11 +4,11 @@ import type { BlockReason, Cell, Direction, Door, GameEvent, GameState, PushRefu
 import { DIRECTIONS } from './types';
 
 export function move(state: GameState, direction: Direction): StepResult {
-  if (state.status === 'won') return blocked(state, 'won');
+  if (state.status === 'won') return blocked(state, 'won', direction);
 
   const fromCell: Cell = { row: state.player.row, column: state.player.column };
   const targetCell = neighbour(fromCell, direction);
-  if (!inside(state, targetCell)) return blocked(state, 'edge');
+  if (!inside(state, targetCell)) return blocked(state, 'edge', direction);
 
   const door = edge(fromCell, direction);
   if (hasDoor(state, door)) {
@@ -69,8 +69,8 @@ function push(state: GameState, fromCell: Cell, targetCell: Cell, direction: Dir
   ]);
 }
 
-function blocked(state: GameState, reason: BlockReason): StepResult {
-  return { state, events: [{ type: 'blocked', reason }] };
+function blocked(state: GameState, reason: BlockReason, direction: Direction): StepResult {
+  return { state, events: [{ type: 'blocked', reason, direction }] };
 }
 
 /** Counts the move and checks for crystals and the win. */
