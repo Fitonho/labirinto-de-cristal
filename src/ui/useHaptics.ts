@@ -4,11 +4,10 @@
 // the system haptic patterns are dropped whenever the touch feedback setting
 // is off, and expo-haptics' Android pulses are too faint to feel on many phones.
 import * as Haptics from 'expo-haptics';
-import { useEffect } from 'react';
 import { Platform, Vibration } from 'react-native';
-import type { GameEvent } from '../core';
 import { logger } from '../state/logger';
 import { hapticCueFor, type HapticCueKind } from './haptics';
+import { useGameEventsListener } from './useGameEventsListener';
 
 const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   win: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
@@ -46,9 +45,9 @@ function play(kind: HapticCueKind) {
   IOS_PLAYERS_BY_CUE_KIND[kind]().catch((error: unknown) => logger.warn('haptic failed', { kind, error: String(error) }));
 }
 
-/** `events` is a new array after every action, so each move plays once even when it repeats the last one. */
-export function useHaptics(events: GameEvent[], vibrationOn: boolean) {
-  useEffect(() => {
+/** Plays as soon as the move happens, not after the board redraws (see useGameEventsListener). */
+export function useHaptics(vibrationOn: boolean) {
+  useGameEventsListener((events) => {
     if (Platform.OS === 'web' || !vibrationOn) return;
     const cue = hapticCueFor(events);
     if (!cue) return;
@@ -59,5 +58,5 @@ export function useHaptics(events: GameEvent[], vibrationOn: boolean) {
     // The next move cancels a tap that hasn't played yet, so fast play never queues them up.
     const timer = setTimeout(() => play(cue.kind), cue.delay);
     return () => clearTimeout(timer);
-  }, [events]);
+  });
 }

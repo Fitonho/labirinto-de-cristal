@@ -1,14 +1,14 @@
-// Plays the last move's sound. Phones use expo-audio: each sound has one
-// player, loaded at start and rewound before every play, mixing with the
-// player's own music and following the iPhone's silent switch. The web uses
+// Plays each move's sound as soon as the move happens. Phones use expo-audio:
+// every sound is loaded into memory once, then gets one player that is rewound
+// before every play. The sounds mix with the player's own music. The web uses
 // Web Audio (see webSounds.web.ts), because expo-audio's web players start late.
 // The files come from scripts/make-sounds.mjs.
-import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
+import { createAudioPlayer, preload, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
-import type { GameEvent } from '../core';
 import { logger } from '../state/logger';
 import { soundCueFor, type SoundCueKind } from './sounds';
+import { useGameEventsListener } from './useGameEventsListener';
 import { createWebSoundBank, type SoundBank } from './webSounds';
 
 const SOUND_FILES_BY_CUE_KIND: Record<SoundCueKind, number> = {
@@ -21,21 +21,39 @@ const SOUND_FILES_BY_CUE_KIND: Record<SoundCueKind, number> = {
 };
 
 function createPhoneSoundBank(): SoundBank<SoundCueKind> {
-  setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'mixWithOthers' }).catch((error: unknown) =>
-    logger.warn('audio mode not set', { error: String(error) }),
+  // A game plays on Android's vibrate setting too, where expo-audio would otherwise stay silent.
+  // The iPhone's mute switch still silences it.
+  setAudioModeAsync({ playsInSilentMode: Platform.OS === 'android', interruptionMode: 'mixWithOthers' }).catch(
+    (error: unknown) => logger.warn('audio mode not set', { error: String(error) }),
   );
-  const playersByCueKind = Object.fromEntries(
-    Object.entries(SOUND_FILES_BY_CUE_KIND).map(([kind, soundFile]) => [kind, createAudioPlayer(soundFile)]),
-  ) as Record<SoundCueKind, AudioPlayer>;
+  const playersByCueKind = new Map<SoundCueKind, AudioPlayer>();
+  let released = false;
+  // A player made from a preloaded sound reads it from memory. Otherwise Android streams it again on every
+  // rewind, which in Expo Go means a round trip through the development server's tunnel.
+  for (const [kind, soundFile] of Object.entries(SOUND_FILES_BY_CUE_KIND) as [SoundCueKind, number][]) {
+    preload(soundFile)
+      .catch((error: unknown) => logger.warn('sound not preloaded', { kind, error: String(error) }))
+      .then(() => {
+        if (!released) playersByCueKind.set(kind, createAudioPlayer(soundFile));
+      });
+  }
   return {
     play(kind) {
-      const player = playersByCueKind[kind];
-      // A sound that is still playing starts again from the top.
-      player.seekTo(0);
-      player.play();
+      const player = playersByCueKind.get(kind);
+      if (!player) return;
+      if (!player.playing && player.currentTime === 0) {
+        player.play();
+        return;
+      }
+      // A sound that has played, or still is, starts again from the top once the rewind is done.
+      player
+        .seekTo(0)
+        .then(() => player.play())
+        .catch((error: unknown) => logger.warn('sound failed', { kind, error: String(error) }));
     },
     release() {
-      for (const player of Object.values(playersByCueKind)) player.remove();
+      released = true;
+      for (const player of playersByCueKind.values()) player.remove();
     },
   };
 }
@@ -50,8 +68,7 @@ function play(soundBank: SoundBank<SoundCueKind>, kind: SoundCueKind) {
   }
 }
 
-/** `events` is a new array after every action, so each move plays once even when it repeats the last one. */
-export function useSounds(events: GameEvent[], soundOn: boolean) {
+export function useSounds(soundOn: boolean) {
   const soundBankRef = useRef<SoundBank<SoundCueKind> | null>(null);
 
   useEffect(() => {
@@ -64,7 +81,7 @@ export function useSounds(events: GameEvent[], soundOn: boolean) {
     };
   }, []);
 
-  useEffect(() => {
+  useGameEventsListener((events) => {
     if (!soundOn) return;
     const cue = soundCueFor(events);
     const soundBank = soundBankRef.current;
@@ -76,5 +93,5 @@ export function useSounds(events: GameEvent[], soundOn: boolean) {
     // The next move cancels a sound that hasn't started yet, so fast play never queues them up.
     const timer = setTimeout(() => play(soundBank, cue.kind), cue.delay);
     return () => clearTimeout(timer);
-  }, [events]);
+  });
 }

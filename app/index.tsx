@@ -37,8 +37,8 @@ export default function GameScreen() {
     [dispatch, toggleSound, toggleVibration],
   );
   useKeyboardCommands(run, !pickerVisible);
-  useHaptics(events, vibrationOn);
-  useSounds(events, soundOn);
+  useHaptics(vibrationOn);
+  useSounds(soundOn);
   useEffect(() => {
     // Screen readers and translators on the web read the page language.
     if (Platform.OS === 'web') document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
