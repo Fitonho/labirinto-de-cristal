@@ -1,13 +1,15 @@
-// Plays the last move's haptic cue on phones. The web stays silent. iOS gets
-// its impact and notification styles; Android gets the system's own haptic
-// patterns, which feel crisper than buzzing the vibration motor.
+// Plays the last move's haptic cue on phones. The web stays silent. Both
+// platforms use the impact and notification styles: on Android these run the
+// vibration motor, because the system haptic patterns are dropped whenever the
+// phone's touch feedback setting is off, which is the default on many phones.
 import * as Haptics from 'expo-haptics';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 import type { GameEvent } from '../core';
+import { logger } from '../state/logger';
 import { hapticCueFor, type HapticCueKind } from './haptics';
 
-const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
+const PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   win: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
   door: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
   crystal: () => Haptics.selectionAsync(),
@@ -15,21 +17,10 @@ const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   bump: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid),
 };
 
-const ANDROID_HAPTICS_BY_CUE_KIND: Record<HapticCueKind, Haptics.AndroidHaptics> = {
-  win: Haptics.AndroidHaptics.Confirm,
-  door: Haptics.AndroidHaptics.Virtual_Key,
-  crystal: Haptics.AndroidHaptics.Segment_Tick,
-  push: Haptics.AndroidHaptics.Context_Click,
-  bump: Haptics.AndroidHaptics.Reject,
-};
-
 function play(kind: HapticCueKind) {
-  const playing =
-    Platform.OS === 'android'
-      ? Haptics.performAndroidHapticsAsync(ANDROID_HAPTICS_BY_CUE_KIND[kind])
-      : IOS_PLAYERS_BY_CUE_KIND[kind]();
-  // A missed tap is not worth an error on screen.
-  playing.catch(() => {});
+  logger.debug('haptic', { kind, platform: Platform.OS });
+  // A missed tap is not worth an error on screen, but the log says why.
+  PLAYERS_BY_CUE_KIND[kind]().catch((error: unknown) => logger.warn('haptic failed', { kind, error: String(error) }));
 }
 
 /** `events` is a new array after every action, so each move plays once even when it repeats the last one. */
