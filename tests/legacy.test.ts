@@ -12,12 +12,12 @@ describe('legacy rules', () => {
   });
 
   it('level 1: own colour blocks when it cannot be pushed, floor can be walked', () => {
-    const g = new LegacyGame(levels.level_1);
-    expect(g.playerPos).toEqual([8, 0]);
-    expect(g.playerColor).toBe('#000000'); // start tile is white, so the player is black
-    g.move(side.Right); // [8,1] is black with black behind it: no push
-    expect(g.playerPos).toEqual([8, 0]);
-    g.move(side.Top); // [7,0] is white floor
-    expect(g.playerPos).toEqual([7, 0]);
+    const legacyGame = new LegacyGame(levels.level_1);
+    expect(legacyGame.playerPos).toEqual([8, 0]);
+    expect(legacyGame.playerColor).toBe('#000000'); // start tile is white, so the player is black
+    legacyGame.move(side.Right); // [8,1] is black with black behind it: no push
+    expect(legacyGame.playerPos).toEqual([8, 0]);
+    legacyGame.move(side.Top); // [7,0] is white floor
+    expect(legacyGame.playerPos).toEqual([7, 0]);
   });
 });

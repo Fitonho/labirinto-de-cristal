@@ -2,26 +2,26 @@
 import type { GameState } from './types';
 
 export interface History {
-  past: GameState[]; // oldest first; past[0] is the level's start
+  pastStates: GameState[]; // oldest first; pastStates[0] is the level's start
   present: GameState;
 }
 
 export function startHistory(state: GameState): History {
-  return { past: [], present: state };
+  return { pastStates: [], present: state };
 }
 
 /** Records a new state. A move that changed nothing is not recorded. */
-export function record(h: History, next: GameState): History {
-  if (next === h.present) return h;
-  return { past: [...h.past, h.present], present: next };
+export function record(history: History, nextState: GameState): History {
+  if (nextState === history.present) return history;
+  return { pastStates: [...history.pastStates, history.present], present: nextState };
 }
 
-export function undo(h: History): History {
-  if (h.past.length === 0) return h;
-  return { past: h.past.slice(0, -1), present: h.past[h.past.length - 1] };
+export function undo(history: History): History {
+  if (history.pastStates.length === 0) return history;
+  return { pastStates: history.pastStates.slice(0, -1), present: history.pastStates[history.pastStates.length - 1] };
 }
 
-export function reset(h: History): History {
-  if (h.past.length === 0) return h;
-  return { past: [], present: h.past[0] };
+export function reset(history: History): History {
+  if (history.pastStates.length === 0) return history;
+  return { pastStates: [], present: history.pastStates[0] };
 }

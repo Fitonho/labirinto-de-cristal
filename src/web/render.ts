@@ -1,47 +1,50 @@
 // Draws a GameState into the board element. Knows nothing about the rules
 // beyond reading the state.
-import { opposite, sides, tileAt, type Colour, type GameState } from '../core';
+import { opposite, sides, tileAt, type Colour, type Direction, type GameState } from '../core';
 
-const borderSide = { up: 'Top', right: 'Right', down: 'Bottom', left: 'Left' } as const;
+const borderSideNames = { up: 'Top', right: 'Right', down: 'Bottom', left: 'Left' } as const;
 
-export function renderBoard(board: HTMLElement, s: GameState) {
-  board.style.setProperty('--rows', String(s.rows));
-  board.style.setProperty('--cols', String(s.cols));
-  board.replaceChildren();
+export function renderBoard(boardElement: HTMLElement, state: GameState) {
+  boardElement.style.setProperty('--row-count', String(state.rowCount));
+  boardElement.style.setProperty('--column-count', String(state.columnCount));
+  boardElement.replaceChildren();
 
   // Doors are drawn on the side that is the player's colour, as before.
-  const doorSides = new Map<number, (keyof typeof borderSide)[]>();
-  for (const d of s.doors) {
-    const [a, b] = sides(d);
-    const aIsPlayers = tileAt(s, a).colour === s.player.colour;
-    const cell = aIsPlayers ? a : b;
-    const side = aIsPlayers ? d.side : d.side === 'right' ? 'left' : 'up';
-    const i = cell.row * s.cols + cell.col;
-    doorSides.set(i, [...(doorSides.get(i) ?? []), side]);
+  const doorSidesByTileIndex = new Map<number, Direction[]>();
+  for (const door of state.doors) {
+    const [firstCell, secondCell] = sides(door);
+    const firstIsPlayersColour = tileAt(state, firstCell).colour === state.player.colour;
+    const drawnCell = firstIsPlayersColour ? firstCell : secondCell;
+    const drawnSide: Direction = firstIsPlayersColour ? door.side : door.side === 'right' ? 'left' : 'up';
+    const drawnTileIndex = drawnCell.row * state.columnCount + drawnCell.column;
+    doorSidesByTileIndex.set(drawnTileIndex, [...(doorSidesByTileIndex.get(drawnTileIndex) ?? []), drawnSide]);
   }
 
-  s.tiles.forEach((tile, i) => {
-    const el = document.createElement('div');
-    el.className = `tile ${tile.colour}`;
-    el.dataset.tile = String(tile.id);
-    if (tile.colour === s.player.colour) el.classList.add('solid');
-    for (const side of doorSides.get(i) ?? []) {
-      el.style[`border${borderSide[side]}Style` as 'borderTopStyle'] = 'dotted';
+  const playerTileIndex = state.player.row * state.columnCount + state.player.column;
+  state.tiles.forEach((tile, tileIndex) => {
+    const tileElement = document.createElement('div');
+    tileElement.className = `tile ${tile.colour}`;
+    tileElement.dataset.tile = String(tile.id);
+    if (tile.colour === state.player.colour) tileElement.classList.add('solid');
+    for (const doorSide of doorSidesByTileIndex.get(tileIndex) ?? []) {
+      tileElement.style[`border${borderSideNames[doorSide]}Style` as 'borderTopStyle'] = 'dotted';
     }
-    if (tile.goal && !s.collected.includes(tile.id)) el.appendChild(diamond(opposite(tile.colour)));
-    if (i === s.player.row * s.cols + s.player.col) el.appendChild(player(s.player.colour));
-    board.appendChild(el);
+    if (tile.goal && !state.collectedGoalIds.includes(tile.id)) {
+      tileElement.appendChild(diamondElement(opposite(tile.colour)));
+    }
+    if (tileIndex === playerTileIndex) tileElement.appendChild(playerElement(state.player.colour));
+    boardElement.appendChild(tileElement);
   });
 }
 
-function diamond(colour: Colour) {
-  const el = document.createElement('div');
-  el.className = `diamond ${colour}`;
-  return el;
+function diamondElement(colour: Colour) {
+  const element = document.createElement('div');
+  element.className = `diamond ${colour}`;
+  return element;
 }
 
-function player(colour: Colour) {
-  const el = document.createElement('div');
-  el.className = `player ${colour}`;
-  return el;
+function playerElement(colour: Colour) {
+  const element = document.createElement('div');
+  element.className = `player ${colour}`;
+  return element;
 }

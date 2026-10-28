@@ -13,6 +13,6 @@ await build({
   // Logging is on everywhere except Netlify's production deploy (and ?debug turns it on there).
   define: { __DEV__: String(process.env.CONTEXT !== 'production') },
 });
-for (const path of ['index.html', 'index.css']) {
-  cpSync(path, `dist/${path}`);
+for (const staticFile of ['index.html', 'index.css']) {
+  cpSync(staticFile, `dist/${staticFile}`);
 }

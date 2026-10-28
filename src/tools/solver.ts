@@ -3,39 +3,45 @@
 import { DIRECTIONS, move, type Direction, type GameState } from '../core';
 
 export interface Solution {
-  moves: number;
+  moveCount: number;
   path: Direction[];
-  states: number;
+  searchedStateCount: number;
 }
 
-const key = (s: GameState) =>
-  JSON.stringify([s.player, s.tiles.map((t) => t.id), s.doors, s.collected]);
+const stateKey = (state: GameState) =>
+  JSON.stringify([state.player, state.tiles.map((tile) => tile.id), state.doors, state.collectedGoalIds]);
 
 /** Returns the shortest solution, or null if none is found within `maxStates`. */
 export function solve(start: GameState, maxStates = 500_000): Solution | null {
-  const parents = new Map<string, [string, Direction] | null>([[key(start), null]]);
-  let frontier = [start];
-  while (frontier.length && parents.size < maxStates) {
-    const next: GameState[] = [];
-    for (const s of frontier) {
-      const k = key(s);
-      for (const d of DIRECTIONS) {
-        const r = move(s, d).state;
-        if (r === s) continue;
-        const rk = key(r);
-        if (parents.has(rk)) continue;
-        parents.set(rk, [k, d]);
-        if (r.status === 'won') return { moves: r.moves - start.moves, path: pathTo(parents, rk), states: parents.size };
-        next.push(r);
+  const parentsByKey = new Map<string, [parentKey: string, direction: Direction] | null>([[stateKey(start), null]]);
+  let frontierStates = [start];
+  while (frontierStates.length && parentsByKey.size < maxStates) {
+    const nextFrontierStates: GameState[] = [];
+    for (const state of frontierStates) {
+      const currentKey = stateKey(state);
+      for (const direction of DIRECTIONS) {
+        const nextState = move(state, direction).state;
+        if (nextState === state) continue;
+        const nextKey = stateKey(nextState);
+        if (parentsByKey.has(nextKey)) continue;
+        parentsByKey.set(nextKey, [currentKey, direction]);
+        if (nextState.status === 'won') {
+          return {
+            moveCount: nextState.moveCount - start.moveCount,
+            path: pathTo(parentsByKey, nextKey),
+            searchedStateCount: parentsByKey.size,
+          };
+        }
+        nextFrontierStates.push(nextState);
       }
     }
-    frontier = next;
+    frontierStates = nextFrontierStates;
   }
   return null;
 }
 
-function pathTo(parents: Map<string, [string, Direction] | null>, k: string): Direction[] {
+function pathTo(parentsByKey: Map<string, [parentKey: string, direction: Direction] | null>, endKey: string): Direction[] {
   const path: Direction[] = [];
-  for (let p = parents.get(k); p; p = parents.get(p[0])) path.unshift(p[1]);
+  for (let parent = parentsByKey.get(endKey); parent; parent = parentsByKey.get(parent[0])) path.unshift(parent[1]);
   return path;
 }

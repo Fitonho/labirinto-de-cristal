@@ -8,7 +8,7 @@ export const DIRECTIONS: readonly Direction[] = ['up', 'right', 'down', 'left'];
 
 export interface Cell {
   row: number;
-  col: number;
+  column: number;
 }
 
 /**
@@ -22,13 +22,13 @@ export interface Tile {
 }
 
 /**
- * A door sits on the edge between (row, col) and its right or lower
+ * A door sits on the edge between (row, column) and its right or lower
  * neighbour. Its two sides always have different colours, so the side in the
  * player's colour is the one that can be pushed and that carries it.
  */
 export interface Door {
   row: number;
-  col: number;
+  column: number;
   side: 'right' | 'down';
 }
 
@@ -37,13 +37,13 @@ export interface Player extends Cell {
 }
 
 export interface GameState {
-  rows: number;
-  cols: number;
-  tiles: Tile[]; // row by row, rows * cols long
+  rowCount: number;
+  columnCount: number;
+  tiles: Tile[]; // row by row, rowCount * columnCount long
   doors: Door[];
   player: Player;
-  collected: number[]; // ids of goal tiles already reached
-  moves: number;
+  collectedGoalIds: number[]; // ids of goal tiles already reached
+  moveCount: number;
   status: 'playing' | 'won';
 }
 
@@ -55,8 +55,8 @@ export interface LevelData {
   order: number;
   /** One string per row: b / w for black / white, uppercase for a goal. */
   grid: string[];
-  start: [row: number, col: number];
-  doors?: [row: number, col: number, side: Direction][];
+  start: [row: number, column: number];
+  doors?: [row: number, column: number, side: Direction][];
   par?: number;
 }
 
@@ -66,12 +66,12 @@ export type PushRefusal = 'edge' | 'goal' | 'ownColour' | 'door';
 export type GameEvent =
   | { type: 'moved'; from: Cell; to: Cell }
   | { type: 'blocked'; reason: BlockReason }
-  | { type: 'pushed'; tile: number; from: Cell; to: Cell }
+  | { type: 'pushed'; tileId: number; from: Cell; to: Cell }
   | { type: 'pushRefused'; reason: PushRefusal; at: Cell }
   | { type: 'flipped'; colour: Colour; door: Door }
   | { type: 'doorMoved'; from: Door; to: Door }
-  | { type: 'collected'; tile: number; at: Cell }
-  | { type: 'won'; moves: number };
+  | { type: 'collected'; tileId: number; at: Cell }
+  | { type: 'won'; moveCount: number };
 
 export interface StepResult {
   state: GameState;

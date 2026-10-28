@@ -33,10 +33,10 @@ h1 { font-size: 1.4rem; margin: 0 0 12px; }
 
 /* The board fills the width on phones and caps tiles at 56px on big screens. */
 #board {
-  --tile: min(56px, calc((100vw - 32px) / var(--cols)), calc(65vh / var(--rows)));
+  --tile-size: min(56px, calc((100vw - 32px) / var(--column-count)), calc(65vh / var(--row-count)));
   display: grid;
-  grid-template-columns: repeat(var(--cols), var(--tile));
-  grid-template-rows: repeat(var(--rows), var(--tile));
+  grid-template-columns: repeat(var(--column-count), var(--tile-size));
+  grid-template-rows: repeat(var(--row-count), var(--tile-size));
   width: max-content;
   margin: 0 auto;
   touch-action: none;

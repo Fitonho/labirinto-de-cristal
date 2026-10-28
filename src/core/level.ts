@@ -13,66 +13,71 @@ export type LevelError =
   | 'door-same-colour'
   | 'door-duplicate';
 
-interface Parsed {
+interface ParsedGrid {
   errors: LevelError[];
-  rows: number;
-  cols: number;
+  rowCount: number;
+  columnCount: number;
   tiles: Tile[];
 }
 
-function parse(data: LevelData): Parsed {
-  const rows = data.grid.map((line) => line.trim().split(/\s+/).filter(Boolean));
+function parseGrid(level: LevelData): ParsedGrid {
+  const symbolRows = level.grid.map((line) => line.trim().split(/\s+/).filter(Boolean));
   const errors: LevelError[] = [];
-  if (rows.length === 0 || rows[0].length === 0) return { errors: ['grid-empty'], rows: 0, cols: 0, tiles: [] };
-  const cols = rows[0].length;
-  if (rows.some((r) => r.length !== cols)) errors.push('grid-ragged');
-  const tiles: Tile[] = [];
-  rows.flat().forEach((symbol, id) => {
+  if (symbolRows.length === 0 || symbolRows[0].length === 0) {
+    return { errors: ['grid-empty'], rowCount: 0, columnCount: 0, tiles: [] };
+  }
+  const columnCount = symbolRows[0].length;
+  if (symbolRows.some((symbolRow) => symbolRow.length !== columnCount)) errors.push('grid-ragged');
+  const tiles: Tile[] = symbolRows.flat().map((symbol, tileId) => {
     if (!/^[bwBW]$/.test(symbol)) errors.push('grid-symbol');
-    const tile: Tile = { id, colour: symbol.toLowerCase() === 'b' ? 'black' : 'white' };
+    const tile: Tile = { id: tileId, colour: symbol.toLowerCase() === 'b' ? 'black' : 'white' };
     if (symbol !== symbol.toLowerCase()) tile.goal = true;
-    tiles.push(tile);
+    return tile;
   });
-  return { errors, rows: rows.length, cols, tiles };
+  return { errors, rowCount: symbolRows.length, columnCount, tiles };
+}
+
+function levelDoors(level: LevelData): Door[] {
+  return (level.doors ?? []).map(([row, column, side]) => edge({ row, column }, side));
 }
 
 /** Lists everything wrong with a level; an empty list means it can be played. */
-export function validateLevel(data: LevelData): LevelError[] {
-  const parsed = parse(data);
-  const errors = parsed.errors;
+export function validateLevel(level: LevelData): LevelError[] {
+  const parsedGrid = parseGrid(level);
+  const errors = parsedGrid.errors;
   if (errors.length) return errors;
-  const s = { ...parsed, doors: [] } as unknown as GameState;
-  if (!s.tiles.some((t) => t.goal)) errors.push('no-goal');
-  const [row, col] = data.start;
-  if (!inside(s, { row, col })) errors.push('start-outside');
-  else if (tileAt(s, { row, col }).goal) errors.push('start-on-goal');
-  const doors: Door[] = [];
-  for (const [r, c, side] of data.doors ?? []) {
-    const d = edge({ row: r, col: c }, side);
-    if (!sides(d).every((cell) => inside(s, cell))) errors.push('door-outside');
-    else if (!doorIsValid(s, d)) errors.push('door-same-colour');
-    if (doors.some((x) => sameDoor(x, d))) errors.push('door-duplicate');
-    doors.push(d);
+  const board = { ...parsedGrid, doors: [] } as unknown as GameState;
+  if (!board.tiles.some((tile) => tile.goal)) errors.push('no-goal');
+  const [startRow, startColumn] = level.start;
+  const start = { row: startRow, column: startColumn };
+  if (!inside(board, start)) errors.push('start-outside');
+  else if (tileAt(board, start).goal) errors.push('start-on-goal');
+  const checkedDoors: Door[] = [];
+  for (const door of levelDoors(level)) {
+    if (!sides(door).every((cell) => inside(board, cell))) errors.push('door-outside');
+    else if (!doorIsValid(board, door)) errors.push('door-same-colour');
+    if (checkedDoors.some((checkedDoor) => sameDoor(checkedDoor, door))) errors.push('door-duplicate');
+    checkedDoors.push(door);
   }
   return errors;
 }
 
 /** Builds the starting state. Throws if the level has errors. */
-export function loadLevel(data: LevelData): GameState {
-  const errors = validateLevel(data);
-  if (errors.length) throw new Error(`Level ${data.id}: ${[...new Set(errors)].join(', ')}`);
-  const { rows, cols, tiles } = parse(data);
-  const [row, col] = data.start;
+export function loadLevel(level: LevelData): GameState {
+  const errors = validateLevel(level);
+  if (errors.length) throw new Error(`Level ${level.id}: ${[...new Set(errors)].join(', ')}`);
+  const { rowCount, columnCount, tiles } = parseGrid(level);
+  const [startRow, startColumn] = level.start;
   const state: GameState = {
-    rows,
-    cols,
+    rowCount,
+    columnCount,
     tiles,
-    doors: (data.doors ?? []).map(([r, c, side]) => edge({ row: r, col: c }, side)),
-    player: { row, col, colour: 'black' },
-    collected: [],
-    moves: 0,
+    doors: levelDoors(level),
+    player: { row: startRow, column: startColumn, colour: 'black' },
+    collectedGoalIds: [],
+    moveCount: 0,
     status: 'playing',
   };
-  state.player.colour = opposite(tileAt(state, { row, col }).colour);
+  state.player.colour = opposite(tileAt(state, state.player).colour);
   return state;
 }

@@ -13,93 +13,105 @@ import { LegacyGame, legacyLevelNames } from './legacy/rules';
 //   and ignored (only level 13 starts like that).
 
 const legacyLevels = new Levels() as any;
-const names = legacyLevelNames(legacyLevels);
-const dirToSide = { up: side.Top, right: side.Right, down: side.Bottom, left: side.Left };
+const legacyNames = legacyLevelNames(legacyLevels);
+const legacySidesByDirection = { up: side.Top, right: side.Right, down: side.Bottom, left: side.Left };
 const sideNames = ['up', 'right', 'down', 'left'] as const;
+const rowOffsets = [-1, 0, 1, 0];
+const columnOffsets = [0, 1, 0, -1];
 
-function rng(seed: number) {
+const WALKS_PER_LEVEL = 100;
+const MOVES_PER_WALK = 150;
+
+/** A small seeded random generator, so failures can be replayed. */
+function seededRandom(seed: number) {
   return () => ((seed = (seed * 1103515245 + 12345) & 0x7fffffff) / 0x7fffffff);
 }
 
-function colourOf(hex: string) {
-  return hex === '#000000' ? 'black' : 'white';
+function colourOf(hexColour: string) {
+  return hexColour === '#000000' ? 'black' : 'white';
 }
 
-/** Doors in the old game, as edges, or null if any breaks the agreed rules. */
-function legacyDoors(g: LegacyGame) {
-  const out: string[] = [];
-  for (let i = 0; i < g.M; i++)
-    for (let j = 0; j < g.N; j++)
-      for (let k = 0; k < 4; k++) {
-        if (g.matriz[i][j].walls[k] !== wallState.portal) continue;
-        if (g.matriz[i][j].color !== g.playerColor) return null;
-        const di = [-1, 0, 1, 0][k], dj = [0, 1, 0, -1][k];
-        const [a, b] = [i + di, j + dj];
-        if (a < 0 || a >= g.M || b < 0 || b >= g.N) return null;
-        if (g.matriz[a][b].color === g.matriz[i][j].color) return null;
-        out.push(edgeKey(i, j, sideNames[k]));
+function edgeKey(row: number, column: number, sideName: string) {
+  if (sideName === 'left') return `${row},${column - 1},right`;
+  if (sideName === 'up') return `${row - 1},${column},down`;
+  return `${row},${column},${sideName}`;
+}
+
+/** Doors in the old game, as edge keys, or null if any breaks the agreed rules. */
+function legacyDoorKeys(legacyGame: LegacyGame) {
+  const doorKeys: string[] = [];
+  for (let row = 0; row < legacyGame.M; row++) {
+    for (let column = 0; column < legacyGame.N; column++) {
+      for (let sideIndex = 0; sideIndex < 4; sideIndex++) {
+        const block = legacyGame.matriz[row][column];
+        if (block.walls[sideIndex] !== wallState.portal) continue;
+        if (block.color !== legacyGame.playerColor) return null;
+        const neighbourRow = row + rowOffsets[sideIndex];
+        const neighbourColumn = column + columnOffsets[sideIndex];
+        const neighbourOutside =
+          neighbourRow < 0 || neighbourRow >= legacyGame.M || neighbourColumn < 0 || neighbourColumn >= legacyGame.N;
+        if (neighbourOutside) return null;
+        if (legacyGame.matriz[neighbourRow][neighbourColumn].color === block.color) return null;
+        doorKeys.push(edgeKey(row, column, sideNames[sideIndex]));
       }
-  return out.sort();
+    }
+  }
+  return doorKeys.sort();
 }
 
-function edgeKey(i: number, j: number, s: string) {
-  if (s === 'left') return `${i},${j - 1},right`;
-  if (s === 'up') return `${i - 1},${j},down`;
-  return `${i},${j},${s}`;
+function engineDoorKeys(state: GameState) {
+  return state.doors.map((door) => `${door.row},${door.column},${door.side}`).sort();
 }
 
-function engineDoors(s: GameState) {
-  return s.doors.map((d) => `${d.row},${d.col},${d.side}`).sort();
-}
-
-function snapshot(g: LegacyGame) {
+function legacySnapshot(legacyGame: LegacyGame) {
   return {
-    player: [...g.playerPos, colourOf(g.playerColor)],
-    tiles: g.matriz.flat().map((b) => colourOf(b.color)[0] + (b.event ? '*' : '')).join(''),
+    player: [...legacyGame.playerPos, colourOf(legacyGame.playerColor)],
+    tiles: legacyGame.matriz
+      .flat()
+      .map((block) => colourOf(block.color)[0] + (block.event ? '*' : ''))
+      .join(''),
   };
 }
 
-function engineSnapshot(s: GameState) {
+function engineSnapshot(state: GameState) {
   return {
-    player: [s.player.row, s.player.col, s.player.colour],
-    tiles: s.tiles.map((t) => t.colour[0] + (t.goal ? '*' : '')).join(''),
+    player: [state.player.row, state.player.column, state.player.colour],
+    tiles: state.tiles.map((tile) => tile.colour[0] + (tile.goal ? '*' : '')).join(''),
   };
 }
 
 describe('engine matches the original rules', () => {
-  names.forEach((name, n) => {
-    const data = levels[n];
-    it(`${name} (${data.id})`, () => {
-      const random = rng(n + 1);
-      let compared = 0;
-      const seen = new Set<string>();
-      for (let walk = 0; walk < 100; walk++) {
-        const g = new LegacyGame(legacyLevels[name]);
-        let s = loadLevel(data);
-        for (let m = 0; m < 150; m++) {
-          const doors = legacyDoors(g);
-          if (doors === null) break;
-          expect(snapshot(g)).toEqual(engineSnapshot(s));
-          expect(doors).toEqual(engineDoors(s));
-          compared++;
-          if (s.status === 'won') {
-            expect(g.won).toBe(true);
+  legacyNames.forEach((legacyName, levelIndex) => {
+    const levelData = levels[levelIndex];
+    it(`${legacyName} (${levelData.id})`, () => {
+      const random = seededRandom(levelIndex + 1);
+      let comparedStateCount = 0;
+      const seenEventTypes = new Set<string>();
+      for (let walk = 0; walk < WALKS_PER_LEVEL; walk++) {
+        const legacyGame = new LegacyGame(legacyLevels[legacyName]);
+        let state = loadLevel(levelData);
+        for (let moveNumber = 0; moveNumber < MOVES_PER_WALK; moveNumber++) {
+          const legacyDoors = legacyDoorKeys(legacyGame);
+          if (legacyDoors === null) break;
+          expect(legacySnapshot(legacyGame)).toEqual(engineSnapshot(state));
+          expect(legacyDoors).toEqual(engineDoorKeys(state));
+          comparedStateCount++;
+          if (state.status === 'won') {
+            expect(legacyGame.won).toBe(true);
             break;
           }
-          const dir = DIRECTIONS[Math.floor(random() * 4)];
-          const r = move(s, dir);
-          if (r.events.some((e) => e.type === 'pushRefused' && e.reason === 'door')) {
-            break;
-          }
-          r.events.forEach((e) => seen.add(e.type));
-          g.move(dirToSide[dir]);
-          s = r.state;
+          const direction = DIRECTIONS[Math.floor(random() * 4)];
+          const result = move(state, direction);
+          if (result.events.some((event) => event.type === 'pushRefused' && event.reason === 'door')) break;
+          result.events.forEach((event) => seenEventTypes.add(event.type));
+          legacyGame.move(legacySidesByDirection[direction]);
+          state = result.state;
         }
       }
-      if (data.id === 'draft-13') return expect(compared).toBe(0);
-      expect(compared).toBeGreaterThan(3000);
+      if (levelData.id === 'draft-13') return expect(comparedStateCount).toBe(0);
+      expect(comparedStateCount).toBeGreaterThan(3000);
       // The walks must have exercised pushes and door flips, not just walking.
-      expect([...seen]).toEqual(expect.arrayContaining(['moved', 'pushed', 'flipped', 'pushRefused']));
+      expect([...seenEventTypes]).toEqual(expect.arrayContaining(['moved', 'pushed', 'flipped', 'pushRefused']));
     });
   });
 });

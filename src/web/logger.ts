@@ -4,7 +4,7 @@
 declare const __DEV__: boolean;
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
-const order: Level[] = ['debug', 'info', 'warn', 'error'];
+const levelsInOrder: Level[] = ['debug', 'info', 'warn', 'error'];
 
 function debugFromUrl(): boolean {
   try {
@@ -21,7 +21,7 @@ export const logging = {
 
 function log(level: Level, message: string, data?: unknown) {
   if (level !== 'error' && level !== 'warn' && !logging.enabled) return;
-  if (order.indexOf(level) < order.indexOf(logging.level)) return;
+  if (levelsInOrder.indexOf(level) < levelsInOrder.indexOf(logging.level)) return;
   const line = `[labirinto] ${message}`;
   data === undefined ? console[level](line) : console[level](line, data);
 }

@@ -31,39 +31,39 @@ const game = createSlice({
   name: 'game',
   initialState: initialState('pt'),
   reducers: {
-    selectLevel(s, a: PayloadAction<number>) {
-      s.levelIndex = a.payload;
-      s.history = startHistory(loadLevel(levels[a.payload]));
-      s.events = [];
+    selectLevel(slice, action: PayloadAction<number>) {
+      slice.levelIndex = action.payload;
+      slice.history = startHistory(loadLevel(levels[action.payload]));
+      slice.events = [];
     },
-    move(s, a: PayloadAction<Direction>) {
-      const { state, events } = engineMove(s.history.present, a.payload);
-      s.history = record(s.history, state);
-      s.events = events;
+    move(slice, action: PayloadAction<Direction>) {
+      const { state, events } = engineMove(slice.history.present, action.payload);
+      slice.history = record(slice.history, state);
+      slice.events = events;
     },
-    undo(s) {
-      s.history = undoHistory(s.history);
-      s.events = [];
+    undo(slice) {
+      slice.history = undoHistory(slice.history);
+      slice.events = [];
     },
-    reset(s) {
-      s.history = resetHistory(s.history);
-      s.events = [];
+    reset(slice) {
+      slice.history = resetHistory(slice.history);
+      slice.events = [];
     },
-    setLanguage(s, a: PayloadAction<Language>) {
-      s.language = a.payload;
+    setLanguage(slice, action: PayloadAction<Language>) {
+      slice.language = action.payload;
     },
   },
 });
 
 export const actions = game.actions;
 
-const logActions: Middleware<{}, RootState> = (api) => (next) => (action) => {
-  const result = next(action);
-  const { events, history } = api.getState().game;
+const logActions: Middleware<{}, RootState> = (storeApi) => (nextDispatch) => (action) => {
+  const result = nextDispatch(action);
+  const { events, history } = storeApi.getState().game;
   logger.debug((action as { type: string }).type, {
     payload: (action as { payload?: unknown }).payload,
     events,
-    moves: history.present.moves,
+    moveCount: history.present.moveCount,
   });
   return result;
 };
@@ -72,7 +72,7 @@ export function createStore(language: Language) {
   return configureStore({
     reducer: { game: game.reducer },
     preloadedState: { game: initialState(language) },
-    middleware: (getDefault) => getDefault().concat(logActions),
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logActions),
   });
 }
 
