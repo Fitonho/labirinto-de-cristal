@@ -1,21 +1,14 @@
-// Console logging that is only on in dev builds, or with ?debug in the URL.
-// The engine never logs; the web shell logs actions and the events they cause.
+// Console logging that is only on in dev builds; a shell can also switch it on
+// (the web page does for ?debug). The engine never logs; the store logs actions
+// and the events they cause.
 
 declare const __DEV__: boolean;
 
 type Level = 'debug' | 'info' | 'warn' | 'error';
 const levelsInOrder: Level[] = ['debug', 'info', 'warn', 'error'];
 
-function debugFromUrl(): boolean {
-  try {
-    return new URLSearchParams(location.search).has('debug');
-  } catch {
-    return false;
-  }
-}
-
 export const logging = {
-  enabled: (typeof __DEV__ !== 'undefined' && __DEV__) || debugFromUrl(),
+  enabled: typeof __DEV__ !== 'undefined' && __DEV__,
   level: 'debug' as Level,
 };
 

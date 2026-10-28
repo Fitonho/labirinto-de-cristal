@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { levels } from '../src/levels/index';
-import { actions, createStore } from '../src/web/store';
+import { actions, createStore } from '../src/state/store';
 
 describe('web store', () => {
   it('plays, undoes and resets through Redux actions', () => {

@@ -2,10 +2,11 @@
 import { levels, chapters } from '../levels/index';
 import { defaultLanguage, t, type StringKey } from './i18n';
 import { listenToKeys, listenToSwipes, type Command } from './input';
-import { logger } from './logger';
+import { logger, logging } from '../state/logger';
 import { renderBoard } from './render';
-import { actions, createStore } from './store';
+import { actions, createStore } from '../state/store';
 
+if (new URLSearchParams(location.search).has('debug')) logging.enabled = true;
 const store = createStore(defaultLanguage());
 const elementById = <ElementType extends HTMLElement>(id: string) => document.getElementById(id) as ElementType;
 

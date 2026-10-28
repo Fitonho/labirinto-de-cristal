@@ -1,5 +1,5 @@
 // Player-facing text in Portuguese and English.
-export type Language = 'pt' | 'en';
+import type { Language } from '../state/store';
 
 const strings = {
   pt: {
