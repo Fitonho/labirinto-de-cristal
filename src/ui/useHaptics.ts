@@ -19,15 +19,21 @@ const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
 };
 
 /**
- * Milliseconds of vibration, or a pattern of pause, vibration, pause, vibration.
- * Many Android motors need about 40 ms to spin up, so shorter pulses are never felt.
+ * Android 13+ files any app vibration of up to three steps under touch feedback,
+ * so the phone's touch feedback setting mutes it. Ending each pulse with a 1 ms
+ * pause and a 1 ms buzz makes it four steps, which plays like the win's double
+ * pulse does. Many motors also need about 40 ms to spin up, so shorter pulses
+ * are never felt.
  */
-const ANDROID_VIBRATIONS_BY_CUE_KIND: Record<HapticCueKind, number | number[]> = {
+const singlePulse = (milliseconds: number) => [0, milliseconds, 1, 1];
+
+/** A pattern of pause, vibration, pause, vibration, in milliseconds. */
+const ANDROID_VIBRATIONS_BY_CUE_KIND: Record<HapticCueKind, number[]> = {
   win: [0, 60, 80, 80],
-  door: 80,
-  crystal: 50,
-  push: 40,
-  bump: 60,
+  door: singlePulse(80),
+  crystal: singlePulse(50),
+  push: singlePulse(40),
+  bump: singlePulse(60),
 };
 
 function play(kind: HapticCueKind) {
