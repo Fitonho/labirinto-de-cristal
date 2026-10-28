@@ -1,0 +1,7 @@
+# Production deploys from master; every other branch and PR gets its own preview URL.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
