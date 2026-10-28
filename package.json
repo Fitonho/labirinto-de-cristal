@@ -4,6 +4,8 @@
   "scripts": {
     "start": "expo start",
     "web": "expo start --web",
+    "phone": "expo start --tunnel ngrok --no-dev --minify --clear",
+    "phone:dev": "expo start --tunnel ngrok --clear",
     "build": "tsc && node scripts/build.mjs",
     "test": "vitest run",
     "typecheck": "tsc",
