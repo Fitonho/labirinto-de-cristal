@@ -2,7 +2,11 @@
 // a move, a jump after undo, restart or a new level, and a short bump out and
 // back when the move went nowhere. Reanimated skips these animations when the
 // phone or browser asks for reduced motion, so pieces then jump into place.
-import { useEffect, useRef } from 'react';
+//
+// The piece is drawn at the board's corner and moved by a transform, never by
+// left and top: those are layout, and animating them recalculates the layout
+// on every frame.
+import { useLayoutEffect, useRef } from 'react';
 import { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import {
   BUMP_BACK_DURATION,
@@ -27,7 +31,8 @@ export function useAnimatedPosition({ left, top, motion, pieceId, bumpDistance }
   const animatedTop = useSharedValue(top);
   const restingPosition = useRef({ left, top });
 
-  useEffect(() => {
+  // A layout effect starts the slide in the same commit as the move, not a frame later.
+  useLayoutEffect(() => {
     const bumpDirection = bumpDirectionFor(motion, pieceId);
     // Most pieces stay put on a move; starting no animation for them keeps a big board quick on phones.
     const stays = left === restingPosition.current.left && top === restingPosition.current.top;
@@ -53,5 +58,5 @@ export function useAnimatedPosition({ left, top, motion, pieceId, bumpDistance }
     }
   }, [left, top, motion, pieceId, bumpDistance, animatedLeft, animatedTop]);
 
-  return useAnimatedStyle(() => ({ left: animatedLeft.value, top: animatedTop.value }));
+  return useAnimatedStyle(() => ({ transform: [{ translateX: animatedLeft.value }, { translateY: animatedTop.value }] }));
 }
