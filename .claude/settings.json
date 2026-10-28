@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell -ExecutionPolicy Bypass -File scripts/open-expo-window.ps1:*)",
+      "Bash(powershell.exe -ExecutionPolicy Bypass -File scripts/open-expo-window.ps1:*)",
+      "PowerShell(powershell -ExecutionPolicy Bypass -File scripts/open-expo-window.ps1:*)",
+      "PowerShell(./scripts/open-expo-window.ps1:*)",
+      "PowerShell(.\\scripts\\open-expo-window.ps1:*)",
+      "Bash(git fetch origin:*)",
+      "PowerShell(git fetch origin:*)",
+      "Bash(git checkout -B claude/:*)",
+      "PowerShell(git checkout -B claude/:*)"
+    ]
+  }
+}
