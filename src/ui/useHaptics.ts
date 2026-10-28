@@ -47,9 +47,9 @@ function play(kind: HapticCueKind) {
 }
 
 /** `events` is a new array after every action, so each move plays once even when it repeats the last one. */
-export function useHaptics(events: GameEvent[]) {
+export function useHaptics(events: GameEvent[], vibrationOn: boolean) {
   useEffect(() => {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web' || !vibrationOn) return;
     const cue = hapticCueFor(events);
     if (!cue) return;
     if (cue.delay === 0) {

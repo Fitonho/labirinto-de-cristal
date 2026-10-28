@@ -1,5 +1,6 @@
-// App state: the current level, its undo history and the last move's events.
-// The reducers only call the engine; all game rules live in src/core.
+// App state: the current level, its undo history, the last move's events and
+// the player's settings.
+// The game reducers only call the engine; all game rules live in src/core.
 import { configureStore, createSlice, type Middleware, type PayloadAction } from '@reduxjs/toolkit';
 import {
   loadLevel,
@@ -14,6 +15,7 @@ import {
 } from '../core';
 import { levels } from '../levels/index';
 import { logger } from './logger';
+import { DEFAULT_SETTINGS, settingsReducer, type Settings } from './settings';
 
 export type Language = 'pt' | 'en';
 
@@ -71,11 +73,11 @@ const logActions: Middleware<{}, RootState> = (store) => (next) => (action) => {
 
 export function createStore(language: Language) {
   return configureStore({
-    reducer: { game: game.reducer },
-    preloadedState: { game: initialState(language) },
+    reducer: { game: game.reducer, settings: settingsReducer },
+    preloadedState: { game: initialState(language), settings: DEFAULT_SETTINGS },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logActions),
   });
 }
 
 export type AppStore = ReturnType<typeof createStore>;
-export type RootState = { game: GameSlice };
+export type RootState = { game: GameSlice; settings: Settings };

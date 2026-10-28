@@ -1,5 +1,5 @@
-// The game screen: board, move counter, level picker, undo, restart and the
-// language switch. All game changes go through the Redux store.
+// The game screen: board, move counter, level picker, undo, restart, the
+// language switch, and the move's sound and vibration. All game changes go through the Redux store.
 import { useCallback, useEffect, useState } from 'react';
 import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -14,6 +14,8 @@ import { LevelPicker } from '../src/ui/LevelPicker';
 import { palette } from '../src/ui/theme';
 import { useHaptics } from '../src/ui/useHaptics';
 import { useKeyboardCommands } from '../src/ui/useKeyboardCommands';
+import { useSettings } from '../src/ui/useSettings';
+import { useSounds } from '../src/ui/useSounds';
 
 export default function GameScreen() {
   const dispatch = useDispatch();
@@ -22,17 +24,21 @@ export default function GameScreen() {
   const level = levels[levelIndex];
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [pickerVisible, setPickerVisible] = useState(false);
+  const { soundOn, vibrationOn, toggleSound, toggleVibration } = useSettings();
 
   const run = useCallback(
     (command: Command) => {
       if (command.type === 'move') dispatch(actions.move(command.direction));
       if (command.type === 'undo') dispatch(actions.undo());
       if (command.type === 'reset') dispatch(actions.reset());
+      if (command.type === 'toggleSound') toggleSound();
+      if (command.type === 'toggleVibration') toggleVibration();
     },
-    [dispatch],
+    [dispatch, toggleSound, toggleVibration],
   );
   useKeyboardCommands(run, !pickerVisible);
-  useHaptics(events);
+  useHaptics(events, vibrationOn);
+  useSounds(events, soundOn);
   useEffect(() => {
     // Screen readers and translators on the web read the page language.
     if (Platform.OS === 'web') document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
