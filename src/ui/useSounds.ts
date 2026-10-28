@@ -1,6 +1,7 @@
 // Plays the last move's sound. Phones use expo-audio: each sound has one
 // player, loaded at start and rewound before every play, mixing with the
-// player's own music and following the iPhone's silent switch. The web uses
+// player's own music. Like most games it follows the media volume, not the
+// ringer, so sounds play on silent and vibrate too. The web uses
 // Web Audio (see webSounds.web.ts), because expo-audio's web players start late.
 // The files come from scripts/make-sounds.mjs.
 import { createAudioPlayer, setAudioModeAsync, type AudioPlayer } from 'expo-audio';
@@ -21,11 +22,18 @@ const SOUND_FILES_BY_CUE_KIND: Record<SoundCueKind, number> = {
 };
 
 function createPhoneSoundBank(): SoundBank<SoundCueKind> {
-  setAudioModeAsync({ playsInSilentMode: false, interruptionMode: 'mixWithOthers' }).catch((error: unknown) =>
+  setAudioModeAsync({ playsInSilentMode: true, interruptionMode: 'mixWithOthers' }).catch((error: unknown) =>
     logger.warn('audio mode not set', { error: String(error) }),
   );
+  // In Expo Go a sound file is an address on the dev server, often over a tunnel,
+  // and a player streaming from it fetches the file again after every rewind,
+  // half a second or more. Downloading each file to the phone first makes every
+  // play read a local file; an installed app already has them locally.
   const playersByCueKind = Object.fromEntries(
-    Object.entries(SOUND_FILES_BY_CUE_KIND).map(([kind, soundFile]) => [kind, createAudioPlayer(soundFile)]),
+    Object.entries(SOUND_FILES_BY_CUE_KIND).map(([kind, soundFile]) => [
+      kind,
+      createAudioPlayer(soundFile, { downloadFirst: true }),
+    ]),
   ) as Record<SoundCueKind, AudioPlayer>;
   return {
     play(kind) {
