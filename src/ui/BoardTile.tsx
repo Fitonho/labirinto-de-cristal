@@ -10,7 +10,7 @@
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedProps, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { G, Path } from 'react-native-svg';
 import { opposite, type Direction, type Tile } from '../core';
 import { boxOutline, seamFrame, seamPath } from './boardLayout';
 import { Crystal } from './Crystal';
@@ -20,6 +20,7 @@ import { useAnimatedPosition } from './useAnimatedPosition';
 import { useBoxAmount } from './useBoxAmount';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+const SVG_MARGIN = 2;
 
 interface BoardTileProps {
   tile: Tile;
@@ -38,7 +39,8 @@ interface BoardTileProps {
  * rendering; the motion only matters to the ones it touches.
  */
 function drawsTheSame(previous: BoardTileProps, next: BoardTileProps): boolean {
-  const motionTouchesTile = next.motion.flips || bumpDirectionFor(next.motion, next.tile.id) !== null;
+  const motionTouchesTile =
+    previous.motion !== next.motion && (next.motion.flips || bumpDirectionFor(next.motion, next.tile.id) !== null);
   return (
     !motionTouchesTile &&
     previous.tile === next.tile &&
@@ -111,9 +113,17 @@ function FlaredShape({ size, doorSides, colour, boxAmount }: ShapeProps & { door
   const doorSidesKey = doorSides.join();
   const steadyDoorSides = useMemo(() => doorSides, [doorSidesKey]);
   const outlineProps = useAnimatedProps(() => ({ d: boxOutline(size, steadyDoorSides, boxAmount.value) }));
+  // The drawing area has a margin all round: Android left a sliver short of a door edge drawn exactly on the
+  // right or bottom border of its view.
   return (
-    <Svg width={size} height={size} style={styles.fill}>
-      <AnimatedPath animatedProps={outlineProps} fill={colour} />
+    <Svg
+      width={size + SVG_MARGIN * 2}
+      height={size + SVG_MARGIN * 2}
+      style={[styles.fill, { left: -SVG_MARGIN, top: -SVG_MARGIN }]}
+    >
+      <G x={SVG_MARGIN} y={SVG_MARGIN}>
+        <AnimatedPath animatedProps={outlineProps} fill={colour} />
+      </G>
     </Svg>
   );
 }

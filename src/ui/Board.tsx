@@ -3,7 +3,7 @@
 // state only; swipes on the board are turned into commands for the screen.
 // The last action's engine events decide whether pieces slide, jump, bump or
 // flip.
-import { useEffect, useMemo, useState } from 'react';
+import { memo, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
 import { useReducedMotion } from 'react-native-reanimated';
@@ -22,7 +22,8 @@ interface BoardProps {
   onCommand: (command: Command) => void;
 }
 
-export function Board({ state, events, tileSize, onCommand }: BoardProps) {
+// Memoised so opening the level picker or switching language doesn't redraw every tile.
+export const Board = memo(function Board({ state, events, tileSize, onCommand }: BoardProps) {
   const doorSides = useMemo(() => doorSidesByTileIndex(state), [state]);
   const motion = useMemo(() => motionFor(events, state), [events, state]);
   const boxColour = useDrawnBoxColour(state.player.colour, motion);
@@ -77,7 +78,7 @@ export function Board({ state, events, tileSize, onCommand }: BoardProps) {
       </View>
     </GestureDetector>
   );
-}
+});
 
 /**
  * The colour drawn as boxes, which is also the player's colour on screen. On a
