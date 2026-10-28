@@ -26,6 +26,15 @@ describe('board layout', () => {
     expect(tileSizeFor(board, 375, 812)).toBe(34);
     expect(tileSizeFor(board, 1280, 300)).toBe(21);
   });
+
+  it('keeps every tile edge on a whole screen pixel', () => {
+    const pixelRatio = 2.625; // a common Android phone
+    const tileSize = tileSizeFor({ rowCount: 5, columnCount: 5 }, 411, 914, pixelRatio);
+    for (let tileCount = 0; tileCount <= 5; tileCount++) {
+      const edgeInPixels = tileCount * tileSize * pixelRatio;
+      expect(Math.abs(edgeInPixels - Math.round(edgeInPixels))).toBeLessThan(1e-9);
+    }
+  });
 });
 
 describe('input and language', () => {

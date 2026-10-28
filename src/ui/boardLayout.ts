@@ -21,13 +21,20 @@ export function doorSidesByTileIndex(state: GameState): Map<number, Direction[]>
 
 export const MAX_TILE_SIZE = 56;
 
-/** Tiles fill the width on phones, keep the board under 65% of the height, and stop at 56 points. */
+/**
+ * Tiles fill the width on phones, keep the board under 65% of the height, and
+ * stop at 56 points. The size is also a whole number of screen pixels: phones
+ * round each tile's position to pixels, and a fractional size left a one-pixel
+ * gap between some rows.
+ */
 export function tileSizeFor(
   board: Pick<GameState, 'rowCount' | 'columnCount'>,
   screenWidth: number,
   screenHeight: number,
+  pixelRatio = 1,
 ): number {
   const sizeByWidth = (screenWidth - 32) / board.columnCount;
   const sizeByHeight = (screenHeight * 0.65) / board.rowCount;
-  return Math.floor(Math.min(MAX_TILE_SIZE, sizeByWidth, sizeByHeight));
+  const size = Math.min(MAX_TILE_SIZE, sizeByWidth, sizeByHeight);
+  return Math.floor(size * pixelRatio) / pixelRatio;
 }
