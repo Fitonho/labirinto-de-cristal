@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { loadLevel, move } from '../src/core';
 import {
@@ -11,9 +12,10 @@ import {
   tileSizeFor,
 } from '../src/ui/boardLayout';
 import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
-import { swipeDirection } from '../src/ui/commands';
 import { hapticCueFor } from '../src/ui/haptics';
+import { commandsByKey, swipeDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
+import { SOUND_CUE_KINDS, soundCueFor } from '../src/ui/sounds';
 import { BUMP_OUT_DURATION, bumpDirectionFor, bumpOffset, FLIP_GROW_DURATION, motionFor, SLIDE_DURATION } from '../src/ui/motion';
 import { customLevelState, levelById } from './helpers';
 
@@ -194,5 +196,35 @@ describe('haptics', () => {
 
   it('stays silent on a move after winning', () => {
     expect(hapticCueFor([{ type: 'blocked', reason: 'won', direction: 'up' }])).toBeNull();
+  });
+});
+
+describe('sounds', () => {
+  // Player is white (stands on black). Black is floor, white blocks.
+  const startState = customLevelState(['b w b b', 'b b b W'], [0, 0]);
+
+  it('ticks on a plain step, as the slide starts', () => {
+    expect(soundCueFor(move(startState, 'down').events)).toEqual({ kind: 'step', delay: 0 });
+  });
+
+  it('plays the haptic cue when a move has one, so sound and vibration land together', () => {
+    expect(soundCueFor(move(startState, 'right').events)).toEqual({ kind: 'push', delay: 0 });
+    expect(soundCueFor(move(startState, 'up').events)).toEqual({ kind: 'bump', delay: BUMP_OUT_DURATION });
+  });
+
+  it('stays silent after undo, restart, a new level or a move after winning', () => {
+    expect(soundCueFor([])).toBeNull();
+    expect(soundCueFor([{ type: 'blocked', reason: 'won', direction: 'up' }])).toBeNull();
+  });
+
+  it('has a file for every sound', () => {
+    for (const kind of SOUND_CUE_KINDS) {
+      expect(existsSync(new URL(`../assets/sounds/${kind}.wav`, import.meta.url)), kind).toBe(true);
+    }
+  });
+
+  it('turns sound and vibration on and off with M and V', () => {
+    expect(commandsByKey.m).toEqual({ type: 'toggleSound' });
+    expect(commandsByKey.v).toEqual({ type: 'toggleVibration' });
   });
 });

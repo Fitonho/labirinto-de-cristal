@@ -1,5 +1,5 @@
-// Root of the Expo app: one Redux store, in the phone's language, and gesture
-// support for every screen.
+// Root of the Expo app: one Redux store, in the phone's language, with the
+// saved settings, and gesture support for every screen.
 import { getLocales } from 'expo-localization';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -10,6 +10,7 @@ import { levels } from '../src/levels/index';
 import { logger, logging } from '../src/state/logger';
 import { createStore } from '../src/state/store';
 import { languageForLocale } from '../src/ui/i18n';
+import { useSavedSettings } from '../src/ui/useSettings';
 
 // ?debug in the page address turns logging on, even on the production site.
 if (Platform.OS === 'web' && new URLSearchParams(window.location.search).has('debug')) logging.enabled = true;
@@ -17,6 +18,7 @@ if (Platform.OS === 'web' && new URLSearchParams(window.location.search).has('de
 export default function RootLayout() {
   useEffect(() => logger.info('started', { levels: levels.length }), []);
   const [store] = useState(() => createStore(languageForLocale(getLocales()[0]?.languageTag)));
+  useSavedSettings(store);
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <Provider store={store}>

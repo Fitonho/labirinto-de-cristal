@@ -1,7 +1,12 @@
 // Player commands and the keys that trigger them, shared by every shell.
 import type { Direction } from '../core';
 
-export type Command = { type: 'move'; direction: Direction } | { type: 'undo' } | { type: 'reset' };
+export type Command =
+  | { type: 'move'; direction: Direction }
+  | { type: 'undo' }
+  | { type: 'reset' }
+  | { type: 'toggleSound' }
+  | { type: 'toggleVibration' };
 
 export const commandsByKey: Record<string, Command> = {
   arrowup: { type: 'move', direction: 'up' },
@@ -15,6 +20,8 @@ export const commandsByKey: Record<string, Command> = {
   z: { type: 'undo' },
   backspace: { type: 'undo' },
   r: { type: 'reset' },
+  m: { type: 'toggleSound' },
+  v: { type: 'toggleVibration' },
 };
 
 export const MIN_SWIPE_PIXELS = 24;
