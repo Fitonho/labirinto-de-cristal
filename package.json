@@ -1,0 +1,10 @@
+{
+  "name": "labirinto-de-cristal",
+  "private": true,
+  "scripts": {
+    "build": "tsc && node scripts/copy-site.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.6.3"
+  }
+}
