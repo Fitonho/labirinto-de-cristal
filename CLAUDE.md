@@ -6,6 +6,7 @@ A small push-and-flip puzzle game in TypeScript. You are a piece of one colour o
 
 - `npm install`, then `npm run build`: type-checks and exports the web version into `dist/` (`expo export`, via `scripts/build.mjs`). Netlify runs this.
 - `npm start`: Expo dev server; scan the QR code with Expo Go on a phone. `npm run web` opens it in a browser.
+- `npm run phone`: the production-like server for phone tests (`--tunnel ngrok --no-dev --minify --clear`); `npm run phone:dev` is the same in dev mode. Dev mode is 5 to 10 times slower, so judge speed with `npm run phone`.
 - `npm test`: Vitest, about 10 s; the comparison test is the slow part.
 - `npm run typecheck`: `tsc` only.
 - `npm run solve -- <level id>`: shortest solution using the real engine. Only use it on small levels (the samples, new 4x4 to 7x7 boards). The 14 draft levels are open-ended, and searching them runs for a long time; the owner asked not to run solvers over them.
@@ -47,5 +48,6 @@ Specs live outside the repo, in the project files: `specs/portal-spec.md` and `s
 ## Workflow
 
 - The owner is Filipe (GitHub `Fitonho`). Work on a branch and open a PR to `master`. Netlify builds a preview at `deploy-preview-<N>--labirinto-de-cristal.netlify.app`. Only Filipe merges, and merging deploys https://labirinto-de-cristal.netlify.app.
+- To let Filipe test a branch on his phone, check it out on his Windows PC (Station-Fi) and run `powershell -ExecutionPolicy Bypass -File scripts/open-expo-window.ps1` there. It stops this project's old Expo and ngrok and starts `npm run phone` in a visible Windows Terminal tab, so he sees the exp:// address and QR code. Never start Expo as a hidden background job. `.claude/settings.json` allows that script and the `git fetch` / `git checkout -B claude/...` it needs without asking.
 - Before pushing, run `npm test` and `npm run build`. For UI changes, also open the built `dist/` in a browser at desktop and phone widths. Native builds can't run in the cloud; Filipe checks them in Expo Go.
 - Player-facing text needs both Portuguese and English entries in `src/ui/i18n.ts`.
