@@ -26,7 +26,8 @@ function addBell(samples, startSeconds, frequency, loudness) {
   const startIndex = Math.round(startSeconds * SAMPLE_RATE);
   for (let sampleIndex = startIndex; sampleIndex < samples.length; sampleIndex++) {
     const time = (sampleIndex - startIndex) / SAMPLE_RATE;
-    const attack = Math.min(1, time / 0.002);
+    // A soft 6 ms attack: a sharper one sounds like a tap on glass, not a chime.
+    const attack = Math.min(1, time / 0.006);
     let value = 0;
     ratios.forEach((ratio, partialIndex) => {
       value += levels[partialIndex] * Math.exp(-time / decays[partialIndex]) * Math.sin(2 * Math.PI * frequency * ratio * time);
@@ -45,13 +46,14 @@ function addThump(samples, startFrequency, endFrequency, decay, noiseLevel, seed
     const frequency = endFrequency + (startFrequency - endFrequency) * Math.exp(-time / 0.03);
     phase += (2 * Math.PI * frequency) / SAMPLE_RATE;
     filteredNoise += 0.15 * (noise() - filteredNoise);
-    const attack = Math.min(1, time / 0.003);
+    // A slow attack and the low-pass in render() keep it a muffled thud, not a tap.
+    const attack = Math.min(1, time / 0.012);
     const texture = noiseLevel * filteredNoise * Math.exp(-time / 0.015) * 4;
     samples[sampleIndex] += attack * Math.exp(-time / decay) * (Math.sin(phase) + texture);
   }
 }
 
-/** The door: a rising glassy sweep with a soft shimmer, then a bell on arrival. */
+/** The door: a rising glassy sweep with a soft shimmer. */
 function addSweep(samples) {
   let phase = 0;
   let upperPhase = 0;
@@ -64,13 +66,28 @@ function addSweep(samples) {
     const shimmer = 0.75 + 0.25 * Math.sin(2 * Math.PI * 28 * time);
     samples[sampleIndex] += 0.5 * envelope * shimmer * (Math.sin(phase) + 0.4 * Math.sin(upperPhase));
   }
-  addBell(samples, 0.2, 1568, 0.35);
 }
 
-/** Draws a sound, scales its loudest sample to `peak` and fades the last 10 ms so it never ends in a click. */
-function render(durationSeconds, draw, peak) {
+/** Softens everything above `cutoffFrequency`: two one-pole low-pass passes, 12 dB per octave. */
+function lowPass(samples, cutoffFrequency) {
+  const smoothing = 1 - Math.exp((-2 * Math.PI * cutoffFrequency) / SAMPLE_RATE);
+  for (let passIndex = 0; passIndex < 2; passIndex++) {
+    let filtered = 0;
+    for (let sampleIndex = 0; sampleIndex < samples.length; sampleIndex++) {
+      filtered += smoothing * (samples[sampleIndex] - filtered);
+      samples[sampleIndex] = filtered;
+    }
+  }
+}
+
+/**
+ * Draws a sound, muffles it above `cutoffFrequency`, scales its loudest sample
+ * to `peak` and fades the last 10 ms so it never ends in a click.
+ */
+function render(durationSeconds, draw, peak, cutoffFrequency) {
   const samples = new Float32Array(Math.round(durationSeconds * SAMPLE_RATE));
   draw(samples);
+  lowPass(samples, cutoffFrequency);
   const loudest = samples.reduce((largest, value) => Math.max(largest, Math.abs(value)), 0) || 1;
   const fadeLength = Math.round(0.01 * SAMPLE_RATE);
   for (let sampleIndex = 0; sampleIndex < samples.length; sampleIndex++) {
@@ -104,18 +121,19 @@ function wavFile(samples) {
 
 /** One file per sound cue kind in src/ui/sounds.ts. */
 const samplesBySoundName = {
-  step: render(0.07, (samples) => addThump(samples, 260, 180, 0.012, 0.6, 7), 0.22),
-  push: render(0.2, (samples) => addThump(samples, 150, 85, 0.05, 0.5, 11), 0.75),
-  bump: render(0.14, (samples) => addThump(samples, 95, 45, 0.03, 0.9, 23), 0.7),
-  door: render(0.7, addSweep, 0.6),
-  crystal: render(0.9, (samples) => addBell(samples, 0, 1318.5, 1), 0.6),
+  step: render(0.09, (samples) => addThump(samples, 160, 115, 0.02, 0.2, 7), 0.16, 700),
+  push: render(0.24, (samples) => addThump(samples, 120, 70, 0.06, 0.25, 11), 0.55, 600),
+  bump: render(0.18, (samples) => addThump(samples, 80, 45, 0.04, 0.3, 23), 0.55, 450),
+  door: render(0.5, addSweep, 0.45, 1800),
+  crystal: render(0.9, (samples) => addBell(samples, 0, 1318.5, 1), 0.45, 2500),
   win: render(
     1.5,
     (samples) =>
       [1046.5, 1318.5, 1568, 2093].forEach((frequency, noteIndex) =>
         addBell(samples, noteIndex * 0.09, frequency, 1 - noteIndex * 0.12),
       ),
-    0.7,
+    0.55,
+    3000,
   ),
 };
 
