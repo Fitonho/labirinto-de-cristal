@@ -1,42 +1,28 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css"
-        integrity="sha384-9aIt2nRpC12Uk9gS9baDl411NQApFmC26EwAOH8WgZl5MYYxFfc+NcPb1dKGj7Sk" crossorigin="anonymous">
     <link rel="stylesheet" href="index.css">
-    <title>Labirinto</title>
+    <title>Labirinto de Cristal</title>
 </head>
 
 <body>
-    <div class="container">
-        <div class='row'>
-            <div class='col'>
-                <div id='board' class="container"></div>
-            </div>
+    <main>
+        <header>
+            <h1 data-text="title">Labirinto de Cristal</h1>
+            <button id="language" type="button" class="link" data-text="language">English</button>
+        </header>
+        <div id="board" aria-label="board"></div>
+        <p id="status" aria-live="polite"></p>
+        <div class="controls">
+            <select id="level-select" aria-label="level"></select>
+            <button id="undo" type="button" data-text="undo">Desfazer</button>
+            <button id="reset" type="button" data-text="reset">Recomeçar</button>
         </div>
-        <div class='row'>
-            <hr>
-        </div>
-        <div class='row'>
-            <div class='col'>
-                <!-- <form> -->
-                    <div class="form-group">
-                        <div class='row'>
-                            <div class='col-3'><select id='levelSelection' class="form-control" name='selectedLevel'>
-                            </select></div>
-                            <div class='col-4'>
-                                <button id='selectLevelButton' type="button" class="btn btn-primary">Select Level</button>
-                            </div>
-                        </div>
-                        
-                    </div>
-                <!-- </form> -->
-            </div>
-        </div>
-    </div>
+        <p class="help" data-text="help"></p>
+    </main>
     <script src="main.js" type="module"></script>
 </body>
 
