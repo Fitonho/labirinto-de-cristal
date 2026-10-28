@@ -2,7 +2,7 @@
 // colour, which tiles are boxes and their outline, which tile edges are doors
 // and how big a tile can be. No React here, so Vitest tests it.
 import { opposite, sides, type Colour, type Direction, type GameState, type Tile } from '../core';
-import { BOX_CORNER_RADIUS, BOX_INSET, DOOR_FLARE_LENGTH, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_WIDTH } from './theme';
+import { BOX_CORNER_RADIUS, BOX_INSET, DOOR_FLARE_LENGTH, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_OVERLAP, SEAM_WIDTH } from './theme';
 
 /**
  * The floor layer is one rectangle in this colour. With two colours it is the
@@ -103,13 +103,16 @@ export interface SeamFrame {
 /**
  * A door's seam is drawn just outside its box, on the floor side of the edge,
  * inside a frame one cell long so its glow can't spill past the cell corners.
+ * The frame starts a pixel inside the box, so the seam always touches it.
  */
+export const seamFrameThickness = SEAM_FRAME_WIDTH + SEAM_OVERLAP;
+
 export function seamFrame(side: Direction, size: number): SeamFrame {
   const frames: Record<Direction, SeamFrame> = {
-    right: { left: size, top: 0, width: SEAM_FRAME_WIDTH, height: size },
-    left: { left: -SEAM_FRAME_WIDTH, top: 0, width: SEAM_FRAME_WIDTH, height: size },
-    down: { left: 0, top: size, width: size, height: SEAM_FRAME_WIDTH },
-    up: { left: 0, top: -SEAM_FRAME_WIDTH, width: size, height: SEAM_FRAME_WIDTH },
+    right: { left: size - SEAM_OVERLAP, top: 0, width: seamFrameThickness, height: size },
+    left: { left: -SEAM_FRAME_WIDTH, top: 0, width: seamFrameThickness, height: size },
+    down: { left: 0, top: size - SEAM_OVERLAP, width: size, height: seamFrameThickness },
+    up: { left: 0, top: -SEAM_FRAME_WIDTH, width: size, height: seamFrameThickness },
   };
   return frames[side];
 }
@@ -119,21 +122,22 @@ export function seamFrame(side: Direction, size: number): SeamFrame {
  * door edge, rounded at both ends on the floor side.
  */
 export function seamPath(side: Direction, size: number): string {
-  // Points are given as (distance along the edge, distance out from it) and turned into frame coordinates.
+  // Points are given as (distance along the edge, distance out from the frame's box side) and turned into frame coordinates.
+  const pillThickness = SEAM_OVERLAP + SEAM_WIDTH;
   const framePoint = (alongEdge: number, outFromEdge: number): string => {
     const points: Record<Direction, [number, number]> = {
       right: [outFromEdge, alongEdge],
-      left: [SEAM_FRAME_WIDTH - outFromEdge, alongEdge],
+      left: [seamFrameThickness - outFromEdge, alongEdge],
       down: [alongEdge, outFromEdge],
-      up: [alongEdge, SEAM_FRAME_WIDTH - outFromEdge],
+      up: [alongEdge, seamFrameThickness - outFromEdge],
     };
     return points[side].join(' ');
   };
   return [
     `M${framePoint(0, 0)}`,
-    `Q${framePoint(0, SEAM_WIDTH)} ${framePoint(SEAM_CAP_LENGTH, SEAM_WIDTH)}`,
-    `L${framePoint(size - SEAM_CAP_LENGTH, SEAM_WIDTH)}`,
-    `Q${framePoint(size, SEAM_WIDTH)} ${framePoint(size, 0)}`,
+    `Q${framePoint(0, pillThickness)} ${framePoint(SEAM_CAP_LENGTH, pillThickness)}`,
+    `L${framePoint(size - SEAM_CAP_LENGTH, pillThickness)}`,
+    `Q${framePoint(size, pillThickness)} ${framePoint(size, 0)}`,
     'Z',
   ].join(' ');
 }

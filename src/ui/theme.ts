@@ -29,5 +29,7 @@ export const DOOR_FLARE_LENGTH = 0.26;
 export const SEAM_WIDTH = 3;
 export const SEAM_GLOW = 7;
 export const SEAM_FRAME_WIDTH = 12;
+/** The seam reaches this far under its box, so pixel rounding on phones can't open a gap between them. */
+export const SEAM_OVERLAP = 1;
 /** How long the seam's rounded ends are, along the edge. */
 export const SEAM_CAP_LENGTH = SEAM_WIDTH * 3;

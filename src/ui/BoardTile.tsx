@@ -15,7 +15,7 @@ import { opposite, type Direction, type Tile } from '../core';
 import { boxOutline, seamFrame, seamPath } from './boardLayout';
 import { Crystal } from './Crystal';
 import { BOX_BUMP_DISTANCE, bumpDirectionFor, type BoardMotion } from './motion';
-import { BOX_CORNER_RADIUS, BOX_INSET, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_WIDTH, seamColour, tileColours } from './theme';
+import { BOX_CORNER_RADIUS, BOX_INSET, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_OVERLAP, SEAM_WIDTH, seamColour, tileColours } from './theme';
 import { useAnimatedPosition } from './useAnimatedPosition';
 import { useBoxAmount } from './useBoxAmount';
 
@@ -166,8 +166,8 @@ function DoorSeam({ side, size, boxAmount }: { side: Direction; size: number; bo
     backgroundColor: seamColour,
     borderRadius: SEAM_WIDTH,
     boxShadow: `0 0 ${SEAM_GLOW}px ${seamColour}`,
-    left: isVertical ? (side === 'left' ? SEAM_FRAME_WIDTH - SEAM_WIDTH : -SEAM_WIDTH) : SEAM_CAP_LENGTH,
-    top: isVertical ? SEAM_CAP_LENGTH : side === 'up' ? SEAM_FRAME_WIDTH - SEAM_WIDTH : -SEAM_WIDTH,
+    left: isVertical ? (side === 'left' ? SEAM_FRAME_WIDTH - SEAM_WIDTH : SEAM_OVERLAP - SEAM_WIDTH) : SEAM_CAP_LENGTH,
+    top: isVertical ? SEAM_CAP_LENGTH : side === 'up' ? SEAM_FRAME_WIDTH - SEAM_WIDTH : SEAM_OVERLAP - SEAM_WIDTH,
     width: isVertical ? SEAM_WIDTH * 2 : size - SEAM_CAP_LENGTH * 2,
     height: isVertical ? size - SEAM_CAP_LENGTH * 2 : SEAM_WIDTH * 2,
   };

@@ -10,7 +10,7 @@ import {
   seamPath,
   tileSizeFor,
 } from '../src/ui/boardLayout';
-import { BOX_INSET, SEAM_FRAME_WIDTH } from '../src/ui/theme';
+import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
 import { swipeDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
 import { bumpDirectionFor, bumpOffset, motionFor } from '../src/ui/motion';
@@ -50,11 +50,12 @@ describe('board layout', () => {
     expect(boxOutline(40, ['left'], 1)).toContain('0.00 40.00 L0.00 0.00');
   });
 
-  it('puts a seam just outside its box, one cell long', () => {
-    expect(seamFrame('right', 40)).toEqual({ left: 40, top: 0, width: SEAM_FRAME_WIDTH, height: 40 });
-    expect(seamFrame('up', 40)).toEqual({ left: 0, top: -SEAM_FRAME_WIDTH, width: 40, height: SEAM_FRAME_WIDTH });
-    // A left seam starts and ends on the edge, which is the frame's right side.
-    expect(seamPath('left', 40)).toMatch(new RegExp(`^M${SEAM_FRAME_WIDTH} 0 .* ${SEAM_FRAME_WIDTH} 40 Z$`));
+  it('puts a seam just outside its box, one cell long, reaching a pixel under the box', () => {
+    const thickness = SEAM_FRAME_WIDTH + SEAM_OVERLAP;
+    expect(seamFrame('right', 40)).toEqual({ left: 40 - SEAM_OVERLAP, top: 0, width: thickness, height: 40 });
+    expect(seamFrame('up', 40)).toEqual({ left: 0, top: -SEAM_FRAME_WIDTH, width: 40, height: thickness });
+    // A left seam starts and ends on the frame's box side, which is its right side.
+    expect(seamPath('left', 40)).toMatch(new RegExp(`^M${thickness} 0 .* ${thickness} 40 Z$`));
   });
 
   it('fits tiles to the screen and caps them', () => {
