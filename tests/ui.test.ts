@@ -12,8 +12,9 @@ import {
 } from '../src/ui/boardLayout';
 import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
 import { swipeDirection } from '../src/ui/commands';
+import { hapticCueFor } from '../src/ui/haptics';
 import { languageForLocale } from '../src/ui/i18n';
-import { bumpDirectionFor, bumpOffset, motionFor } from '../src/ui/motion';
+import { BUMP_OUT_DURATION, bumpDirectionFor, bumpOffset, FLIP_GROW_DURATION, motionFor, SLIDE_DURATION } from '../src/ui/motion';
 import { customLevelState, levelById } from './helpers';
 
 describe('board layout', () => {
@@ -142,5 +143,56 @@ describe('board motion', () => {
   it('offsets a bump in its direction', () => {
     expect(bumpOffset('left', 5)).toEqual({ offsetLeft: -5, offsetTop: 0 });
     expect(bumpOffset('down', 5)).toEqual({ offsetLeft: 0, offsetTop: 5 });
+  });
+});
+
+describe('haptics', () => {
+  // Player is white (stands on black). Black is floor, white blocks.
+  const startState = customLevelState(['b w b b', 'b b b W'], [0, 0]);
+
+  it('stays silent on a plain step and when there are no events, as after undo or restart', () => {
+    expect(hapticCueFor(move(startState, 'down').events)).toBeNull();
+    expect(hapticCueFor([])).toBeNull();
+  });
+
+  it('taps as soon as a push starts', () => {
+    expect(hapticCueFor(move(startState, 'right').events)).toEqual({ kind: 'push', delay: 0 });
+  });
+
+  it('taps when a bump hits, at the board edge or against a box that will not move', () => {
+    expect(hapticCueFor(move(startState, 'up').events)).toEqual({ kind: 'bump', delay: BUMP_OUT_DURATION });
+    const refusedState = customLevelState(['b w w', 'b b B'], [0, 0]);
+    expect(hapticCueFor(move(refusedState, 'right').events)).toEqual({ kind: 'bump', delay: BUMP_OUT_DURATION });
+  });
+
+  it('taps a door when the colours swap', () => {
+    const doorState = { ...startState, doors: [{ row: 1, column: 0, side: 'right' as const }] };
+    const { events } = move({ ...doorState, player: { row: 1, column: 0, colour: 'white' } }, 'right');
+    expect(hapticCueFor(events)).toEqual({ kind: 'door', delay: FLIP_GROW_DURATION });
+  });
+
+  it('plays only the strongest cue of a move: win over crystal, door over push', () => {
+    const at = { row: 0, column: 0 };
+    expect(hapticCueFor([{ type: 'moved', from: at, to: at }, { type: 'collected', tileId: 1, at }])).toEqual({
+      kind: 'crystal',
+      delay: SLIDE_DURATION,
+    });
+    expect(
+      hapticCueFor([
+        { type: 'moved', from: at, to: at },
+        { type: 'collected', tileId: 1, at },
+        { type: 'won', moveCount: 3 },
+      ]),
+    ).toEqual({ kind: 'win', delay: SLIDE_DURATION });
+    expect(
+      hapticCueFor([
+        { type: 'pushed', tileId: 1, from: at, to: at },
+        { type: 'flipped', colour: 'black', door: { ...at, side: 'right' } },
+      ]),
+    ).toEqual({ kind: 'door', delay: FLIP_GROW_DURATION });
+  });
+
+  it('stays silent on a move after winning', () => {
+    expect(hapticCueFor([{ type: 'blocked', reason: 'won', direction: 'up' }])).toBeNull();
   });
 });
