@@ -1,6 +1,42 @@
-// Pure helpers that turn a GameState into what the board draws: which tile
-// edges are doors and how big a tile can be. No React here, so Vitest tests it.
-import { sides, tileAt, type Direction, type GameState } from '../core';
+// Pure helpers that turn a GameState into what the board draws: the floor
+// colour, which tiles are boxes and their shape, which tile edges are doors
+// and how big a tile can be. No React here, so Vitest tests it.
+import { opposite, sides, tileAt, type Colour, type Direction, type GameState, type Tile } from '../core';
+import { EDGE_WIDTH } from './theme';
+
+/**
+ * The floor layer is one rectangle in this colour. With two colours it is the
+ * one the player is not; a third colour or a neutral floor changes only this.
+ */
+export function floorColour(state: GameState): Colour {
+  return opposite(state.player.colour);
+}
+
+/** Boxes are the tiles in the player's colour: the ones that block and can be pushed. */
+export function isBox(state: GameState, tile: Tile): boolean {
+  return tile.colour === state.player.colour;
+}
+
+export interface BoxInsets {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}
+
+/**
+ * How far a box sits inside its cell on each side. The floor shows through
+ * the gap, which is what outlines a box. On a door side the box reaches the
+ * edge so the dotted door sits on it.
+ */
+export function boxInsets(doorSides: Direction[]): BoxInsets {
+  return {
+    top: doorSides.includes('up') ? 0 : EDGE_WIDTH,
+    right: doorSides.includes('right') ? 0 : EDGE_WIDTH,
+    bottom: doorSides.includes('down') ? 0 : EDGE_WIDTH,
+    left: doorSides.includes('left') ? 0 : EDGE_WIDTH,
+  };
+}
 
 /**
  * Doors are drawn on the side that is the player's colour, as dotted edges of
