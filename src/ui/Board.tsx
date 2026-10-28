@@ -3,17 +3,17 @@
 // state only; swipes on the board are turned into commands for the screen.
 // The last action's engine events decide whether pieces slide, jump, bump or
 // flip.
-import { memo, useEffect, useMemo, useState } from 'react';
-import { View } from 'react-native';
+import { memo, useMemo, useRef } from 'react';
 import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
-import { useReducedMotion } from 'react-native-reanimated';
-import { opposite, type Colour, type GameEvent, type GameState } from '../core';
-import { doorSidesByTileIndex, floorColour, isBox } from './boardLayout';
+import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import type { GameEvent, GameState } from '../core';
+import { doorSidesByTileIndex, floorColour } from './boardLayout';
 import { BoardTile } from './BoardTile';
 import { swipeDirection, type Command } from './commands';
-import { FLIP_GROW_DURATION, motionFor, type BoardMotion } from './motion';
+import { motionFor } from './motion';
 import { Player } from './Player';
 import { tileColours } from './theme';
+import { drawnColourOf, useBoxAmounts } from './useBoxAmounts';
 
 interface BoardProps {
   state: GameState;
@@ -26,12 +26,21 @@ interface BoardProps {
 export const Board = memo(function Board({ state, events, tileSize, onCommand }: BoardProps) {
   const doorSides = useMemo(() => doorSidesByTileIndex(state), [state]);
   const motion = useMemo(() => motionFor(events, state), [events, state]);
-  const boxColour = useDrawnBoxColour(state.player.colour, motion);
+  const { boxAmountsByColour, drawnBoxColour } = useBoxAmounts(state.player.colour, motion);
+  const floorStyle = useAnimatedStyle(() => ({ backgroundColor: tileColours[floorColour(drawnColourOf(drawnBoxColour.value))] }));
+  // A swipe moves as soon as it is long enough, not when the finger lifts; the rest of that stroke does nothing.
+  const swipeHasMoved = useRef(false);
   const swipe = usePanGesture({
     runOnJS: true,
-    onDeactivate: (panEvent) => {
+    onBegin: () => {
+      swipeHasMoved.current = false;
+    },
+    onUpdate: (panEvent) => {
+      if (swipeHasMoved.current) return;
       const direction = swipeDirection(panEvent.translationX, panEvent.translationY);
-      if (direction) onCommand({ type: 'move', direction });
+      if (!direction) return;
+      swipeHasMoved.current = true;
+      onCommand({ type: 'move', direction });
     },
   });
 
@@ -45,15 +54,10 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
   };
   return (
     <GestureDetector gesture={swipe}>
-      <View
+      <Animated.View
         testID="board"
         accessibilityLabel="board"
-        style={{
-          width: tileSize * state.columnCount,
-          height: tileSize * state.rowCount,
-          overflow: 'hidden',
-          backgroundColor: tileColours[floorColour(boxColour)],
-        }}
+        style={[{ width: tileSize * state.columnCount, height: tileSize * state.rowCount, overflow: 'hidden' }, floorStyle]}
       >
         {state.tiles.map((tile, tileIndex) => (
           <BoardTile
@@ -62,39 +66,20 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
             size={tileSize}
             {...cellPosition(tileIndex)}
             doorSides={doorSides.get(tileIndex) ?? []}
-            isBox={isBox(state, tile)}
-            isDrawnAbove={tile.colour === boxColour}
+            boxAmount={boxAmountsByColour[tile.colour]}
+            drawnBoxColour={drawnBoxColour}
             showCrystal={showsCrystal(tileIndex)}
             motion={motion}
           />
         ))}
         <Player
-          colour={boxColour}
+          drawnBoxColour={drawnBoxColour}
           tileSize={tileSize}
           left={state.player.column * tileSize}
           top={state.player.row * tileSize}
           motion={motion}
         />
-      </View>
+      </Animated.View>
     </GestureDetector>
   );
 });
-
-/**
- * The colour drawn as boxes, which is also the player's colour on screen. On a
- * flip it stays the old colour until the old boxes have grown into full tiles,
- * so the floor, the player and which tiles sit on top all swap at that moment.
- */
-function useDrawnBoxColour(playerColour: Colour, motion: BoardMotion): Colour {
-  const reducedMotion = useReducedMotion();
-  const [flipPastHalfway, setFlipPastHalfway] = useState<BoardMotion | null>(null);
-  const waitsForHalfway = motion.flips && !reducedMotion && flipPastHalfway !== motion;
-
-  useEffect(() => {
-    if (!motion.flips || reducedMotion) return;
-    const timer = setTimeout(() => setFlipPastHalfway(motion), FLIP_GROW_DURATION);
-    return () => clearTimeout(timer);
-  }, [motion, reducedMotion]);
-
-  return waitsForHalfway ? opposite(playerColour) : playerColour;
-}

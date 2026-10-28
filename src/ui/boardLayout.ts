@@ -9,7 +9,9 @@ import { BOX_CORNER_RADIUS, BOX_INSET, DOOR_FLARE_LENGTH, SEAM_CAP_LENGTH, SEAM_
  * one the boxes are not; a third colour or a neutral floor changes only this.
  */
 export function floorColour(boxColour: Colour): Colour {
-  return opposite(boxColour);
+  'worklet';
+  // Spelled out rather than calling the engine's opposite(), because the board runs this on the UI thread during a flip.
+  return boxColour === 'black' ? 'white' : 'black';
 }
 
 /** Boxes are the tiles in the player's colour: the ones that block and can be pushed. */

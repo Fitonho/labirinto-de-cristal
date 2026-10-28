@@ -5,8 +5,10 @@
 // flip turn boxes into floor and back. A box's doors are glowing seams just
 // outside it, and they and its crystal move with it when it slides.
 //
-// Phones redraw every tile on a flip, so a tile without doors is a plain
-// rounded view that only scales; just the few door tiles need an SVG outline.
+// A flip animates every tile, so a tile without doors is a plain rounded view
+// that only scales; just the few door tiles need an SVG outline. Tiles of one
+// colour share their box amount and the board's drawn box colour, so a flip
+// changes no props and redraws no tile in React.
 import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedProps, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
@@ -17,7 +19,7 @@ import { Crystal } from './Crystal';
 import { BOX_BUMP_DISTANCE, bumpDirectionFor, type BoardMotion } from './motion';
 import { BOX_CORNER_RADIUS, BOX_INSET, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_OVERLAP, SEAM_WIDTH, seamColour, tileColours } from './theme';
 import { useAnimatedPosition } from './useAnimatedPosition';
-import { useBoxAmount } from './useBoxAmount';
+import { drawnColourOf, type DrawnBoxColour } from './useBoxAmounts';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
 const SVG_MARGIN = 2;
@@ -28,27 +30,26 @@ interface BoardTileProps {
   left: number; // the cell's position; the box's own shape comes from boxOutline
   top: number;
   doorSides: Direction[];
-  isBox: boolean; // what the tile is after this move
-  isDrawnAbove: boolean; // boxes sit above floor tiles; during a flip this switches halfway
+  boxAmount: SharedValue<number>; // shared by every tile of this colour: 1 is a box, 0 is floor
+  drawnBoxColour: DrawnBoxColour; // boxes sit above floor tiles; during a flip this switches halfway
   showCrystal: boolean;
   motion: BoardMotion;
 }
 
 /**
- * Most tiles neither move, bump nor flip on a given move, so they skip
- * rendering; the motion only matters to the ones it touches.
+ * Most tiles neither move nor bump on a given move, so they skip rendering;
+ * the motion only matters to the ones it touches. A flip runs on shared values.
  */
 function drawsTheSame(previous: BoardTileProps, next: BoardTileProps): boolean {
-  const motionTouchesTile =
-    previous.motion !== next.motion && (next.motion.flips || bumpDirectionFor(next.motion, next.tile.id) !== null);
+  const motionTouchesTile = previous.motion !== next.motion && bumpDirectionFor(next.motion, next.tile.id) !== null;
   return (
     !motionTouchesTile &&
     previous.tile === next.tile &&
     previous.size === next.size &&
     previous.left === next.left &&
     previous.top === next.top &&
-    previous.isBox === next.isBox &&
-    previous.isDrawnAbove === next.isDrawnAbove &&
+    previous.boxAmount === next.boxAmount &&
+    previous.drawnBoxColour === next.drawnBoxColour &&
     previous.showCrystal === next.showCrystal &&
     previous.doorSides.join() === next.doorSides.join()
   );
@@ -60,8 +61,8 @@ export const BoardTile = memo(function BoardTile({
   left,
   top,
   doorSides,
-  isBox,
-  isDrawnAbove,
+  boxAmount,
+  drawnBoxColour,
   showCrystal,
   motion,
 }: BoardTileProps) {
@@ -72,11 +73,12 @@ export const BoardTile = memo(function BoardTile({
     pieceId: tile.id,
     bumpDistance: size * BOX_BUMP_DISTANCE,
   });
-  const boxAmount = useBoxAmount(isBox, motion);
+  const tileColour = tile.colour;
+  const stackingStyle = useAnimatedStyle(() => ({ zIndex: drawnColourOf(drawnBoxColour.value) === tileColour ? 2 : 0 }));
   return (
     <Animated.View
-      testID={isBox ? `box-${tile.id}` : `floor-${tile.id}`}
-      style={[{ position: 'absolute', width: size, height: size, zIndex: isDrawnAbove ? 2 : 0 }, positionStyle]}
+      testID={`tile-${tile.id}`}
+      style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size }, positionStyle, stackingStyle]}
     >
       {doorSides.length > 0 ? (
         <FlaredShape size={size} doorSides={doorSides} colour={tileColours[tile.colour]} boxAmount={boxAmount} />

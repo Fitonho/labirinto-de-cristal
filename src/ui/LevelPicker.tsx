@@ -1,5 +1,6 @@
 // A list of levels grouped by chapter, shown over the game. Stands in for the
-// web <select>, which React Native does not have.
+// web <select>, which React Native does not have. It opens and closes without
+// a fade: the fade held it on screen for about 300 ms after a level was picked.
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { chapters, levels } from '../levels/index';
 import type { Language } from '../state/store';
@@ -16,7 +17,7 @@ interface LevelPickerProps {
 
 export function LevelPicker({ visible, language, currentLevelIndex, onPick, onClose }: LevelPickerProps) {
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose}>
         <Pressable style={styles.sheet} onPress={() => {}}>
           <Text style={styles.heading}>{t(language, 'chooseLevel')}</Text>
