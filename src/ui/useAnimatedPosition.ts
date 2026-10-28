@@ -2,7 +2,7 @@
 // a move, a jump after undo, restart or a new level, and a short bump out and
 // back when the move went nowhere. Reanimated skips these animations when the
 // phone or browser asks for reduced motion, so pieces then jump into place.
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Easing, useAnimatedStyle, useSharedValue, withSequence, withTiming } from 'react-native-reanimated';
 import {
   BUMP_BACK_DURATION,
@@ -25,9 +25,14 @@ interface PiecePosition {
 export function useAnimatedPosition({ left, top, motion, pieceId, bumpDistance }: PiecePosition) {
   const animatedLeft = useSharedValue(left);
   const animatedTop = useSharedValue(top);
+  const restingPosition = useRef({ left, top });
 
   useEffect(() => {
     const bumpDirection = bumpDirectionFor(motion, pieceId);
+    // Most pieces stay put on a move; starting no animation for them keeps a big board quick on phones.
+    const stays = left === restingPosition.current.left && top === restingPosition.current.top;
+    restingPosition.current = { left, top };
+    if (stays && !bumpDirection) return;
     if (bumpDirection) {
       const { offsetLeft, offsetTop } = bumpOffset(bumpDirection, bumpDistance);
       const bump = (restingValue: number, offset: number) =>

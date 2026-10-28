@@ -73,8 +73,10 @@ export default function GameScreen() {
         currentLevelIndex={levelIndex}
         onClose={() => setPickerVisible(false)}
         onPick={(pickedLevelIndex) => {
-          dispatch(actions.selectLevel(pickedLevelIndex));
+          // Close the picker first and build the new board on a later frame. Building it redraws every tile,
+          // and doing that in the same frame held the picker on screen after the tap.
           setPickerVisible(false);
+          requestAnimationFrame(() => requestAnimationFrame(() => dispatch(actions.selectLevel(pickedLevelIndex))));
         }}
       />
     </SafeAreaView>

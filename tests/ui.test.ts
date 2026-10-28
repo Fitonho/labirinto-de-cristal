@@ -1,38 +1,61 @@
 import { describe, expect, it } from 'vitest';
 import { loadLevel, move } from '../src/core';
-import { boxInsets, doorSidesByTileIndex, floorColour, isBox, MAX_TILE_SIZE, tileSizeFor } from '../src/ui/boardLayout';
-import { EDGE_WIDTH } from '../src/ui/theme';
+import {
+  boxOutline,
+  doorSidesByTileIndex,
+  floorColour,
+  isBox,
+  MAX_TILE_SIZE,
+  seamFrame,
+  seamPath,
+  tileSizeFor,
+} from '../src/ui/boardLayout';
+import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
 import { swipeDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
 import { bumpDirectionFor, bumpOffset, motionFor } from '../src/ui/motion';
 import { customLevelState, levelById } from './helpers';
 
 describe('board layout', () => {
-  it('draws a door on the tile in the player colour', () => {
-    // sample-b: the door sits between a black and a white tile on the top row; the player is white.
+  it('lists a door on both tiles beside it, so either can show it after a flip', () => {
+    // sample-b: the door sits between tiles 2 and 3 on the top row.
+    const state = loadLevel(levelById('sample-b'));
+    expect(doorSidesByTileIndex(state).get(2)).toEqual(['right']);
+    expect(doorSidesByTileIndex(state).get(3)).toEqual(['left']);
+    expect(doorSidesByTileIndex(state).has(1)).toBe(false);
+  });
+
+  it('draws the floor in the colour the boxes are not, and boxes in the player colour', () => {
     const state = loadLevel(levelById('sample-b'));
     expect(state.player.colour).toBe('white');
-    expect(doorSidesByTileIndex(state).get(3)).toEqual(['left']);
-    expect(doorSidesByTileIndex(state).has(2)).toBe(false);
-  });
-
-  it('draws the same door on the other tile after a flip', () => {
-    const state = loadLevel(levelById('sample-b'));
-    const flippedState = { ...state, player: { ...state.player, colour: 'black' as const } };
-    expect(doorSidesByTileIndex(flippedState).get(2)).toEqual(['right']);
-  });
-
-  it('draws the floor in the colour the player is not, and boxes in the player colour', () => {
-    const state = loadLevel(levelById('sample-b'));
-    expect(floorColour(state)).toBe('black');
+    expect(floorColour(state.player.colour)).toBe('black');
     expect(state.tiles.filter((tile) => isBox(state, tile)).every((tile) => tile.colour === 'white')).toBe(true);
-    const flippedState = { ...state, player: { ...state.player, colour: 'black' as const } };
-    expect(floorColour(flippedState)).toBe('white');
+    expect(floorColour('black')).toBe('white');
   });
 
-  it('insets a box from its cell except on its door sides', () => {
-    expect(boxInsets([])).toEqual({ top: EDGE_WIDTH, right: EDGE_WIDTH, bottom: EDGE_WIDTH, left: EDGE_WIDTH });
-    expect(boxInsets(['left', 'down'])).toEqual({ top: EDGE_WIDTH, right: EDGE_WIDTH, bottom: 0, left: 0 });
+  it('outlines a floor tile, and a box halfway through a flip at its start, as the full cell', () => {
+    const outlinePoints = (path: string) => (path.match(/-?\d+\.\d+/g) ?? []).map(Number);
+    for (const doorSides of [[], ['left' as const], ['up' as const, 'right' as const]]) {
+      const points = outlinePoints(boxOutline(40, doorSides, 0));
+      expect(points.every((coordinate) => coordinate === 0 || coordinate === 40)).toBe(true);
+    }
+  });
+
+  it('insets a box from its cell, except that a door side reaches the cell edge', () => {
+    const inset = 40 * BOX_INSET;
+    const plainPoints = boxOutline(40, [], 1).match(/-?\d+\.\d+/g)!.map(Number);
+    expect(Math.min(...plainPoints)).toBeCloseTo(inset);
+    expect(Math.max(...plainPoints)).toBeCloseTo(40 - inset);
+    // With a door on the left, the outline runs down the left edge from corner to corner.
+    expect(boxOutline(40, ['left'], 1)).toContain('0.00 40.00 L0.00 0.00');
+  });
+
+  it('puts a seam just outside its box, one cell long, reaching a pixel under the box', () => {
+    const thickness = SEAM_FRAME_WIDTH + SEAM_OVERLAP;
+    expect(seamFrame('right', 40)).toEqual({ left: 40 - SEAM_OVERLAP, top: 0, width: thickness, height: 40 });
+    expect(seamFrame('up', 40)).toEqual({ left: 0, top: -SEAM_FRAME_WIDTH, width: 40, height: thickness });
+    // A left seam starts and ends on the frame's box side, which is its right side.
+    expect(seamPath('left', 40)).toMatch(new RegExp(`^M${thickness} 0 .* ${thickness} 40 Z$`));
   });
 
   it('fits tiles to the screen and caps them', () => {
@@ -74,18 +97,26 @@ describe('board motion', () => {
   it('slides the player and the pushed box after a push', () => {
     const { state, events } = move(startState, 'right');
     const motion = motionFor(events, state);
-    expect(motion).toEqual({ slides: true, bump: null });
+    expect(motion).toEqual({ slides: true, flips: false, bump: null });
     expect(bumpDirectionFor(motion, 'player')).toBeNull();
   });
 
+  it('flips the board when the player goes through a door', () => {
+    const doorState = { ...startState, doors: [{ row: 1, column: 0, side: 'right' as const }] };
+    const { state, events } = move({ ...doorState, player: { row: 1, column: 0, colour: 'white' } }, 'right');
+    expect(state.player.colour).toBe('white');
+    expect(events[0]).toMatchObject({ type: 'flipped' });
+    expect(motionFor(events, state)).toEqual({ slides: true, flips: true, bump: null });
+  });
+
   it('jumps into place when there are no events, as after undo or restart', () => {
-    expect(motionFor([], startState)).toEqual({ slides: false, bump: null });
+    expect(motionFor([], startState)).toEqual({ slides: false, flips: false, bump: null });
   });
 
   it('bumps only the player at the board edge', () => {
     const { state, events } = move(startState, 'up');
     const motion = motionFor(events, state);
-    expect(motion).toEqual({ slides: false, bump: { direction: 'up', boxTileId: null } });
+    expect(motion).toEqual({ slides: false, flips: false, bump: { direction: 'up', boxTileId: null } });
     expect(bumpDirectionFor(motion, 'player')).toBe('up');
   });
 
@@ -105,7 +136,7 @@ describe('board motion', () => {
   it('does not bump after the level is won', () => {
     const wonState = { ...startState, status: 'won' as const };
     const { state, events } = move(wonState, 'up');
-    expect(motionFor(events, state)).toEqual({ slides: false, bump: null });
+    expect(motionFor(events, state)).toEqual({ slides: false, flips: false, bump: null });
   });
 
   it('offsets a bump in its direction', () => {

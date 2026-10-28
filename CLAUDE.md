@@ -1,6 +1,6 @@
 # Labirinto de Cristal
 
-A small push-and-flip puzzle game in TypeScript. You are a piece of one colour on a board of black and white tiles: tiles of the other colour are floor, tiles of your colour block you and can be pushed, and walking through a door (a dotted edge) flips your colour. Reach the crystal while you are the colour it shows. The game is one Expo (React Native) app that runs on Android, iOS and the web; Netlify serves its web export.
+A small push-and-flip puzzle game in TypeScript. You are a piece of one colour on a board of black and white tiles: tiles of the other colour are floor, tiles of your colour block you and can be pushed, and walking through a door (a glowing seam on an edge) flips your colour. Reach the crystal while you are the colour it shows. The game is one Expo (React Native) app that runs on Android, iOS and the web; Netlify serves its web export.
 
 ## Commands
 
@@ -18,7 +18,7 @@ A small push-and-flip puzzle game in TypeScript. You are a piece of one colour o
 - `src/levels/`: levels as JSON (`drafts.json`, `samples.json`), listed in menu order by `index.ts`. Grid rows use `b` / `w`, uppercase for a crystal; doors are `[row, column, side]`.
 - `app/`: Expo Router screens. `_layout.tsx` creates the store; `index.tsx` is the game screen.
 - `src/state/`: the Redux Toolkit store (`store.ts`), which calls the engine, and the dev logger (`logger.ts`). No React Native imports, so Vitest tests them.
-- `src/ui/`: React Native components (`Board`, `Box`, `Crystal`, `LevelPicker`) and their pure helpers: `boardLayout.ts` (floor colour, box shape, door edges, tile size), `commands.ts` (keys and swipes), `i18n.ts` (PT/EN text), `theme.ts` (the only place with colour codes).
+- `src/ui/`: React Native components (`Board`, `BoardTile`, `Player`, `Crystal`, `LevelPicker`), their animation hooks, and their pure helpers: `boardLayout.ts` (floor colour, box outline, door seams, tile size), `motion.ts` (slide, bump and flip timing from engine events), `commands.ts` (keys and swipes), `i18n.ts` (PT/EN text), `theme.ts` (the only place with colour codes).
 - `src/tools/solver.ts`: breadth-first solver on top of the engine.
 - `tests/`: engine, store, UI helper and comparison tests. Tests import only pure TypeScript, never React Native components. `tests/legacy/` is a verbatim copy of the original rules and levels, kept only so `compare.test.ts` can check the engine against them. Don't edit or restyle it.
 
@@ -29,7 +29,8 @@ Specs live outside the repo, in the project files: `specs/portal-spec.md` and `s
 - Doors are stored on edges (`{ row, column, side: 'right' | 'down' }`), not on tiles. Their two sides always have different colours, so only one side can be pushed at a time. A pushed tile carries the doors on its four edges, including the one on its leading edge. The tile that slides back carries none. A flip moves no doors.
 - A push is refused if, afterwards, any door would have the same colour on both sides or would face off the board (portal rule 6). Nothing can be pushed onto a crystal, but a crystal tile can itself be pushed.
 - A push swaps whole tiles: the tile layer moves (colour, crystal), and a future board layer (pads, holes, walls) must stay put.
-- The board draws in layers: the floor is one rectangle, boxes (tiles in the player's colour) sit on it inset by `EDGE_WIDTH`, so the floor between them is their outline. Don't go back to per-tile borders; they left seams on phones.
+- The board draws in layers: the floor is one rectangle, and every tile sits on it. Boxes (tiles in the player's colour) are inset with rounded corners (`BOX_INSET`, `BOX_CORNER_RADIUS`), so the floor between them is their outline; floor tiles are full squares in the floor colour. Don't go back to per-tile borders; they left seams on phones.
+- A box's door side reaches the whole cell edge and curves out into it, and the door is a glowing half-pill seam on the floor side of that edge. A flip grows the old boxes into full tiles, swaps the floor and player colours halfway, then shrinks the new boxes out (`FLIP_GROW_DURATION`, `FLIP_SHRINK_DURATION`).
 - Colours are game values (`'black' | 'white'`). Hex codes belong only in `src/ui/theme.ts`.
 - Winning sets `status: 'won'` once every crystal is collected, and further moves are blocked.
 - New mechanics go into the engine as a new tile kind, tile property, door kind or win condition, never as a branch in the renderer. Bump `LevelData.version` when the level format changes.
