@@ -4,9 +4,11 @@
   "scripts": {
     "build": "tsc && node scripts/build.mjs",
     "test": "vitest run",
-    "typecheck": "tsc"
+    "typecheck": "tsc",
+    "solve": "node scripts/solve.mjs"
   },
   "devDependencies": {
+    "@types/node": "22.10.1",
     "esbuild": "0.24.0",
     "typescript": "5.6.3",
     "vitest": "2.1.8"

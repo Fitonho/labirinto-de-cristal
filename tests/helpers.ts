@@ -1,5 +1,6 @@
 import { loadLevel, move, type Direction, type GameState, type LevelData } from '../src/core';
 import { levels } from '../src/levels/index';
+import { solve } from '../src/tools/solver';
 
 export const level = (id: string): LevelData => {
   const found = levels.find((l) => l.id === id);
@@ -18,26 +19,7 @@ export function play(state: GameState, path: string): GameState {
   return state;
 }
 
-/** Breadth-first search for the shortest win, for tiny levels only. */
-export function shortestWin(start: GameState, maxStates = 200_000): number | null {
-  const key = (s: GameState) => JSON.stringify([s.player, s.tiles.map((t) => t.id), s.doors, s.collected]);
-  const seen = new Set([key(start)]);
-  let frontier = [start];
-  for (let depth = 1; frontier.length && seen.size < maxStates; depth++) {
-    const next: GameState[] = [];
-    for (const s of frontier) {
-      for (const d of ['up', 'right', 'down', 'left'] as const) {
-        const r = move(s, d).state;
-        if (r === s) continue;
-        if (r.status === 'won') return depth;
-        const k = key(r);
-        if (!seen.has(k)) {
-          seen.add(k);
-          next.push(r);
-        }
-      }
-    }
-    frontier = next;
-  }
-  return null;
+/** Shortest win length, for tiny levels only. */
+export function shortestWin(start: GameState): number | null {
+  return solve(start)?.moves ?? null;
 }
