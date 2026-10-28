@@ -32,6 +32,7 @@ Specs live outside the repo, in the project files: `specs/portal-spec.md` and `s
 ## Code style (the owner's preferences)
 
 - **Name every variable for what it holds**, including loop variables, callback parameters and destructured values: `door`, `tileIndex`, `direction`, `event`, `levelData`. No one- or two-letter names (`s`, `d`, `i`, `e`, `t`, `r`, `el`, `dx`) and no unclear abbreviations (`col` → `column`, `cols` → `columnCount`).
+- Exceptions, agreed with the owner: well-known conventions stay short. That means `t()` for translations and the Redux shapes `(state, action)` in reducers and `store => next => action` in middleware. Generic type parameters still get descriptive names (`ElementType`, not `T`).
 - **Arrays and other collections are plural** (`tiles`, `doors`, `movedDoors`, `pastStates`). A count is `somethingCount`, and a map is `valuesByKey`.
 - Match the surrounding comment style: a short header comment per file and comments that explain why, not what.
 - Keep the engine pure and covered by tests. A rule change gets a test in `tests/engine.test.ts`. If it deliberately changes old behaviour, also update the stop conditions in `tests/compare.test.ts` and say why there.

@@ -1,6 +1,6 @@
 // Web entry point: wires the store to the page.
 import { levels, chapters } from '../levels/index';
-import { defaultLanguage, translate, type StringKey } from './i18n';
+import { defaultLanguage, t, type StringKey } from './i18n';
 import { listenToKeys, listenToSwipes, type Command } from './input';
 import { logger } from './logger';
 import { renderBoard } from './render';
@@ -36,12 +36,12 @@ function fillLevelSelect() {
   levelSelect.replaceChildren();
   for (const chapter of chapters) {
     const chapterGroup = document.createElement('optgroup');
-    chapterGroup.label = translate(language, `chapter.${chapter}` as StringKey);
+    chapterGroup.label = t(language, `chapter.${chapter}` as StringKey);
     levels.forEach((level, levelIndexInList) => {
       if (level.chapter !== chapter) return;
       const option = document.createElement('option');
       option.value = String(levelIndexInList);
-      option.textContent = `${translate(language, 'level')} ${level.order}`;
+      option.textContent = `${t(language, 'level')} ${level.order}`;
       chapterGroup.appendChild(option);
     });
     levelSelect.appendChild(chapterGroup);
@@ -58,7 +58,7 @@ function render() {
     shownLanguage = language;
     document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
     for (const textElement of document.querySelectorAll<HTMLElement>('[data-text]')) {
-      textElement.textContent = translate(language, textElement.dataset.text as StringKey);
+      textElement.textContent = t(language, textElement.dataset.text as StringKey);
     }
     fillLevelSelect();
   }
@@ -68,8 +68,8 @@ function render() {
     renderBoard(boardElement, state);
   }
   const par = levels[levelIndex].par;
-  const moveText = `${translate(language, 'moves')}: ${state.moveCount}${par ? ` (${translate(language, 'par')} ${par})` : ''}`;
-  statusElement.textContent = state.status === 'won' ? `${translate(language, 'won')} ${moveText}` : moveText;
+  const moveText = `${t(language, 'moves')}: ${state.moveCount}${par ? ` (${t(language, 'par')} ${par})` : ''}`;
+  statusElement.textContent = state.status === 'won' ? `${t(language, 'won')} ${moveText}` : moveText;
   statusElement.classList.toggle('won', state.status === 'won');
 }
 

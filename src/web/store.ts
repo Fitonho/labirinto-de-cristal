@@ -31,35 +31,35 @@ const game = createSlice({
   name: 'game',
   initialState: initialState('pt'),
   reducers: {
-    selectLevel(slice, action: PayloadAction<number>) {
-      slice.levelIndex = action.payload;
-      slice.history = startHistory(loadLevel(levels[action.payload]));
-      slice.events = [];
+    selectLevel(state, action: PayloadAction<number>) {
+      state.levelIndex = action.payload;
+      state.history = startHistory(loadLevel(levels[action.payload]));
+      state.events = [];
     },
-    move(slice, action: PayloadAction<Direction>) {
-      const { state, events } = engineMove(slice.history.present, action.payload);
-      slice.history = record(slice.history, state);
-      slice.events = events;
+    move(state, action: PayloadAction<Direction>) {
+      const { state: nextGameState, events } = engineMove(state.history.present, action.payload);
+      state.history = record(state.history, nextGameState);
+      state.events = events;
     },
-    undo(slice) {
-      slice.history = undoHistory(slice.history);
-      slice.events = [];
+    undo(state) {
+      state.history = undoHistory(state.history);
+      state.events = [];
     },
-    reset(slice) {
-      slice.history = resetHistory(slice.history);
-      slice.events = [];
+    reset(state) {
+      state.history = resetHistory(state.history);
+      state.events = [];
     },
-    setLanguage(slice, action: PayloadAction<Language>) {
-      slice.language = action.payload;
+    setLanguage(state, action: PayloadAction<Language>) {
+      state.language = action.payload;
     },
   },
 });
 
 export const actions = game.actions;
 
-const logActions: Middleware<{}, RootState> = (storeApi) => (nextDispatch) => (action) => {
-  const result = nextDispatch(action);
-  const { events, history } = storeApi.getState().game;
+const logActions: Middleware<{}, RootState> = (store) => (next) => (action) => {
+  const result = next(action);
+  const { events, history } = store.getState().game;
   logger.debug((action as { type: string }).type, {
     payload: (action as { payload?: unknown }).payload,
     events,

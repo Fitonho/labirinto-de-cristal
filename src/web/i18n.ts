@@ -32,7 +32,7 @@ const strings = {
 
 export type StringKey = keyof (typeof strings)['pt'];
 
-export function translate(language: Language, key: StringKey): string {
+export function t(language: Language, key: StringKey): string {
   return strings[language][key];
 }
 
