@@ -1,15 +1,16 @@
-// Plays the last move's haptic cue on phones. The web stays silent. Both
-// platforms use the impact and notification styles: on Android these run the
-// vibration motor, because the system haptic patterns are dropped whenever the
-// phone's touch feedback setting is off, which is the default on many phones.
+// Plays the last move's haptic cue on phones. The web stays silent. iOS uses
+// expo-haptics' impact and notification styles. Android runs the vibration
+// motor through React Native's Vibration at the phone's normal strength:
+// the system haptic patterns are dropped whenever the touch feedback setting
+// is off, and expo-haptics' Android pulses are too faint to feel on many phones.
 import * as Haptics from 'expo-haptics';
 import { useEffect } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Vibration } from 'react-native';
 import type { GameEvent } from '../core';
 import { logger } from '../state/logger';
 import { hapticCueFor, type HapticCueKind } from './haptics';
 
-const PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
+const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   win: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
   door: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
   crystal: () => Haptics.selectionAsync(),
@@ -17,10 +18,23 @@ const PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   bump: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid),
 };
 
+/** Milliseconds of vibration, or a pattern of pause, vibration, pause, vibration. */
+const ANDROID_VIBRATIONS_BY_CUE_KIND: Record<HapticCueKind, number | number[]> = {
+  win: [0, 40, 80, 60],
+  door: 45,
+  crystal: 25,
+  push: 20,
+  bump: 35,
+};
+
 function play(kind: HapticCueKind) {
   logger.debug('haptic', { kind, platform: Platform.OS });
+  if (Platform.OS === 'android') {
+    Vibration.vibrate(ANDROID_VIBRATIONS_BY_CUE_KIND[kind]);
+    return;
+  }
   // A missed tap is not worth an error on screen, but the log says why.
-  PLAYERS_BY_CUE_KIND[kind]().catch((error: unknown) => logger.warn('haptic failed', { kind, error: String(error) }));
+  IOS_PLAYERS_BY_CUE_KIND[kind]().catch((error: unknown) => logger.warn('haptic failed', { kind, error: String(error) }));
 }
 
 /** `events` is a new array after every action, so each move plays once even when it repeats the last one. */
