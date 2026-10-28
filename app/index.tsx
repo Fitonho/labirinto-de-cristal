@@ -12,6 +12,7 @@ import type { Command } from '../src/ui/commands';
 import { t } from '../src/ui/i18n';
 import { LevelPicker } from '../src/ui/LevelPicker';
 import { palette } from '../src/ui/theme';
+import { useHaptics } from '../src/ui/useHaptics';
 import { useKeyboardCommands } from '../src/ui/useKeyboardCommands';
 
 export default function GameScreen() {
@@ -31,6 +32,7 @@ export default function GameScreen() {
     [dispatch],
   );
   useKeyboardCommands(run, !pickerVisible);
+  useHaptics(events);
   useEffect(() => {
     // Screen readers and translators on the web read the page language.
     if (Platform.OS === 'web') document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
