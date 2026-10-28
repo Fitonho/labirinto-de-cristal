@@ -1,0 +1,82 @@
+[
+  {
+    "version": 1,
+    "id": "sample-a",
+    "chapter": "samples",
+    "order": 1,
+    "grid": [
+      "w w w w w",
+      "w w w B w",
+      "b b w b b",
+      "w w w w w"
+    ],
+    "start": [2, 0],
+    "doors": []
+  },
+  {
+    "version": 1,
+    "id": "sample-b",
+    "chapter": "samples",
+    "order": 2,
+    "grid": [
+      "b b b w W",
+      "b w b w w",
+      "b b b w w",
+      "b w w w w",
+      "b b b b b"
+    ],
+    "start": [4, 0],
+    "doors": [
+      [0, 3, "left"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "sample-c",
+    "chapter": "samples",
+    "order": 3,
+    "grid": [
+      "W b w w w",
+      "b w b b b",
+      "b b b b b"
+    ],
+    "start": [2, 0],
+    "doors": [
+      [0, 4, "down"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "sample-d",
+    "chapter": "samples",
+    "order": 4,
+    "grid": [
+      "b b w w B",
+      "b b w w b",
+      "b b w w b",
+      "b b w w b",
+      "b b w w b"
+    ],
+    "start": [2, 0],
+    "doors": [
+      [4, 2, "left"],
+      [2, 3, "right"]
+    ]
+  },
+  {
+    "version": 1,
+    "id": "sample-e",
+    "chapter": "samples",
+    "order": 5,
+    "grid": [
+      "b b b b w W",
+      "b b b b w w",
+      "b w b b w w",
+      "b b b b b b"
+    ],
+    "start": [3, 0],
+    "doors": [
+      [2, 1, "up"]
+    ]
+  }
+]
