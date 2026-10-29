@@ -1,8 +1,8 @@
 // Pure helpers that turn a GameState into what the board draws: the floor
-// colour, which tiles are boxes and their outline, which tile edges are doors
+// colour, which tiles are boxes and their outline, which tile edges are portals
 // and how big a tile can be. No React here, so Vitest tests it.
 import { opposite, sides, type Colour, type Direction, type GameState, type Tile } from '../core';
-import { BOX_CORNER_RADIUS, BOX_INSET, DOOR_FLARE_LENGTH, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_OVERLAP, SEAM_WIDTH } from './theme';
+import { BOX_CORNER_RADIUS, BOX_INSET, PORTAL_FLARE_LENGTH, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_OVERLAP, SEAM_WIDTH } from './theme';
 
 /**
  * The floor layer is one rectangle in this colour. With two colours it is the
@@ -20,21 +20,21 @@ export function isBox(state: GameState, tile: Tile): boolean {
 }
 
 /**
- * The sides of each tile that are doors, by tile index. A door belongs to the
+ * The sides of each tile that are portals, by tile index. A portal belongs to the
  * edge, so both tiles beside it list it; only the one drawn as a box shows it.
  */
-export function doorSidesByTileIndex(state: GameState): Map<number, Direction[]> {
-  const doorSides = new Map<number, Direction[]>();
+export function portalSidesByTileIndex(state: GameState): Map<number, Direction[]> {
+  const portalSides = new Map<number, Direction[]>();
   const addSide = (cell: { row: number; column: number }, side: Direction) => {
     const tileIndex = cell.row * state.columnCount + cell.column;
-    doorSides.set(tileIndex, [...(doorSides.get(tileIndex) ?? []), side]);
+    portalSides.set(tileIndex, [...(portalSides.get(tileIndex) ?? []), side]);
   };
-  for (const door of state.doors) {
-    const [firstCell, secondCell] = sides(door);
-    addSide(firstCell, door.side);
-    addSide(secondCell, door.side === 'right' ? 'left' : 'up');
+  for (const portal of state.portals) {
+    const [firstCell, secondCell] = sides(portal);
+    addSide(firstCell, portal.side);
+    addSide(secondCell, portal.side === 'right' ? 'left' : 'up');
   }
-  return doorSides;
+  return portalSides;
 }
 
 interface BoxCorner {
@@ -58,34 +58,34 @@ const BOX_CORNERS: BoxCorner[] = [
 
 /**
  * A tile's outline as an SVG path. `boxAmount` 1 is a box: inset from its
- * cell with rounded corners, except that a door side reaches the whole cell
+ * cell with rounded corners, except that a portal side reaches the whole cell
  * edge and the box's sides curve outward into it. 0 is the full, square cell,
  * which is how a floor tile looks and where a flip passes through. Runs on the
  * UI thread while a flip animates.
  */
-export function boxOutline(size: number, doorSides: Direction[], boxAmount: number): string {
+export function boxOutline(size: number, portalSides: Direction[], boxAmount: number): string {
   'worklet';
   const inset = size * BOX_INSET * boxAmount;
   const cornerRadius = size * BOX_CORNER_RADIUS * boxAmount;
-  const flareLength = size * DOOR_FLARE_LENGTH * boxAmount;
+  const flareLength = size * PORTAL_FLARE_LENGTH * boxAmount;
   const pointText = (pointX: number, pointY: number) => `${pointX.toFixed(2)} ${pointY.toFixed(2)}`;
   const segments: string[] = [];
   for (const corner of BOX_CORNERS) {
     const cornerX = corner.cornerX * size;
     const cornerY = corner.cornerY * size;
-    const beforeIsDoor = doorSides.includes(corner.sideBefore);
-    const afterIsDoor = doorSides.includes(corner.sideAfter);
+    const beforeIsPortal = portalSides.includes(corner.sideBefore);
+    const afterIsPortal = portalSides.includes(corner.sideAfter);
     // Where the two sides meet once each is pushed into the cell by its inset.
-    const innerX = cornerX + corner.nextX * (beforeIsDoor ? 0 : inset) - corner.alongX * (afterIsDoor ? 0 : inset);
-    const innerY = cornerY + corner.nextY * (beforeIsDoor ? 0 : inset) - corner.alongY * (afterIsDoor ? 0 : inset);
+    const innerX = cornerX + corner.nextX * (beforeIsPortal ? 0 : inset) - corner.alongX * (afterIsPortal ? 0 : inset);
+    const innerY = cornerY + corner.nextY * (beforeIsPortal ? 0 : inset) - corner.alongY * (afterIsPortal ? 0 : inset);
     let segment: string;
-    if (beforeIsDoor && afterIsDoor) {
+    if (beforeIsPortal && afterIsPortal) {
       segment = `${pointText(cornerX, cornerY)} Q${pointText(cornerX, cornerY)} ${pointText(cornerX, cornerY)}`;
-    } else if (beforeIsDoor) {
-      // Leaving a door side: curve from the cell corner back in to the inset side.
+    } else if (beforeIsPortal) {
+      // Leaving a portal side: curve from the cell corner back in to the inset side.
       segment = `${pointText(cornerX, cornerY)} Q${pointText(innerX, innerY)} ${pointText(innerX + corner.nextX * flareLength, innerY + corner.nextY * flareLength)}`;
-    } else if (afterIsDoor) {
-      // Reaching a door side: curve out from the inset side to the cell corner.
+    } else if (afterIsPortal) {
+      // Reaching a portal side: curve out from the inset side to the cell corner.
       segment = `${pointText(innerX - corner.alongX * flareLength, innerY - corner.alongY * flareLength)} Q${pointText(innerX, innerY)} ${pointText(cornerX, cornerY)}`;
     } else {
       segment = `${pointText(innerX - corner.alongX * cornerRadius, innerY - corner.alongY * cornerRadius)} Q${pointText(innerX, innerY)} ${pointText(innerX + corner.nextX * cornerRadius, innerY + corner.nextY * cornerRadius)}`;
@@ -96,14 +96,14 @@ export function boxOutline(size: number, doorSides: Direction[], boxAmount: numb
 }
 
 export interface SeamFrame {
-  left: number; // relative to the tile the door belongs to
+  left: number; // relative to the tile the portal belongs to
   top: number;
   width: number;
   height: number;
 }
 
 /**
- * A door's seam is drawn just outside its box, on the floor side of the edge,
+ * A portal's seam is drawn just outside its box, on the floor side of the edge,
  * inside a frame one cell long so its glow can't spill past the cell corners.
  * The frame starts a pixel inside the box, so the seam always touches it.
  */
@@ -121,7 +121,7 @@ export function seamFrame(side: Direction, size: number): SeamFrame {
 
 /**
  * The seam's visible half as an SVG path in its frame: a half pill along the
- * door edge, rounded at both ends on the floor side.
+ * portal edge, rounded at both ends on the floor side.
  */
 export function seamPath(side: Direction, size: number): string {
   // Points are given as (distance along the edge, distance out from the frame's box side) and turned into frame coordinates.

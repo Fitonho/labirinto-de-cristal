@@ -12,7 +12,7 @@ export interface SoundCue {
 }
 
 /** Every sound, in the order of the files in assets/sounds/. */
-export const SOUND_CUE_KINDS: SoundCueKind[] = ['step', 'push', 'bump', 'door', 'crystal', 'win', 'par'];
+export const SOUND_CUE_KINDS: SoundCueKind[] = ['step', 'push', 'bump', 'portal', 'crystal', 'win', 'par'];
 
 /** The sound for the last move, or null for undo, restart, a new level or a move after winning. */
 export function soundCueFor(events: GameEvent[]): SoundCue | null {

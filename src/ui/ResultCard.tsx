@@ -36,7 +36,7 @@ interface ResultCardProps {
   result: WinResult | null;
   isLastLevel: boolean;
   language: Language;
-  /** The glow round the under-par badge: the level's door seam colour. */
+  /** The glow round the under-par badge: the level's portal seam colour. */
   seamColour: string;
   /** The two colours the next level will draw, shown as a dot on Next, or null with a favourite palette. */
   nextTileColours: Record<Colour, string> | null;

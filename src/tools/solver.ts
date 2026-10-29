@@ -9,7 +9,7 @@ export interface Solution {
 }
 
 const stateKey = (state: GameState) =>
-  JSON.stringify([state.player, state.tiles.map((tile) => tile.id), state.doors, state.collectedGoalIds]);
+  JSON.stringify([state.player, state.tiles.map((tile) => tile.id), state.portals, state.collectedGoalIds]);
 
 /** Returns the shortest solution, or null if none is found within `maxStates`. */
 export function solve(start: GameState, maxStates = 500_000): Solution | null {

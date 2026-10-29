@@ -1,5 +1,5 @@
 // Draws a GameState in layers: the floor as one rectangle, then every tile as
-// a box or as floor with its doors and crystal, then the player. Reads the
+// a box or as floor with its portals and crystal, then the player. Reads the
 // state only; swipes on the board are turned into commands for the screen.
 // The last action's engine events decide whether pieces slide, jump, bump or
 // flip, how the Pebble reacts, and whether a collected star bursts. Every
@@ -8,7 +8,7 @@ import { memo, useMemo } from 'react';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import { opposite, type GameEvent, type GameState } from '../core';
-import { doorSidesByTileIndex, floorColour } from './boardLayout';
+import { portalSidesByTileIndex, floorColour } from './boardLayout';
 import { BoardTile } from './BoardTile';
 import { CollectBurstLayer } from './CollectBurst';
 import type { Command } from './commands';
@@ -29,7 +29,7 @@ interface BoardProps {
 
 // Memoised so opening the level picker or switching language doesn't redraw every tile.
 export const Board = memo(function Board({ state, events, tileSize, palette, onCommand }: BoardProps) {
-  const doorSides = useMemo(() => doorSidesByTileIndex(state), [state]);
+  const portalSides = useMemo(() => portalSidesByTileIndex(state), [state]);
   const motion = useMemo(() => motionFor(events, state), [events, state]);
   const { boxAmountsByColour, drawnBoxColour } = useBoxAmounts(state.player.colour, motion);
   const { tileColours, seamColour } = palette;
@@ -65,7 +65,7 @@ export const Board = memo(function Board({ state, events, tileSize, palette, onC
             tile={tile}
             size={tileSize}
             {...cellPosition(tileIndex)}
-            doorSides={doorSides.get(tileIndex) ?? []}
+            portalSides={portalSides.get(tileIndex) ?? []}
             boxAmount={boxAmountsByColour[tile.colour]}
             drawnBoxColour={drawnBoxColour}
             tileColours={tileColours}

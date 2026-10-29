@@ -79,7 +79,7 @@ export const PEBBLE_POSES: Record<PebbleAction, PebblePose> = {
     anchored: true,
     eyeLooks: [{ to: 'squint', duration: 40 }, { to: 'squint', duration: 220 }],
   },
-  // Squeezed thin through the door while the old boxes grow, then springs out wide at the colour swap (FLIP_GROW_DURATION).
+  // Squeezed thin through the portal while the old boxes grow, then springs out wide at the colour swap (FLIP_GROW_DURATION).
   flip: {
     stretches: [{ to: -0.4, duration: 90 }],
     anchored: false,

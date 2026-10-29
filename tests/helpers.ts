@@ -8,8 +8,8 @@ export const levelById = (levelId: string): LevelData => {
   return foundLevel;
 };
 
-export const customLevelState = (grid: string[], start: [number, number], doors: LevelData['doors'] = []): GameState =>
-  loadLevel({ version: 1, id: 'test', chapter: 'test', order: 0, grid, start, doors });
+export const customLevelState = (grid: string[], start: [number, number], portals: LevelData['portals'] = []): GameState =>
+  loadLevel({ version: 2, id: 'test', chapter: 'test', order: 0, grid, start, portals });
 
 const directionsByLetter: Record<string, Direction> = { U: 'up', R: 'right', D: 'down', L: 'left' };
 

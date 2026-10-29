@@ -53,7 +53,7 @@ function addThump(samples, startFrequency, endFrequency, decay, noiseLevel, seed
   }
 }
 
-/** The door: a rising glassy sweep with a soft shimmer. */
+/** The portal: a rising glassy sweep with a soft shimmer. */
 function addSweep(samples) {
   let phase = 0;
   let upperPhase = 0;
@@ -124,7 +124,7 @@ const samplesBySoundName = {
   step: render(0.09, (samples) => addThump(samples, 160, 115, 0.02, 0.2, 7), 0.24, 700),
   push: render(0.24, (samples) => addThump(samples, 120, 70, 0.06, 0.25, 11), 0.72, 600),
   bump: render(0.18, (samples) => addThump(samples, 80, 45, 0.04, 0.3, 23), 0.55, 450),
-  door: render(0.5, addSweep, 0.32, 1800),
+  portal: render(0.5, addSweep, 0.32, 1800),
   crystal: render(0.9, (samples) => addBell(samples, 0, 1318.5, 1), 0.45, 2500),
   win: render(
     1.5,

@@ -26,7 +26,7 @@ export interface Bump {
 
 export interface BoardMotion {
   slides: boolean; // false after undo, restart or a new level: everything jumps into place
-  flips: boolean; // the player went through a door, so boxes and floor trade places
+  flips: boolean; // the player went through a portal, so boxes and floor trade places
   bump: Bump | null;
 }
 

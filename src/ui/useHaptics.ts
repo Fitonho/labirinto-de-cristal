@@ -11,7 +11,7 @@ import { useGameEventsListener } from './useGameEventsListener';
 
 const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   win: () => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success),
-  door: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
+  portal: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium),
   crystal: () => Haptics.selectionAsync(),
   push: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
   bump: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid),
@@ -30,7 +30,7 @@ const singlePulse = (milliseconds: number) => [0, milliseconds, 1, 1];
 /** A pattern of pause, vibration, pause, vibration, in milliseconds. */
 const ANDROID_VIBRATIONS_BY_CUE_KIND: Record<HapticCueKind, number[]> = {
   win: [0, 60, 80, 80],
-  door: singlePulse(80),
+  portal: singlePulse(80),
   crystal: singlePulse(50),
   push: singlePulse(40),
   bump: singlePulse(60),

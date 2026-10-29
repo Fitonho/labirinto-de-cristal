@@ -16,7 +16,7 @@ const SOUND_FILES_BY_CUE_KIND: Record<SoundCueKind, number> = {
   step: require('../../assets/sounds/step.wav'),
   push: require('../../assets/sounds/push.wav'),
   bump: require('../../assets/sounds/bump.wav'),
-  door: require('../../assets/sounds/door.wav'),
+  portal: require('../../assets/sounds/portal.wav'),
   crystal: require('../../assets/sounds/crystal.wav'),
   win: require('../../assets/sounds/win.wav'),
   par: require('../../assets/sounds/par.wav'),

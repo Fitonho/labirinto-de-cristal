@@ -9,9 +9,9 @@ import { fileURLToPath } from 'node:url';
 const levelsFolder = fileURLToPath(new URL('../src/levels/', import.meta.url));
 const outputFile = fileURLToPath(new URL('../tests/levelFingerprints.json', import.meta.url));
 
-/** FNV-1a over the board's grid, start and doors; the same function as in tests/levels.test.ts. */
+/** FNV-1a over the board's grid, start and portals; the same function as in tests/levels.test.ts. */
 export function fingerprintOf(levelData) {
-  const boardText = JSON.stringify([levelData.grid, levelData.start, levelData.doors ?? []]);
+  const boardText = JSON.stringify([levelData.grid, levelData.start, levelData.portals ?? []]);
   let hash = 0x811c9dc5;
   for (let characterIndex = 0; characterIndex < boardText.length; characterIndex++) {
     hash ^= boardText.charCodeAt(characterIndex);

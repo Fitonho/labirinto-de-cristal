@@ -1,5 +1,5 @@
 // A level's start drawn small, for the levels screens: one floor rectangle,
-// one path for every box, one for every door and a star per crystal. A
+// one path for every box, one for every portal and a star per crystal. A
 // picture is a handful of SVG shapes whatever the board's size, so a screen
 // of them stays cheap. No React here, so Vitest tests it.
 import { loadLevel, opposite, type Colour, type LevelData } from '../core';
@@ -13,9 +13,9 @@ export interface BoardPictureShapes {
   boxColour: Colour;
   /** Every box as a rounded square, in one path. */
   boxesPath: string;
-  /** Every door as a line on its edge, in one path. */
-  doorsPath: string;
-  doorWidth: number;
+  /** Every portal as a line on its edge, in one path. */
+  portalsPath: string;
+  portalWidth: number;
   crystals: { points: string; colour: Colour }[];
   pebble: { centreX: number; centreY: number; radius: number };
 }
@@ -57,11 +57,11 @@ export function boardPictureShapesFor(levelData: LevelData, tileSize: number): B
       crystals.push({ points: starPoints(centreX, centreY, tileSize * STAR_OUTER_RADIUS * 1.3, innerRadius), colour: opposite(tile.colour) });
     }
   });
-  const doorsPath = state.doors
-    .map((door) => {
-      const left = door.column * tileSize;
-      const top = door.row * tileSize;
-      return door.side === 'right' ? `M${left + tileSize} ${top}V${top + tileSize}` : `M${left} ${top + tileSize}H${left + tileSize}`;
+  const portalsPath = state.portals
+    .map((portal) => {
+      const left = portal.column * tileSize;
+      const top = portal.row * tileSize;
+      return portal.side === 'right' ? `M${left + tileSize} ${top}V${top + tileSize}` : `M${left} ${top + tileSize}H${left + tileSize}`;
     })
     .join('');
   return {
@@ -70,8 +70,8 @@ export function boardPictureShapesFor(levelData: LevelData, tileSize: number): B
     floorColour: opposite(boxColour),
     boxColour,
     boxesPath: boxPaths.join(''),
-    doorsPath,
-    doorWidth: Math.max(1.5, tileSize * 0.14),
+    portalsPath,
+    portalWidth: Math.max(1.5, tileSize * 0.14),
     crystals,
     pebble: {
       centreX: (state.player.column + 0.5) * tileSize,

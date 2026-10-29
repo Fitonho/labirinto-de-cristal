@@ -166,7 +166,7 @@ function LevelCell({ level, mark, open, current, width, language, palette, onPre
       <View style={styles.cellLabel}>
         <Text style={[styles.cellNumber, { color: appColours.ink }]}>{level.order}</Text>
         {mark === 'atPar' && (
-          // The Beacon's star in the door colour, outlined so it shows on light pages too.
+          // The Beacon's star in the portal colour, outlined so it shows on light pages too.
           <Svg width={15} height={15} viewBox="0 0 16 16">
             <Polygon points={starPoints(8, 8, 7.5, 2.6)} fill={palette.seamColour} stroke={appColours.ink} strokeWidth={0.8} />
           </Svg>
