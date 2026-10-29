@@ -12,7 +12,8 @@ import { BackHandler, PixelRatio, Platform, Pressable, StyleSheet, Text, useWind
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { chapters, levels } from '../src/levels/index';
+import { directionsFor, LAB_CHAPTER } from '../src/levels/lab';
+import { chapters, labSolutionsByLevelId, levels } from '../src/levels/index';
 import { otherUnsolvedLevelOpen } from '../src/state/levelProgress';
 import { sessionActions } from '../src/state/session';
 import { settingsActions } from '../src/state/settings';
@@ -45,6 +46,8 @@ import { winResultFor } from '../src/ui/winResult';
  * for a header that wraps in a large font.
  */
 const CONTROLS_HEIGHT = 172;
+/** Time between the moves the Solve button plays, long enough to follow each slide. */
+const SOLVE_STEP_INTERVAL = 320;
 
 export default function GameScreen() {
   const dispatch = useDispatch();
@@ -103,6 +106,25 @@ export default function GameScreen() {
   ideaCardOpenRef.current = ideaCardOpen;
   const homeOpenRef = useRef(homeOpen);
   homeOpenRef.current = homeOpen;
+  // Lab levels have a Solve button that plays their shortest solution from the start, one move at a time.
+  const labSolution = labSolutionsByLevelId[level.id] ?? null;
+  const [solving, setSolving] = useState(false);
+  useEffect(() => setSolving(false), [level.id]);
+  useEffect(() => {
+    if (!solving || !labSolution) return;
+    dispatch(actions.reset());
+    const directions = directionsFor(labSolution);
+    let moveIndex = 0;
+    const timer = setInterval(() => {
+      if (moveIndex >= directions.length) {
+        setSolving(false);
+        return;
+      }
+      dispatch(actions.move(directions[moveIndex]));
+      moveIndex += 1;
+    }, SOLVE_STEP_INTERVAL);
+    return () => clearInterval(timer);
+  }, [solving, labSolution, dispatch]);
   // A player who keeps restarting one level hears, once ever, that they can leave it for later.
   useEffect(() => {
     if (homeOpen || ideaCardOpenRef.current) return;
@@ -113,11 +135,13 @@ export default function GameScreen() {
     dispatch(settingsActions.stuckTipShown());
   }, [steps, stuckTipSeen, homeOpen, bestMovesByLevelId, level.id, dispatch]);
   const { starCount, parCount, allSolved } = useMemo(() => {
-    const levelsWithPar = levels.filter((eachLevel) => eachLevel.par !== undefined);
+    // The Lab is for judging boards, so it counts toward nothing.
+    const playerLevels = levels.filter((eachLevel) => eachLevel.chapter !== LAB_CHAPTER);
+    const levelsWithPar = playerLevels.filter((eachLevel) => eachLevel.par !== undefined);
     return {
       starCount: levelsWithPar.filter((eachLevel) => (bestMovesByLevelId[eachLevel.id] ?? Infinity) <= (eachLevel.par ?? 0)).length,
       parCount: levelsWithPar.length,
-      allSolved: levels.every((eachLevel) => bestMovesByLevelId[eachLevel.id] !== undefined),
+      allSolved: playerLevels.every((eachLevel) => bestMovesByLevelId[eachLevel.id] !== undefined),
     };
   }, [bestMovesByLevelId]);
   const result = useMemo(
@@ -266,12 +290,19 @@ export default function GameScreen() {
                 Undo, pressed far more often, is on the right, under most players' thumb. */}
             <View style={styles.statusRow}>
               <IconButton icon="restart" label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} size={48} />
-              <Text
-                accessibilityLiveRegion="polite"
-                style={[styles.status, won ? paletteStyles.accent : paletteStyles.quiet, won && styles.wonStatus]}
-              >
-                {won ? `${t(language, 'won')} ${moveText}` : moveText}
-              </Text>
+              <View style={styles.statusBlock}>
+                <Text
+                  accessibilityLiveRegion="polite"
+                  style={[styles.status, won ? paletteStyles.accent : paletteStyles.quiet, won && styles.wonStatus]}
+                >
+                  {won ? `${t(language, 'won')} ${moveText}` : moveText}
+                </Text>
+                {labSolution !== null && (
+                  <Pressable accessibilityRole="button" onPress={() => setSolving((wasSolving) => !wasSolving)} hitSlop={8}>
+                    <Text style={[styles.solve, paletteStyles.accent]}>{t(language, solving ? 'stopSolving' : 'solve')}</Text>
+                  </Pressable>
+                )}
+              </View>
               <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
             </View>
             <View style={{ height: touchPadHeight }}>
@@ -358,6 +389,8 @@ const styles = StyleSheet.create({
   chapterName: { fontSize: 13 },
   boardArea: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  status: { flex: 1, textAlign: 'center', fontSize: 16 },
+  statusBlock: { flex: 1, alignItems: 'center', gap: 2 },
+  status: { textAlign: 'center', fontSize: 16 },
+  solve: { fontSize: 14, fontWeight: '600', textDecorationLine: 'underline' },
   wonStatus: { fontWeight: '600' },
 });
