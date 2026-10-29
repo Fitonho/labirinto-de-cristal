@@ -7,7 +7,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useAppColours } from './AppColours';
 
-export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart' | 'levels' | 'back' | 'more';
+export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart' | 'levels' | 'back' | 'more' | 'lock';
 
 interface IconButtonProps {
   icon: IconKind;
@@ -105,6 +105,14 @@ export function IconShape({ icon, colour }: { icon: IconKind; colour: string }) 
           {[6, 12, 18].map((dotCentre) => (
             <Circle key={dotCentre} cx={dotCentre} cy={12} r={1.9} fill={colour} />
           ))}
+        </>
+      );
+    case 'lock':
+      // A locked level on the levels screens.
+      return (
+        <>
+          <Rect x={5} y={11} width={14} height={10} rx={2} fill={colour} />
+          <Path d="M8 11 V8 A4 4 0 0 1 16 8 V11" {...line} />
         </>
       );
     case 'levels':

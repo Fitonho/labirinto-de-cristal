@@ -1,16 +1,17 @@
-// The game screen: on top the back arrow to the levels screen, the level and
+// The game screen: on top the back arrow up to the chapter's levels, the level and
 // its chapter, and the sound, colours and ⋯ buttons; then the board, Restart,
 // the move counter and Undo over the touch area, and the result sheet that
 // rises over two thirds of the screen once the level is won. Plays the
 // move's sound and vibration. All game changes go through the Redux store. The
 // board and the app around it take their colours from the level's palette.
-import { router, useFocusEffect, useIsFocused } from 'expo-router';
+import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, PixelRatio, Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { levels } from '../src/levels/index';
+import { settingsActions } from '../src/state/settings';
 import { actions, selectNextPaletteId, selectPaletteId, type RootState } from '../src/state/store';
 import { AppColoursProvider } from '../src/ui/AppColours';
 import { Board } from '../src/ui/Board';
@@ -19,6 +20,7 @@ import { ColourPicker } from '../src/ui/ColourPicker';
 import type { Command } from '../src/ui/commands';
 import { t, type StringKey } from '../src/ui/i18n';
 import { IconButton } from '../src/ui/IconButton';
+import { openChapterFromGame } from '../src/ui/levelsNavigation';
 import { MoreSheet } from '../src/ui/MoreSheet';
 import { ResultCard } from '../src/ui/ResultCard';
 import { appColoursFor, boardPalettes, PALETTE_FADE_DURATION } from '../src/ui/theme';
@@ -87,7 +89,7 @@ export default function GameScreen() {
     },
     [dispatch],
   );
-  const openLevels = useCallback(() => router.push('/levels'), []);
+  const openLevels = useCallback(() => openChapterFromGame(level.chapter), [level.chapter]);
   const goToNextLevel = useCallback(() => {
     if (isLastLevel) openLevels();
     else goToLevel(levelIndex + 1);
@@ -204,7 +206,7 @@ export default function GameScreen() {
             tapMovesOn={tapMovesOn}
             onToggleVibration={toggleVibration}
             onToggleTapMoves={toggleTapMoves}
-            onChooseLanguage={(chosenLanguage) => dispatch(actions.setLanguage(chosenLanguage))}
+            onChooseLanguage={(chosenLanguage) => dispatch(settingsActions.setLanguageChoice(chosenLanguage))}
             onClose={() => setMoreVisible(false)}
           />
           <ColourPicker

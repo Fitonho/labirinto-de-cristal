@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { levels } from '../src/levels/index';
 import { drawPalette, PALETTE_IDS, type PaletteId } from '../src/state/palettes';
-import { bestMovesFromSaved, progressActions, progressToSave } from '../src/state/progress';
+import { progressActions, progressFromSaved, progressToSave } from '../src/state/progress';
 import { DEFAULT_SETTINGS, settingsActions, settingsFromSaved } from '../src/state/settings';
 import { actions, createStore, selectNextPaletteId, selectPaletteId } from '../src/state/store';
 
@@ -32,14 +32,14 @@ describe('web store', () => {
 describe('settings', () => {
   it('starts with sound, vibration and tap moves on and switches each one separately', () => {
     const store = createStore('en');
-    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random' });
+    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone' });
     store.dispatch(settingsActions.setSoundOn(false));
-    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random' });
+    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone' });
     store.dispatch(settingsActions.setTapMovesOn(false));
-    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: false, paletteChoice: 'random' });
+    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: false, paletteChoice: 'random', languageChoice: 'phone' });
     store.dispatch(settingsActions.setVibrationOn(false));
-    store.dispatch(settingsActions.loadedSettings({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss' }));
-    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss' });
+    store.dispatch(settingsActions.loadedSettings({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss', languageChoice: 'phone' }));
+    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss', languageChoice: 'phone' });
   });
 
   it('loads saved settings, filling anything missing, mistyped or unreadable with its default', () => {
@@ -48,6 +48,7 @@ describe('settings', () => {
       vibrationOn: false,
       tapMovesOn: false,
       paletteChoice: 'teal',
+      languageChoice: 'phone',
     });
     // A save from before tap moves and palettes existed gets tap moves on and random colours.
     expect(settingsFromSaved(JSON.stringify({ soundOn: false, vibrationOn: true }))).toEqual({
@@ -55,12 +56,27 @@ describe('settings', () => {
       vibrationOn: true,
       tapMovesOn: true,
       paletteChoice: 'random',
+      languageChoice: 'phone',
     });
     // A palette that no longer exists falls back to random.
     expect(settingsFromSaved(JSON.stringify({ paletteChoice: 'classic' })).paletteChoice).toBe('random');
+    expect(settingsFromSaved(JSON.stringify({ languageChoice: 'fr' })).languageChoice).toBe('phone');
     expect(settingsFromSaved(JSON.stringify({ soundOn: 'no', unknownSetting: 1 }))).toEqual(DEFAULT_SETTINGS);
     expect(settingsFromSaved('not json')).toEqual(DEFAULT_SETTINGS);
     expect(settingsFromSaved(null)).toEqual(DEFAULT_SETTINGS);
+  });
+
+  it('keeps a language the player picked over the phone\'s, also after loading it', () => {
+    const store = createStore('pt');
+    store.dispatch(settingsActions.setLanguageChoice('en'));
+    expect(store.getState().game.language).toBe('en');
+    const reopenedStore = createStore('pt');
+    reopenedStore.dispatch(settingsActions.loadedSettings(settingsFromSaved(JSON.stringify(store.getState().settings))));
+    expect(reopenedStore.getState().game.language).toBe('en');
+    // Following the phone leaves the phone's language alone.
+    const phoneStore = createStore('pt');
+    phoneStore.dispatch(settingsActions.loadedSettings(DEFAULT_SETTINGS));
+    expect(phoneStore.getState().game.language).toBe('pt');
   });
 });
 
@@ -151,20 +167,35 @@ describe('progress', () => {
     expect(store.getState().progress).toEqual({ bestMovesByLevelId: {}, lastWin: null });
   });
 
-  it('saves only the bests, loads them back, and keeps the better best after loading', () => {
+  it('saves the bests and the current level, loads them back, and keeps the better best after loading', () => {
     const store = createStore('en', 1);
     winSampleC(store);
-    const savedText = progressToSave(store.getState().progress);
-    expect(JSON.parse(savedText)).toEqual({ bestMovesByLevelId: { 'sample-c': 10 } });
-    expect(bestMovesFromSaved(savedText)).toEqual({ 'sample-c': 10 });
+    const savedText = progressToSave(store.getState().progress, 'sample-c');
+    expect(JSON.parse(savedText)).toEqual({ version: 2, bestMovesByLevelId: { 'sample-c': 10 }, currentLevelId: 'sample-c' });
+    expect(progressFromSaved(savedText)).toEqual({ bestMovesByLevelId: { 'sample-c': 10 }, currentLevelId: 'sample-c' });
     store.dispatch(progressActions.loadedBests({ 'sample-c': 14, 'sample-a': 6 }));
     expect(store.getState().progress.bestMovesByLevelId).toEqual({ 'sample-c': 10, 'sample-a': 6 });
   });
 
+  it('loads a version 1 file, which saved only the bests', () => {
+    expect(progressFromSaved('{"bestMovesByLevelId": {"sample-a": 4}}')).toEqual({ bestMovesByLevelId: { 'sample-a': 4 }, currentLevelId: null });
+  });
+
   it('ignores a broken or odd progress file', () => {
-    expect(bestMovesFromSaved(null)).toEqual({});
-    expect(bestMovesFromSaved('not json')).toEqual({});
-    expect(bestMovesFromSaved('{"bestMovesByLevelId": {"a": 3, "b": "4", "c": -1, "d": 2.5}}')).toEqual({ a: 3 });
+    const empty = { bestMovesByLevelId: {}, currentLevelId: null };
+    expect(progressFromSaved(null)).toEqual(empty);
+    expect(progressFromSaved('not json')).toEqual(empty);
+    expect(progressFromSaved('{"bestMovesByLevelId": {"a": 3, "b": "4", "c": -1, "d": 2.5}, "currentLevelId": 7}')).toEqual({
+      bestMovesByLevelId: { a: 3 },
+      currentLevelId: null,
+    });
+  });
+
+  it('forgets every win on a reset', () => {
+    const store = createStore('en', 1);
+    winSampleC(store);
+    store.dispatch(progressActions.resetProgress());
+    expect(store.getState().progress).toEqual({ bestMovesByLevelId: {}, lastWin: null });
   });
 
   it('peeks at the palette the next level will draw, and at none with a favourite', () => {
