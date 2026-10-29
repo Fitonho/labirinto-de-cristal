@@ -4,8 +4,8 @@
 // open one they haven't solved. Its back arrow goes up to the chapters; see
 // levelsNavigation.ts.
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo } from 'react';
-import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useCallback, useMemo, useState } from 'react';
+import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Svg, { Polygon } from 'react-native-svg';
 import { useDispatch } from 'react-redux';
@@ -33,8 +33,16 @@ export default function ChapterScreen() {
   const { language, levelIndex, currentLevelId, bestMovesByLevelId, palette, appColours, summaries, openLevelIds } = useLevelProgress();
   const summary = summaries.find((chapterSummary) => chapterSummary.chapter === chapterId) ?? summaries[0];
   const levelToPlay = levelToPlayIn(summary, openLevelIds, bestMovesByLevelId, currentLevelId);
-  const { width: screenWidth } = useWindowDimensions();
-  const cellWidth = Math.floor((Math.min(screenWidth, 640) - 2 * PAGE_PADDING - (COLUMN_COUNT - 1) * GRID_GAP) / COLUMN_COUNT);
+  // Measured from the grid itself, so the three columns always fit whatever the page's padding and insets.
+  const [gridWidth, setGridWidth] = useState(0);
+  const cellWidth = Math.floor((gridWidth - (COLUMN_COUNT - 1) * GRID_GAP) / COLUMN_COUNT);
+  const rows = useMemo(() => {
+    const levelRows: LevelData[][] = [];
+    for (let levelIndexInChapter = 0; levelIndexInChapter < summary.levels.length; levelIndexInChapter += COLUMN_COUNT) {
+      levelRows.push(summary.levels.slice(levelIndexInChapter, levelIndexInChapter + COLUMN_COUNT));
+    }
+    return levelRows;
+  }, [summary]);
   const goBack = useCallback(() => backToChapters(from === 'chapters'), [from]);
 
   const playLevel = useCallback(
@@ -81,20 +89,25 @@ export default function ChapterScreen() {
               {`${summary.solvedCount} / ${summary.levels.length}`}
             </Text>
           </View>
-          <ScrollView contentContainerStyle={styles.grid}>
-            {summary.levels.map((level) => (
-              <LevelCell
-                key={level.id}
-                level={level}
-                mark={levelMarkFor(level, bestMovesByLevelId)}
-                open={openLevelIds.has(level.id)}
-                current={level.id === currentLevelId}
-                width={cellWidth}
-                language={language}
-                palette={palette}
-                onPress={playLevel}
-              />
-            ))}
+          <ScrollView contentContainerStyle={styles.grid} onLayout={(event) => setGridWidth(event.nativeEvent.layout.width)}>
+            {cellWidth > 0 &&
+              rows.map((rowLevels) => (
+                <View key={rowLevels[0].id} style={styles.gridRow}>
+                  {rowLevels.map((level) => (
+                    <LevelCell
+                      key={level.id}
+                      level={level}
+                      mark={levelMarkFor(level, bestMovesByLevelId)}
+                      open={openLevelIds.has(level.id)}
+                      current={level.id === currentLevelId}
+                      width={cellWidth}
+                      language={language}
+                      palette={palette}
+                      onPress={playLevel}
+                    />
+                  ))}
+                </View>
+              ))}
           </ScrollView>
           <Text style={[styles.legend, { color: appColours.quiet }]}>{t(language, 'levelLegend')}</Text>
           {levelToPlay && (
@@ -175,7 +188,8 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   heading: { flex: 1, fontSize: 24, fontWeight: '700' },
   chip: { fontSize: 14, fontWeight: '600', borderWidth: 1, borderRadius: 14, paddingHorizontal: 10, paddingVertical: 3, overflow: 'hidden' },
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GRID_GAP, paddingBottom: 8 },
+  grid: { gap: GRID_GAP, paddingBottom: 8 },
+  gridRow: { flexDirection: 'row', gap: GRID_GAP },
   cell: { borderRadius: 12, padding: 6, gap: 5, alignItems: 'center' },
   cellPicture: { alignSelf: 'stretch', alignItems: 'center', justifyContent: 'center' },
   cellLabel: { flexDirection: 'row', alignItems: 'center', gap: 5 },
