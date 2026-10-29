@@ -3,17 +3,18 @@
 // state only; swipes on the board are turned into commands for the screen.
 // The last action's engine events decide whether pieces slide, jump, bump or
 // flip.
-import { memo, useMemo, useRef } from 'react';
-import { GestureDetector, usePanGesture } from 'react-native-gesture-handler';
+import { memo, useMemo } from 'react';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
 import type { GameEvent, GameState } from '../core';
 import { doorSidesByTileIndex, floorColour } from './boardLayout';
 import { BoardTile } from './BoardTile';
-import { swipeDirection, type Command } from './commands';
+import type { Command } from './commands';
 import { motionFor } from './motion';
 import { Player } from './Player';
 import { tileColours } from './theme';
 import { drawnColourOf, useBoxAmounts } from './useBoxAmounts';
+import { useSwipeGesture } from './useSwipeGesture';
 
 interface BoardProps {
   state: GameState;
@@ -28,21 +29,7 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
   const motion = useMemo(() => motionFor(events, state), [events, state]);
   const { boxAmountsByColour, drawnBoxColour } = useBoxAmounts(state.player.colour, motion);
   const floorStyle = useAnimatedStyle(() => ({ backgroundColor: tileColours[floorColour(drawnColourOf(drawnBoxColour.value))] }));
-  // A swipe moves as soon as it is long enough, not when the finger lifts; the rest of that stroke does nothing.
-  const swipeHasMoved = useRef(false);
-  const swipe = usePanGesture({
-    runOnJS: true,
-    onBegin: () => {
-      swipeHasMoved.current = false;
-    },
-    onUpdate: (panEvent) => {
-      if (swipeHasMoved.current) return;
-      const direction = swipeDirection(panEvent.translationX, panEvent.translationY);
-      if (!direction) return;
-      swipeHasMoved.current = true;
-      onCommand({ type: 'move', direction });
-    },
-  });
+  const swipe = useSwipeGesture(onCommand);
 
   const cellPosition = (tileIndex: number) => ({
     left: (tileIndex % state.columnCount) * tileSize,

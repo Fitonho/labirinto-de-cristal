@@ -1,8 +1,9 @@
-// The game screen: board, move counter, level picker, undo, restart, the
-// language switch, and the move's sound and vibration. All game changes go through the Redux store.
+// The game screen: the switches and level picker on top, the board, then
+// Undo, the move counter and Restart over the touch area. Plays the move's
+// sound and vibration. All game changes go through the Redux store.
 import { useCallback, useEffect, useState } from 'react';
 import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { levels } from '../src/levels/index';
 import { actions, type RootState } from '../src/state/store';
@@ -10,12 +11,22 @@ import { Board } from '../src/ui/Board';
 import { tileSizeFor } from '../src/ui/boardLayout';
 import type { Command } from '../src/ui/commands';
 import { t } from '../src/ui/i18n';
+import { IconButton } from '../src/ui/IconButton';
 import { LevelPicker } from '../src/ui/LevelPicker';
 import { palette } from '../src/ui/theme';
+import { TouchPad } from '../src/ui/TouchPad';
 import { useHaptics } from '../src/ui/useHaptics';
 import { useKeyboardCommands } from '../src/ui/useKeyboardCommands';
 import { useSettings } from '../src/ui/useSettings';
 import { useSounds } from '../src/ui/useSounds';
+
+/**
+ * Height kept free of the board for everything else: the header, the Undo and
+ * Restart row, the smallest touch area, and the padding and gaps between them.
+ */
+const CONTROLS_HEIGHT = 330;
+/** The web's keyboard help line under the touch area. */
+const HELP_HEIGHT = 48;
 
 export default function GameScreen() {
   const dispatch = useDispatch();
@@ -24,7 +35,7 @@ export default function GameScreen() {
   const level = levels[levelIndex];
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [pickerVisible, setPickerVisible] = useState(false);
-  const { soundOn, vibrationOn, toggleSound, toggleVibration } = useSettings();
+  const { soundOn, vibrationOn, tapMovesOn, toggleSound, toggleVibration, toggleTapMoves } = useSettings();
 
   const run = useCallback(
     (command: Command) => {
@@ -44,36 +55,64 @@ export default function GameScreen() {
     if (Platform.OS === 'web') document.documentElement.lang = language === 'pt' ? 'pt-BR' : 'en';
   }, [language]);
 
-  const tileSize = tileSizeFor(state, Math.min(screenWidth, 640), screenHeight, PixelRatio.get());
+  const safeAreaInsets = useSafeAreaInsets();
+  const reservedHeight = CONTROLS_HEIGHT + (Platform.OS === 'web' ? HELP_HEIGHT : 0) + safeAreaInsets.top + safeAreaInsets.bottom;
+  const tileSize = tileSizeFor(state, Math.min(screenWidth, 640), screenHeight, PixelRatio.get(), reservedHeight);
   const moveText = `${t(language, 'moves')}: ${state.moveCount}${level.par ? ` (${t(language, 'par')} ${level.par})` : ''}`;
   const won = state.status === 'won';
+
+  const hint = state.moveCount === 0 ? t(language, tapMovesOn ? 'hintTapOrSwipe' : 'hintSwipe') : null;
 
   return (
     <SafeAreaView style={styles.page}>
       <View style={styles.column}>
         <View style={styles.header}>
-          <Text accessibilityRole="header" style={styles.title}>
-            {t(language, 'title')}
-          </Text>
-          <Pressable
-            accessibilityRole="button"
-            onPress={() => dispatch(actions.setLanguage(language === 'pt' ? 'en' : 'pt'))}
-          >
-            <Text style={styles.link}>{t(language, 'language')}</Text>
-          </Pressable>
+          <View style={styles.titleBlock}>
+            <Text accessibilityRole="header" style={styles.title}>
+              {t(language, 'title')}
+            </Text>
+            <Pressable accessibilityRole="button" onPress={() => setPickerVisible(true)} hitSlop={8}>
+              <Text style={styles.link}>{`${t(language, 'level')} ${level.order} ▾`}</Text>
+            </Pressable>
+          </View>
+          <View style={styles.switches}>
+            <IconButton icon="sound" label={t(language, 'sound')} switchedOn={soundOn} onPress={toggleSound} size={36} />
+            {/* The web never vibrates, so it has no vibration switch. */}
+            {Platform.OS !== 'web' && (
+              <IconButton
+                icon="vibration"
+                label={t(language, 'vibration')}
+                switchedOn={vibrationOn}
+                onPress={toggleVibration}
+                size={36}
+              />
+            )}
+            <IconButton icon="tapMoves" label={t(language, 'tapMoves')} switchedOn={tapMovesOn} onPress={toggleTapMoves} size={36} />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t(language, 'language')}
+              onPress={() => dispatch(actions.setLanguage(language === 'pt' ? 'en' : 'pt'))}
+              hitSlop={4}
+              style={({ pressed }) => [styles.languageButton, pressed && styles.pressed]}
+            >
+              <Text style={styles.languageText}>{t(language, 'languageShort')}</Text>
+            </Pressable>
+          </View>
         </View>
         <View style={styles.boardArea}>
           <Board state={state} events={events} tileSize={tileSize} onCommand={run} />
         </View>
-        <Text accessibilityLiveRegion="polite" style={[styles.status, won && styles.wonStatus]}>
-          {won ? `${t(language, 'won')} ${moveText}` : moveText}
-        </Text>
-        <View style={styles.controls}>
-          <ControlButton label={`${t(language, 'level')} ${level.order} ▾`} onPress={() => setPickerVisible(true)} />
-          <ControlButton label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} />
-          <ControlButton label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} />
+        {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping.
+            Undo, pressed far more often, is on the right, under most players' thumb. */}
+        <View style={styles.statusRow}>
+          <IconButton icon="restart" label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} size={48} />
+          <Text accessibilityLiveRegion="polite" style={[styles.status, won && styles.wonStatus]}>
+            {won ? `${t(language, 'won')} ${moveText}` : moveText}
+          </Text>
+          <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
         </View>
-        <Text style={styles.help}>{t(language, 'help')}</Text>
+        <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
+        {Platform.OS === 'web' && <Text style={styles.help}>{t(language, 'help')}</Text>}
       </View>
       <LevelPicker
         visible={pickerVisible}
@@ -91,32 +130,30 @@ export default function GameScreen() {
   );
 }
 
-function ControlButton({ label, onPress }: { label: string; onPress: () => void }) {
-  return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.button}>
-      <Text style={styles.buttonText}>{label}</Text>
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
   page: { flex: 1, backgroundColor: palette.page },
-  column: { width: '100%', maxWidth: 640, alignSelf: 'center', padding: 16 },
-  header: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', gap: 12, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '700', color: palette.ink },
+  column: { flex: 1, width: '100%', maxWidth: 640, alignSelf: 'center', padding: 16, gap: 12 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  titleBlock: { flexShrink: 1, gap: 2 },
+  title: { fontSize: 20, fontWeight: '700', color: palette.ink },
   link: { color: palette.accent, fontSize: 16 },
-  boardArea: { alignItems: 'center' },
-  status: { textAlign: 'center', marginVertical: 12, color: palette.quiet, fontSize: 16 },
-  wonStatus: { color: palette.accent, fontWeight: '600' },
-  controls: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, justifyContent: 'center' },
-  button: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  switches: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  languageButton: {
+    height: 36,
+    minWidth: 36,
+    paddingHorizontal: 8,
+    borderRadius: 18,
     borderWidth: 1,
     borderColor: palette.controlBorder,
-    borderRadius: 8,
     backgroundColor: palette.control,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonText: { fontSize: 16, color: palette.ink },
-  help: { textAlign: 'center', color: palette.quiet, fontSize: 13.5, marginTop: 16 },
+  languageText: { fontSize: 13, fontWeight: '600', color: palette.ink },
+  pressed: { opacity: 0.6 },
+  boardArea: { alignItems: 'center' },
+  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  status: { flex: 1, textAlign: 'center', color: palette.quiet, fontSize: 16 },
+  wonStatus: { color: palette.accent, fontWeight: '600' },
+  help: { textAlign: 'center', color: palette.quiet, fontSize: 13.5 },
 });
