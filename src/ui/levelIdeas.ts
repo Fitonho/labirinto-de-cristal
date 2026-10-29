@@ -38,16 +38,9 @@ export interface IdeaHighlight {
   portals: Portal[];
 }
 
-/** What glows on the board after the card: the portals, the stars, every box (the bridge to be), or the boxes next to the Pebble. */
+/** What glows on the board after the card: the portals (the bridge's too, so the glow doesn't point at the answer), the stars, or the boxes next to the Pebble. */
 export function ideaHighlightFor(idea: LevelIdea, state: GameState): IdeaHighlight {
-  if (idea === 'portal' || idea === 'portalPush') return { cells: [], portals: state.portals };
-  if (idea === 'bridge') {
-    const cells: Cell[] = [];
-    state.tiles.forEach((tile, tileIndex) => {
-      if (tile.colour === state.player.colour) cells.push({ row: Math.floor(tileIndex / state.columnCount), column: tileIndex % state.columnCount });
-    });
-    return { cells, portals: [] };
-  }
+  if (idea === 'portal' || idea === 'bridge' || idea === 'portalPush') return { cells: [], portals: state.portals };
   if (idea === 'crystalColour') {
     const cells: Cell[] = [];
     state.tiles.forEach((tile, tileIndex) => {

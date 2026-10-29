@@ -84,12 +84,7 @@ describe('new-idea card', () => {
       { row: 0, column: 1 },
       { row: 1, column: 0 },
     ]);
-    // The bridge to be: every tile in the Pebble's colour.
-    const bridgeLevel = customLevelState(['b w w', 'b b B'], [1, 0]);
-    expect(ideaHighlightFor('bridge', bridgeLevel).cells).toEqual([
-      { row: 0, column: 1 },
-      { row: 0, column: 2 },
-    ]);
+    expect(ideaHighlightFor('bridge', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
   });
 });
 
