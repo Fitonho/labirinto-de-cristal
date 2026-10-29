@@ -2,3 +2,4 @@ node_modules/
 dist/
 .expo/
 expo-env.d.ts
+lab-batches/

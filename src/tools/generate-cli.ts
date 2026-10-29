@@ -19,14 +19,14 @@ const HELP = `Finds new levels and writes them to the Lab chapter (src/levels/la
   --count    how many levels to find (default 10)
   --time     stop after this many seconds (default 300)
   --seed     start of the random numbers, to repeat a run (default: the clock)
+  --tag      a word for the level ids and names, e.g. portals-5x5 (default: the seed)
   --append   add to the Lab instead of replacing it
+  --out      write here instead of src/levels/lab.json (generate-batches.mjs runs several at once this way)
   --url      where the app runs, for the links (default http://localhost:8081/)
 
 Every board is tidied (calmer colours, same solution length) before it is written.
 In the app the Lab shows in dev, in Expo Go and on the web with ?debug; each Lab level has a Solve button.`;
 
-// npm runs scripts from the repo's root folder.
-const labFile = resolve('src/levels/lab.json');
 
 function optionValues(argumentList: string[]): Map<string, string> {
   const valuesByName = new Map<string, string>();
@@ -73,8 +73,11 @@ const options: GeneratorOptions = {
 const levelCount = Number(valuesByName.get('count') ?? 10);
 const timeLimitMs = Number(valuesByName.get('time') ?? 300) * 1000;
 const seed = Number(valuesByName.get('seed') ?? Date.now() % 1_000_000);
+const tag = valuesByName.get('tag') ?? String(seed);
 const appUrl = valuesByName.get('url') ?? 'http://localhost:8081/';
 const appending = valuesByName.has('append');
+// npm runs scripts from the repo's root folder.
+const labFile = resolve(valuesByName.get('out') ?? 'src/levels/lab.json');
 
 const labLevels: LabLevel[] = appending ? JSON.parse(readFileSync(labFile, 'utf8')) : [];
 const boardKeys = new Set(labLevels.map((labLevel) => JSON.stringify([labLevel.grid, labLevel.start, labLevel.portals])));
@@ -85,7 +88,7 @@ let tryCount = 0;
 console.error(`Seed ${seed}. Looking for ${levelCount} levels, ${columnCount}x${rowCount}, needing ${mechanics.join(', ') || 'nothing in particular'}, ${minMoves} to ${maxMoves} moves...`);
 while (foundCount < levelCount && Date.now() - startedAt < timeLimitMs) {
   tryCount++;
-  const generated = generateLevel(options, random);
+  const generated = generateLevel(options, random, () => Date.now() - startedAt >= timeLimitMs);
   if (!generated) continue;
   const boardKey = JSON.stringify([generated.level.grid, generated.level.start, generated.level.portals]);
   if (boardKeys.has(boardKey)) continue;
@@ -93,7 +96,7 @@ while (foundCount < levelCount && Date.now() - startedAt < timeLimitMs) {
   foundCount++;
   const labLevel: LabLevel = {
     ...generated.level,
-    id: `lab-${seed}-${foundCount}`,
+    id: `lab-${tag}-${seed}-${foundCount}`,
     chapter: 'lab',
     order: labLevels.length + 1,
     solution: solutionLettersFor(generated.solution),

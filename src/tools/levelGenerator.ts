@@ -190,15 +190,21 @@ function changedBoard(board: Board, options: GeneratorOptions, random: () => num
  * solution, then tidied. Null when no starting board passed, or the climb
  * ended under `minMoves`. Call it again (same random) for the next try.
  */
-export function generateLevel(options: GeneratorOptions, random: () => number, startingBoardTryCount = 2000): GeneratedLevel | null {
+export function generateLevel(
+  options: GeneratorOptions,
+  random: () => number,
+  isOutOfTime: () => boolean = () => false,
+  startingBoardTryCount = 2000,
+): GeneratedLevel | null {
   let board: Board | null = null;
   let best: ReturnType<typeof checkedSolution> = null;
-  for (let tryIndex = 0; tryIndex < startingBoardTryCount && !best; tryIndex++) {
+  for (let tryIndex = 0; tryIndex < startingBoardTryCount && !best && !isOutOfTime(); tryIndex++) {
     board = randomBoard(options, random);
     best = checkedSolution(board, options);
   }
   if (!board || !best) return null;
-  for (let stepIndex = 0; stepIndex < options.climbStepCount; stepIndex++) {
+  // Out of time mid-climb, the board climbed so far still gets judged and tidied.
+  for (let stepIndex = 0; stepIndex < options.climbStepCount && !isOutOfTime(); stepIndex++) {
     const nextBoard = changedBoard(board, options, random);
     const next = checkedSolution(nextBoard, options);
     if (next && next.score >= best.score) {

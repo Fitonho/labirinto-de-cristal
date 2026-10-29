@@ -292,7 +292,10 @@ export function tFilled(language: Language, key: StringKey, valuesByName: Record
 /** A level's name, or its number when it has none yet. */
 export function levelNameFor(language: Language, levelId: string, levelOrder: number): string {
   const key = `levelName.${levelId}`;
-  return key in strings[language] ? t(language, key as StringKey) : `${t(language, 'level')} ${levelOrder}`;
+  if (key in strings[language]) return t(language, key as StringKey);
+  // Generated Lab levels have no names; their id (tag, seed, number) says where they came from.
+  if (levelId.startsWith('lab-')) return levelId.slice('lab-'.length);
+  return `${t(language, 'level')} ${levelOrder}`;
 }
 
 /** Portuguese for any Portuguese locale tag (pt, pt-BR, pt-PT), English otherwise. */
