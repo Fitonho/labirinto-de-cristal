@@ -9,7 +9,7 @@ export interface BoardPalette {
   id: PaletteId;
   /** 'black' is always the dark colour and 'white' the light one, so the board never relies on hue alone. */
   tileColours: Record<Colour, string>;
-  /** The glowing seam that marks a door: amber, or another colour where amber is too close to the light colour. */
+  /** The glowing seam that marks a portal: amber, or another colour where amber is too close to the light colour. */
   seamColour: string;
   /** Links, the current level and the touch area in the app around the board. */
   accent: string;
@@ -108,10 +108,10 @@ export const PALETTE_FADE_DURATION = 300;
 /** How far a box sits inside its cell, and how round its corners are, as shares of the tile size. */
 export const BOX_INSET = 0.1;
 export const BOX_CORNER_RADIUS = 0.2;
-/** How far from a door side a box's edge starts curving out into it, as a share of the tile size. */
-export const DOOR_FLARE_LENGTH = 0.26;
+/** How far from a portal side a box's edge starts curving out into it, as a share of the tile size. */
+export const PORTAL_FLARE_LENGTH = 0.26;
 
-/** The seam's visible half, its glow, and the frame that clips the glow to the door's own cell, in points. */
+/** The seam's visible half, its glow, and the frame that clips the glow to the portal's own cell, in points. */
 export const SEAM_WIDTH = 3;
 export const SEAM_GLOW = 7;
 export const SEAM_FRAME_WIDTH = 12;

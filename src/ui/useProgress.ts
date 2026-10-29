@@ -2,7 +2,8 @@
 // storage on the web), the same way as the settings. Two entries: the bests and
 // the level the player is on, written after a win or a level change; and the
 // board in progress, written when the app is put away. Nothing is written on a
-// move, so playing costs nothing extra.
+// move, so playing costs nothing extra. Once loaded, it says whether this is a
+// returning player, who starts on home.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
@@ -10,6 +11,7 @@ import { levels } from '../levels/index';
 import { logger } from '../state/logger';
 import { progressActions, progressFromSaved, progressToSave, type SavedProgress } from '../state/progress';
 import { replaySteps, resumeFromSaved, resumeToSave, type SavedResume } from '../state/resume';
+import { isReturningPlayer, sessionActions } from '../state/session';
 import { actions, type AppStore } from '../state/store';
 
 const PROGRESS_KEY = 'labirinto-de-cristal/progress';
@@ -63,6 +65,7 @@ export function useSavedProgress(store: AppStore) {
         // A player who already moved or picked a level before loading finished keeps what they did.
         const { levelIndex, steps } = store.getState().game;
         if (levelIndex === 0 && steps === '') openSavedLevel(store, progress, resume);
+        store.dispatch(sessionActions.savedLoaded({ returning: isReturningPlayer(progress, resume, levels[0].id) }));
 
         let lastSavedBests = store.getState().progress.bestMovesByLevelId;
         let lastSavedLevelIndex = store.getState().game.levelIndex;

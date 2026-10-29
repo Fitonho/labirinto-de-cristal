@@ -1,6 +1,6 @@
 // Turns level data into a starting GameState, and checks it first.
-import { doorIsValid, edge, inside, opposite, sameDoor, sides, tileAt } from './board';
-import type { Door, GameState, LevelData, Tile } from './types';
+import { portalIsValid, edge, inside, opposite, samePortal, sides, tileAt } from './board';
+import type { Portal, GameState, LevelData, Tile } from './types';
 
 export type LevelError =
   | 'grid-empty'
@@ -9,9 +9,9 @@ export type LevelError =
   | 'no-goal'
   | 'start-outside'
   | 'start-on-goal'
-  | 'door-outside'
-  | 'door-same-colour'
-  | 'door-duplicate';
+  | 'portal-outside'
+  | 'portal-same-colour'
+  | 'portal-duplicate';
 
 interface ParsedGrid {
   errors: LevelError[];
@@ -37,8 +37,8 @@ function parseGrid(level: LevelData): ParsedGrid {
   return { errors, rowCount: symbolRows.length, columnCount, tiles };
 }
 
-function levelDoors(level: LevelData): Door[] {
-  return (level.doors ?? []).map(([row, column, side]) => edge({ row, column }, side));
+function levelPortals(level: LevelData): Portal[] {
+  return (level.portals ?? []).map(([row, column, side]) => edge({ row, column }, side));
 }
 
 /** Lists everything wrong with a level; an empty list means it can be played. */
@@ -46,18 +46,18 @@ export function validateLevel(level: LevelData): LevelError[] {
   const parsedGrid = parseGrid(level);
   const errors = parsedGrid.errors;
   if (errors.length) return errors;
-  const board = { ...parsedGrid, doors: [] } as unknown as GameState;
+  const board = { ...parsedGrid, portals: [] } as unknown as GameState;
   if (!board.tiles.some((tile) => tile.goal)) errors.push('no-goal');
   const [startRow, startColumn] = level.start;
   const start = { row: startRow, column: startColumn };
   if (!inside(board, start)) errors.push('start-outside');
   else if (tileAt(board, start).goal) errors.push('start-on-goal');
-  const checkedDoors: Door[] = [];
-  for (const door of levelDoors(level)) {
-    if (!sides(door).every((cell) => inside(board, cell))) errors.push('door-outside');
-    else if (!doorIsValid(board, door)) errors.push('door-same-colour');
-    if (checkedDoors.some((checkedDoor) => sameDoor(checkedDoor, door))) errors.push('door-duplicate');
-    checkedDoors.push(door);
+  const checkedPortals: Portal[] = [];
+  for (const portal of levelPortals(level)) {
+    if (!sides(portal).every((cell) => inside(board, cell))) errors.push('portal-outside');
+    else if (!portalIsValid(board, portal)) errors.push('portal-same-colour');
+    if (checkedPortals.some((checkedPortal) => samePortal(checkedPortal, portal))) errors.push('portal-duplicate');
+    checkedPortals.push(portal);
   }
   return errors;
 }
@@ -72,7 +72,7 @@ export function loadLevel(level: LevelData): GameState {
     rowCount,
     columnCount,
     tiles,
-    doors: levelDoors(level),
+    portals: levelPortals(level),
     player: { row: startRow, column: startColumn, colour: 'black' },
     collectedGoalIds: [],
     moveCount: 0,

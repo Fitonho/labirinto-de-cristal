@@ -1,6 +1,6 @@
 [
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-01",
     "chapter": "drafts",
     "order": 1,
@@ -16,12 +16,12 @@
       "w b b b b b b b b b"
     ],
     "start": [8, 0],
-    "doors": [
+    "portals": [
       [4, 5, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-02",
     "chapter": "drafts",
     "order": 2,
@@ -37,12 +37,12 @@
       "w b b b b b b b b b"
     ],
     "start": [8, 0],
-    "doors": [
+    "portals": [
       [4, 5, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-03",
     "chapter": "drafts",
     "order": 3,
@@ -58,12 +58,12 @@
       "w w b b w b b w w"
     ],
     "start": [8, 4],
-    "doors": [
+    "portals": [
       [4, 4, "down"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-04",
     "chapter": "drafts",
     "order": 4,
@@ -79,12 +79,12 @@
       "w w b b w b b w w"
     ],
     "start": [8, 4],
-    "doors": [
+    "portals": [
       [4, 4, "down"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-05",
     "chapter": "drafts",
     "order": 5,
@@ -100,13 +100,13 @@
       "b b w w w w w b b"
     ],
     "start": [8, 4],
-    "doors": [
+    "portals": [
       [8, 1, "right"],
       [8, 7, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-06",
     "chapter": "drafts",
     "order": 6,
@@ -122,13 +122,13 @@
       "b b w w w w w b b"
     ],
     "start": [8, 4],
-    "doors": [
+    "portals": [
       [8, 1, "right"],
       [8, 7, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-07",
     "chapter": "drafts",
     "order": 7,
@@ -144,7 +144,7 @@
       "b w b w w w b w b"
     ],
     "start": [0, 3],
-    "doors": [
+    "portals": [
       [8, 2, "right"],
       [8, 2, "left"],
       [8, 6, "right"],
@@ -152,7 +152,7 @@
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-08",
     "chapter": "drafts",
     "order": 8,
@@ -168,7 +168,7 @@
       "b w b w w w b w b"
     ],
     "start": [0, 3],
-    "doors": [
+    "portals": [
       [8, 2, "right"],
       [8, 2, "left"],
       [8, 6, "right"],
@@ -176,7 +176,7 @@
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-09",
     "chapter": "drafts",
     "order": 9,
@@ -192,7 +192,7 @@
       "b b w b b b w b b"
     ],
     "start": [0, 5],
-    "doors": [
+    "portals": [
       [0, 1, "right"],
       [0, 7, "down"],
       [8, 1, "up"],
@@ -200,7 +200,7 @@
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-10",
     "chapter": "drafts",
     "order": 10,
@@ -216,7 +216,7 @@
       "b b w b b b w b b"
     ],
     "start": [0, 5],
-    "doors": [
+    "portals": [
       [0, 1, "right"],
       [0, 7, "down"],
       [8, 1, "up"],
@@ -224,7 +224,7 @@
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-11",
     "chapter": "drafts",
     "order": 11,
@@ -239,13 +239,13 @@
       "b b w w w w w B"
     ],
     "start": [7, 0],
-    "doors": [
+    "portals": [
       [2, 0, "up"],
       [7, 2, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-12",
     "chapter": "drafts",
     "order": 12,
@@ -260,13 +260,13 @@
       "b b w w w w w B"
     ],
     "start": [7, 0],
-    "doors": [
+    "portals": [
       [2, 0, "up"],
       [7, 2, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-13",
     "chapter": "drafts",
     "order": 13,
@@ -281,13 +281,13 @@
       "w b w b w b w b"
     ],
     "start": [7, 0],
-    "doors": [
+    "portals": [
       [0, 1, "left"],
       [7, 6, "right"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "draft-14",
     "chapter": "drafts",
     "order": 14,
@@ -302,7 +302,7 @@
       "b w b w b w b w"
     ],
     "start": [7, 7],
-    "doors": [
+    "portals": [
       [0, 7, "left"],
       [7, 0, "up"]
     ]

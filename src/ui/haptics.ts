@@ -5,7 +5,7 @@ import type { GameEvent } from '../core';
 import { BUMP_OUT_DURATION, FLIP_GROW_DURATION, PAR_CUE_DELAY, SLIDE_DURATION } from './motion';
 
 /** 'par' is the extra cue for a win on or under par, played as the result card's badge lands. */
-export type HapticCueKind = 'win' | 'door' | 'crystal' | 'push' | 'bump' | 'par';
+export type HapticCueKind = 'win' | 'portal' | 'crystal' | 'push' | 'bump' | 'par';
 
 export interface HapticCue {
   kind: HapticCueKind;
@@ -13,12 +13,12 @@ export interface HapticCue {
 }
 
 /** Strongest first: a move that does several things gets only the first matching cue. */
-const CUE_KINDS_BY_PRIORITY: HapticCueKind[] = ['win', 'door', 'crystal', 'push', 'bump'];
+const CUE_KINDS_BY_PRIORITY: HapticCueKind[] = ['win', 'portal', 'crystal', 'push', 'bump'];
 
-/** When each cue plays: a push as the box starts, a bump when it hits, a door when the colours swap, the rest on arrival. */
+/** When each cue plays: a push as the box starts, a bump when it hits, a portal when the colours swap, the rest on arrival. */
 const DELAYS_BY_CUE_KIND: Record<HapticCueKind, number> = {
   win: SLIDE_DURATION,
-  door: FLIP_GROW_DURATION,
+  portal: FLIP_GROW_DURATION,
   crystal: SLIDE_DURATION,
   push: 0,
   bump: BUMP_OUT_DURATION,
@@ -37,7 +37,7 @@ function cueKindFor(event: GameEvent): HapticCueKind | null {
     case 'won':
       return 'win';
     case 'flipped':
-      return 'door';
+      return 'portal';
     case 'collected':
       return 'crystal';
     case 'pushed':

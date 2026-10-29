@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { loadLevel, move } from '../src/core';
 import {
   boxOutline,
-  doorSidesByTileIndex,
+  portalSidesByTileIndex,
   floorColour,
   isBox,
   MAX_TILE_SIZE,
@@ -43,12 +43,12 @@ import {
 import { customLevelState, levelById } from './helpers';
 
 describe('board layout', () => {
-  it('lists a door on both tiles beside it, so either can show it after a flip', () => {
-    // sample-b: the door sits between tiles 2 and 3 on the top row.
+  it('lists a portal on both tiles beside it, so either can show it after a flip', () => {
+    // sample-b: the portal sits between tiles 2 and 3 on the top row.
     const state = loadLevel(levelById('sample-b'));
-    expect(doorSidesByTileIndex(state).get(2)).toEqual(['right']);
-    expect(doorSidesByTileIndex(state).get(3)).toEqual(['left']);
-    expect(doorSidesByTileIndex(state).has(1)).toBe(false);
+    expect(portalSidesByTileIndex(state).get(2)).toEqual(['right']);
+    expect(portalSidesByTileIndex(state).get(3)).toEqual(['left']);
+    expect(portalSidesByTileIndex(state).has(1)).toBe(false);
   });
 
   it('draws the floor in the colour the boxes are not, and boxes in the player colour', () => {
@@ -61,18 +61,18 @@ describe('board layout', () => {
 
   it('outlines a floor tile, and a box halfway through a flip at its start, as the full cell', () => {
     const outlinePoints = (path: string) => (path.match(/-?\d+\.\d+/g) ?? []).map(Number);
-    for (const doorSides of [[], ['left' as const], ['up' as const, 'right' as const]]) {
-      const points = outlinePoints(boxOutline(40, doorSides, 0));
+    for (const portalSides of [[], ['left' as const], ['up' as const, 'right' as const]]) {
+      const points = outlinePoints(boxOutline(40, portalSides, 0));
       expect(points.every((coordinate) => coordinate === 0 || coordinate === 40)).toBe(true);
     }
   });
 
-  it('insets a box from its cell, except that a door side reaches the cell edge', () => {
+  it('insets a box from its cell, except that a portal side reaches the cell edge', () => {
     const inset = 40 * BOX_INSET;
     const plainPoints = boxOutline(40, [], 1).match(/-?\d+\.\d+/g)!.map(Number);
     expect(Math.min(...plainPoints)).toBeCloseTo(inset);
     expect(Math.max(...plainPoints)).toBeCloseTo(40 - inset);
-    // With a door on the left, the outline runs down the left edge from corner to corner.
+    // With a portal on the left, the outline runs down the left edge from corner to corner.
     expect(boxOutline(40, ['left'], 1)).toContain('0.00 40.00 L0.00 0.00');
   });
 
@@ -158,9 +158,9 @@ describe('board motion', () => {
     expect(bumpDirectionFor(motion, 'player')).toBeNull();
   });
 
-  it('flips the board when the player goes through a door', () => {
-    const doorState = { ...startState, doors: [{ row: 1, column: 0, side: 'right' as const }] };
-    const { state, events } = move({ ...doorState, player: { row: 1, column: 0, colour: 'white' } }, 'right');
+  it('flips the board when the player goes through a portal', () => {
+    const portalState = { ...startState, portals: [{ row: 1, column: 0, side: 'right' as const }] };
+    const { state, events } = move({ ...portalState, player: { row: 1, column: 0, colour: 'white' } }, 'right');
     expect(state.player.colour).toBe('white');
     expect(events[0]).toMatchObject({ type: 'flipped' });
     expect(motionFor(events, state)).toEqual({ slides: true, flips: true, bump: null });
@@ -224,9 +224,9 @@ describe('piece looks', () => {
     expect(pebbleReactionFor(refused.events, refused.state)).toMatchObject({ action: 'bump', direction: 'right' });
   });
 
-  it('squeezes through a door rather than just sliding', () => {
-    const doorState = { ...startState, doors: [{ row: 1, column: 0, side: 'right' as const }], player: { row: 1, column: 0, colour: 'white' as const } };
-    const { state, events } = move(doorState, 'right');
+  it('squeezes through a portal rather than just sliding', () => {
+    const portalState = { ...startState, portals: [{ row: 1, column: 0, side: 'right' as const }], player: { row: 1, column: 0, colour: 'white' as const } };
+    const { state, events } = move(portalState, 'right');
     expect(pebbleReactionFor(events, state)).toMatchObject({ action: 'flip', direction: 'right' });
   });
 
@@ -310,13 +310,13 @@ describe('haptics', () => {
     expect(hapticCueFor(move(refusedState, 'right').events)).toEqual({ kind: 'bump', delay: BUMP_OUT_DURATION });
   });
 
-  it('taps a door when the colours swap', () => {
-    const doorState = { ...startState, doors: [{ row: 1, column: 0, side: 'right' as const }] };
-    const { events } = move({ ...doorState, player: { row: 1, column: 0, colour: 'white' } }, 'right');
-    expect(hapticCueFor(events)).toEqual({ kind: 'door', delay: FLIP_GROW_DURATION });
+  it('taps a portal when the colours swap', () => {
+    const portalState = { ...startState, portals: [{ row: 1, column: 0, side: 'right' as const }] };
+    const { events } = move({ ...portalState, player: { row: 1, column: 0, colour: 'white' } }, 'right');
+    expect(hapticCueFor(events)).toEqual({ kind: 'portal', delay: FLIP_GROW_DURATION });
   });
 
-  it('plays only the strongest cue of a move: win over crystal, door over push', () => {
+  it('plays only the strongest cue of a move: win over crystal, portal over push', () => {
     const at = { row: 0, column: 0 };
     expect(hapticCueFor([{ type: 'moved', from: at, to: at }, { type: 'collected', tileId: 1, at }])).toEqual({
       kind: 'crystal',
@@ -332,9 +332,9 @@ describe('haptics', () => {
     expect(
       hapticCueFor([
         { type: 'pushed', tileId: 1, from: at, to: at },
-        { type: 'flipped', colour: 'black', door: { ...at, side: 'right' } },
+        { type: 'flipped', colour: 'black', portal: { ...at, side: 'right' } },
       ]),
-    ).toEqual({ kind: 'door', delay: FLIP_GROW_DURATION });
+    ).toEqual({ kind: 'portal', delay: FLIP_GROW_DURATION });
   });
 
   it('stays silent on a move after winning', () => {

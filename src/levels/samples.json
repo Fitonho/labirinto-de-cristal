@@ -1,6 +1,6 @@
 [
   {
-    "version": 1,
+    "version": 2,
     "id": "sample-a",
     "par": 4,
     "chapter": "samples",
@@ -12,10 +12,10 @@
       "w w w w w"
     ],
     "start": [2, 0],
-    "doors": []
+    "portals": []
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "sample-b",
     "par": 8,
     "chapter": "samples",
@@ -28,12 +28,12 @@
       "b b b b b"
     ],
     "start": [4, 0],
-    "doors": [
+    "portals": [
       [0, 3, "left"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "sample-c",
     "par": 10,
     "chapter": "samples",
@@ -44,12 +44,12 @@
       "b b b b b"
     ],
     "start": [2, 0],
-    "doors": [
+    "portals": [
       [0, 4, "down"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "sample-d",
     "par": 10,
     "chapter": "samples",
@@ -62,13 +62,13 @@
       "b b w w b"
     ],
     "start": [2, 0],
-    "doors": [
+    "portals": [
       [4, 2, "left"],
       [2, 3, "right"]
     ]
   },
   {
-    "version": 1,
+    "version": 2,
     "id": "sample-e",
     "par": 10,
     "chapter": "samples",
@@ -80,7 +80,7 @@
       "b b b b b b"
     ],
     "start": [3, 0],
-    "doors": [
+    "portals": [
       [2, 1, "up"]
     ]
   }

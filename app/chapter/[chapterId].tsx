@@ -1,5 +1,5 @@
-// One chapter's levels: a picture of each level's board with its number, ✓
-// once solved and ★ at par or better. Locked levels are faded with a lock. The
+// One chapter's levels: a picture of each level's board with its number and
+// name, ✓ once solved and ★ at par or better. Locked levels are faded with a lock. The
 // big button at the bottom plays the level the player is on, or the first
 // open one they haven't solved. Its back arrow goes up to the chapters; see
 // levelsNavigation.ts.
@@ -15,7 +15,7 @@ import { levelMarkFor, levelToPlayIn, type LevelMark } from '../../src/state/lev
 import { actions, type Language } from '../../src/state/store';
 import { AppColoursProvider, useAppColours } from '../../src/ui/AppColours';
 import { BoardPicture } from '../../src/ui/BoardPicture';
-import { t, tFilled, type StringKey } from '../../src/ui/i18n';
+import { levelNameFor, t, tFilled, type StringKey } from '../../src/ui/i18n';
 import { IconButton, IconShape } from '../../src/ui/IconButton';
 import { backToChapters, backToGame } from '../../src/ui/levelsNavigation';
 import { starPoints } from '../../src/ui/pieceLooks';
@@ -47,7 +47,7 @@ export default function ChapterScreen() {
 
   const playLevel = useCallback(
     (level: LevelData) => {
-      backToGame();
+      backToGame(dispatch);
       const pickedLevelIndex = levels.indexOf(level);
       if (pickedLevelIndex === levelIndex) return;
       // Build the new board on a later frame, so the game screen can come back into view first.
@@ -55,13 +55,17 @@ export default function ChapterScreen() {
     },
     [dispatch, levelIndex],
   );
-  // L, the key that opens the levels, closes them again.
+  // L, the key that opens the levels, closes them again; Escape goes up, like the back arrow.
   useKeyboardCommands(
-    useCallback((command) => {
-      if (command.type !== 'levels') return false;
-      backToGame();
-      return true;
-    }, []),
+    useCallback(
+      (command) => {
+        if (command.type === 'levels') backToGame(dispatch);
+        else if (command.type === 'back') goBack();
+        else return false;
+        return true;
+      },
+      [dispatch, goBack],
+    ),
     Platform.OS === 'web',
   );
   // Android's back button does what the back arrow does.
@@ -141,6 +145,7 @@ interface LevelCellProps {
 function LevelCell({ level, mark, open, current, width, language, palette, onPress }: LevelCellProps) {
   const appColours = useAppColours();
   const pictureHeight = Math.round(width * 0.62);
+  const levelName = levelNameFor(language, level.id, level.order);
   const stateText = !open ? t(language, 'levelLocked') : mark === 'atPar' ? t(language, 'levelAtPar') : mark === 'solved' ? t(language, 'levelSolved') : '';
   const cellColours = useMemo(
     () => ({
@@ -154,7 +159,7 @@ function LevelCell({ level, mark, open, current, width, language, palette, onPre
   return (
     <Pressable
       accessibilityRole="button"
-      accessibilityLabel={[`${t(language, 'level')} ${level.order}`, stateText].filter(Boolean).join(', ')}
+      accessibilityLabel={[`${t(language, 'level')} ${level.order}`, levelName, stateText].filter(Boolean).join(', ')}
       accessibilityState={{ disabled: !open, selected: current }}
       disabled={!open}
       onPress={() => onPress(level)}
@@ -166,7 +171,7 @@ function LevelCell({ level, mark, open, current, width, language, palette, onPre
       <View style={styles.cellLabel}>
         <Text style={[styles.cellNumber, { color: appColours.ink }]}>{level.order}</Text>
         {mark === 'atPar' && (
-          // The Beacon's star in the door colour, outlined so it shows on light pages too.
+          // The Beacon's star in the portal colour, outlined so it shows on light pages too.
           <Svg width={15} height={15} viewBox="0 0 16 16">
             <Polygon points={starPoints(8, 8, 7.5, 2.6)} fill={palette.seamColour} stroke={appColours.ink} strokeWidth={0.8} />
           </Svg>
@@ -178,6 +183,9 @@ function LevelCell({ level, mark, open, current, width, language, palette, onPre
           </Svg>
         )}
       </View>
+      <Text numberOfLines={2} style={[styles.cellName, { color: appColours.quiet }]}>
+        {levelName}
+      </Text>
     </Pressable>
   );
 }
@@ -195,6 +203,7 @@ const styles = StyleSheet.create({
   cellLabel: { flexDirection: 'row', alignItems: 'center', gap: 5 },
   cellNumber: { fontSize: 15, fontWeight: '600' },
   cellMark: { fontSize: 15, fontWeight: '700' },
+  cellName: { fontSize: 12, lineHeight: 15, textAlign: 'center' },
   locked: { opacity: 0.45 },
   pressed: { opacity: 0.6 },
   legend: { fontSize: 13, textAlign: 'center' },

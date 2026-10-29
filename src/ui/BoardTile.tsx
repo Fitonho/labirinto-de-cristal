@@ -2,11 +2,11 @@
 // cell with rounded corners, so the floor showing between boxes is their
 // outline and no seam can open between tiles; a floor tile is a full square in
 // the floor colour, invisible on the floor layer. Drawing every tile lets a
-// flip turn boxes into floor and back. A box's doors are glowing seams just
+// flip turn boxes into floor and back. A box's portals are glowing seams just
 // outside it, and they and its crystal move with it when it slides.
 //
-// A flip animates every tile, so a tile without doors is a plain rounded view
-// that only scales; just the few door tiles need an SVG outline. Tiles of one
+// A flip animates every tile, so a tile without portals is a plain rounded view
+// that only scales; just the few portal tiles need an SVG outline. Tiles of one
 // colour share their box amount and the board's drawn box colour, so a flip
 // changes no props and redraws no tile in React.
 import { memo, useMemo } from 'react';
@@ -29,7 +29,7 @@ interface BoardTileProps {
   size: number;
   left: number; // the cell's position; the box's own shape comes from boxOutline
   top: number;
-  doorSides: Direction[];
+  portalSides: Direction[];
   boxAmount: SharedValue<number>; // shared by every tile of this colour: 1 is a box, 0 is floor
   drawnBoxColour: DrawnBoxColour; // boxes sit above floor tiles; during a flip this switches halfway
   tileColours: Record<Colour, string>; // the level's palette
@@ -55,7 +55,7 @@ function drawsTheSame(previous: BoardTileProps, next: BoardTileProps): boolean {
     previous.tileColours === next.tileColours &&
     previous.seamColour === next.seamColour &&
     previous.showCrystal === next.showCrystal &&
-    previous.doorSides.join() === next.doorSides.join()
+    previous.portalSides.join() === next.portalSides.join()
   );
 }
 
@@ -64,7 +64,7 @@ export const BoardTile = memo(function BoardTile({
   size,
   left,
   top,
-  doorSides,
+  portalSides,
   boxAmount,
   drawnBoxColour,
   tileColours,
@@ -86,13 +86,13 @@ export const BoardTile = memo(function BoardTile({
       testID={`tile-${tile.id}`}
       style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size }, positionStyle, stackingStyle]}
     >
-      {doorSides.length > 0 ? (
-        <FlaredShape size={size} doorSides={doorSides} colour={tileColours[tile.colour]} boxAmount={boxAmount} />
+      {portalSides.length > 0 ? (
+        <FlaredShape size={size} portalSides={portalSides} colour={tileColours[tile.colour]} boxAmount={boxAmount} />
       ) : (
         <RoundedShape size={size} colour={tileColours[tile.colour]} boxAmount={boxAmount} />
       )}
-      {doorSides.map((doorSide) => (
-        <DoorSeam key={doorSide} side={doorSide} size={size} seamColour={seamColour} boxAmount={boxAmount} />
+      {portalSides.map((portalSide) => (
+        <PortalSeam key={portalSide} side={portalSide} size={size} seamColour={seamColour} boxAmount={boxAmount} />
       ))}
       {showCrystal && (
         <Crystal
@@ -113,7 +113,7 @@ interface ShapeProps {
   boxAmount: SharedValue<number>;
 }
 
-/** A tile without doors: a square that scales down into a rounded box. */
+/** A tile without portals: a square that scales down into a rounded box. */
 function RoundedShape({ size, colour, boxAmount }: ShapeProps) {
   const shapeStyle = useAnimatedStyle(() => {
     const scale = 1 - 2 * BOX_INSET * boxAmount.value;
@@ -123,13 +123,13 @@ function RoundedShape({ size, colour, boxAmount }: ShapeProps) {
   return <Animated.View style={[styles.fill, { width: size, height: size, backgroundColor: colour }, shapeStyle]} />;
 }
 
-/** A tile with doors: its door sides reach the cell edge and curve out into it, so it needs an SVG outline. */
-function FlaredShape({ size, doorSides, colour, boxAmount }: ShapeProps & { doorSides: Direction[] }) {
+/** A tile with portals: its portal sides reach the cell edge and curve out into it, so it needs an SVG outline. */
+function FlaredShape({ size, portalSides, colour, boxAmount }: ShapeProps & { portalSides: Direction[] }) {
   // The board builds new arrays on every move; keeping the same one avoids rebuilding the animation.
-  const doorSidesKey = doorSides.join();
-  const steadyDoorSides = useMemo(() => doorSides, [doorSidesKey]);
-  const outlineProps = useAnimatedProps(() => ({ d: boxOutline(size, steadyDoorSides, boxAmount.value) }));
-  // The drawing area has a margin all round: Android left a sliver short of a door edge drawn exactly on the
+  const portalSidesKey = portalSides.join();
+  const steadyPortalSides = useMemo(() => portalSides, [portalSidesKey]);
+  const outlineProps = useAnimatedProps(() => ({ d: boxOutline(size, steadyPortalSides, boxAmount.value) }));
+  // The drawing area has a margin all round: Android left a sliver short of a portal edge drawn exactly on the
   // right or bottom border of its view.
   return (
     <Svg
@@ -173,18 +173,18 @@ const seamShapes: Record<Direction, { roundedCorners: object; transformOrigin: s
 };
 
 /**
- * A door: a half pill along the edge with a soft glow, on the floor side of
+ * A portal: a half pill along the edge with a soft glow, on the floor side of
  * its box. It pulls back into the edge as its box turns into floor, and comes
  * out as a new box forms.
  */
-interface DoorSeamProps {
+interface PortalSeamProps {
   side: Direction;
   size: number;
   seamColour: string;
   boxAmount: SharedValue<number>;
 }
 
-function DoorSeam({ side, size, seamColour, boxAmount }: DoorSeamProps) {
+function PortalSeam({ side, size, seamColour, boxAmount }: PortalSeamProps) {
   const frame = seamFrame(side, size);
   const shape = seamShapes[side];
   const isVertical = side === 'left' || side === 'right';

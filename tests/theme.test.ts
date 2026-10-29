@@ -1,5 +1,5 @@
 // Checks every board palette for what the game needs from it: the two tile
-// colours far apart for everyone, including colour-blind players, a door seam
+// colours far apart for everyone, including colour-blind players, a portal seam
 // that stands apart from both, and readable text in the app around the board.
 import { describe, expect, it } from 'vitest';
 import { PALETTE_IDS } from '../src/state/palettes';
@@ -93,7 +93,7 @@ describe('board palettes', () => {
     }
   });
 
-  it('draws the door seam in a colour that stands apart from both tiles for everyone', () => {
+  it('draws the portal seam in a colour that stands apart from both tiles for everyone', () => {
     for (const paletteId of PALETTE_IDS) {
       const { tileColours, seamColour } = boardPalettes[paletteId];
       for (const [visionName, matrix] of Object.entries(visionMatrices)) {

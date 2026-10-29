@@ -1,7 +1,7 @@
 // The tall sheet that rises over two thirds of the screen once a level is won:
 // a star emblem that spins in and bursts like a collected star, a big
-// headline, the moves, a par badge, the best, a big Next button and Play
-// again, Undo and Levels. It is always mounted, hidden below the screen, so
+// headline, the moves, a par badge, the best, a big Next button (Chapters
+// after a chapter's last level) and Play again, Undo and Levels. It is always mounted, hidden below the screen, so
 // the winning move mounts nothing; the rise, the spin and the badge stamp run
 // on shared values with UI-thread delays, and the burst mounts a frame later.
 // Colours come from the level's palette.
@@ -35,8 +35,10 @@ interface ResultCardProps {
   /** The win to show; kept on screen while the card drops away. */
   result: WinResult | null;
   isLastLevel: boolean;
+  /** The level was its chapter's last: the big button opens the chapters instead of the next level. */
+  chapterDone: boolean;
   language: Language;
-  /** The glow round the under-par badge: the level's door seam colour. */
+  /** The glow round the under-par badge: the level's portal seam colour. */
   seamColour: string;
   /** The two colours the next level will draw, shown as a dot on Next, or null with a favourite palette. */
   nextTileColours: Record<Colour, string> | null;
@@ -48,12 +50,14 @@ interface ResultCardProps {
   onPlayAgain: () => void;
   onUndo: () => void;
   onLevels: () => void;
+  onChapters: () => void;
 }
 
 export const ResultCard = memo(function ResultCard({
   won,
   result,
   isLastLevel,
+  chapterDone,
   language,
   seamColour,
   nextTileColours,
@@ -63,6 +67,7 @@ export const ResultCard = memo(function ResultCard({
   onPlayAgain,
   onUndo,
   onLevels,
+  onChapters,
 }: ResultCardProps) {
   const appColours = useAppColours();
   const rise = useSharedValue(0); // 0 hidden below the screen, 1 landed
@@ -191,7 +196,7 @@ export const ResultCard = memo(function ResultCard({
           </Animated.View>
         </View>
         <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.title, { color: appColours.ink }]}>
-          {t(language, isLastLevel ? 'allDone' : 'won')}
+          {t(language, isLastLevel ? 'allDone' : chapterDone ? 'chapterComplete' : 'won')}
         </Text>
         <View style={styles.moveFigure}>
           <Text style={[styles.moveNumber, { color: appColours.ink }]}>{shown.moveCount}</Text>
@@ -213,17 +218,17 @@ export const ResultCard = memo(function ResultCard({
         <View style={styles.actions}>
           <Pressable
             accessibilityRole="button"
-            onPress={pressWith(isLastLevel ? onLevels : onNext, !isLastLevel)}
+            onPress={pressWith(chapterDone ? onChapters : onNext, !chapterDone)}
             style={({ pressed }) => [styles.primary, { backgroundColor: appColours.accent }, pressed && styles.pressed]}
           >
-            {!isLastLevel && nextTileColours && (
+            {!chapterDone && nextTileColours && (
               // A peek at the next level's colours: its dark half over its light one.
               <View style={[styles.peek, { backgroundColor: nextTileColours.white }]}>
                 <View style={[styles.peekHalf, { backgroundColor: nextTileColours.black }]} />
               </View>
             )}
             <Text style={[styles.primaryText, { color: appColours.onAccent }]}>
-              {isLastLevel ? t(language, 'backToLevels') : `${t(language, 'nextLevel')} →`}
+              {`${t(language, chapterDone ? 'chapters' : 'nextLevel')} →`}
             </Text>
           </Pressable>
           <View style={styles.secondaryRow}>

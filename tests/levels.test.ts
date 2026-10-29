@@ -73,7 +73,7 @@ describe('resuming a board', () => {
 describe('unlocking', () => {
   // A small made-up game: two tested chapters and the always-open drafts.
   const level = (id: string, chapter: string, order: number, par?: number): LevelData => ({
-    version: 1,
+    version: 2,
     id,
     chapter,
     order,
@@ -138,21 +138,21 @@ describe('board pictures', () => {
     expect(pictureTileSizeFor(levelById('draft-01'), 10, 10)).toBe(2);
   });
 
-  it('draws every box in one path, every door in another, and each crystal and the Pebble', () => {
+  it('draws every box in one path, every portal in another, and each crystal and the Pebble', () => {
     const shapes = boardPictureShapesFor(levelById('sample-b'), 10);
     expect(shapes.width).toBe(50);
     expect(shapes.height).toBe(50);
     expect(shapes.floorColour).not.toBe(shapes.boxColour);
     expect(shapes.boxesPath.match(/M/g)?.length).toBeGreaterThan(0);
-    expect(shapes.doorsPath.match(/M/g)?.length).toBe(1);
+    expect(shapes.portalsPath.match(/M/g)?.length).toBe(1);
     expect(shapes.crystals.length).toBe(1);
     expect(shapes.pebble).toEqual({ centreX: 5, centreY: 45, radius: 2.6 });
   });
 });
 
-/** FNV-1a over the board's grid, start and doors; the same function as in scripts/level-fingerprints.mjs. */
+/** FNV-1a over the board's grid, start and portals; the same function as in scripts/level-fingerprints.mjs. */
 function fingerprintOf(levelData: LevelData): string {
-  const boardText = JSON.stringify([levelData.grid, levelData.start, levelData.doors ?? []]);
+  const boardText = JSON.stringify([levelData.grid, levelData.start, levelData.portals ?? []]);
   let hash = 0x811c9dc5;
   for (let characterIndex = 0; characterIndex < boardText.length; characterIndex++) {
     hash ^= boardText.charCodeAt(characterIndex);

@@ -22,11 +22,11 @@ export interface Tile {
 }
 
 /**
- * A door sits on the edge between (row, column) and its right or lower
+ * A portal sits on the edge between (row, column) and its right or lower
  * neighbour. Its two sides always have different colours, so the side in the
  * player's colour is the one that can be pushed and that carries it.
  */
-export interface Door {
+export interface Portal {
   row: number;
   column: number;
   side: 'right' | 'down';
@@ -40,7 +40,7 @@ export interface GameState {
   rowCount: number;
   columnCount: number;
   tiles: Tile[]; // row by row, rowCount * columnCount long
-  doors: Door[];
+  portals: Portal[];
   player: Player;
   collectedGoalIds: number[]; // ids of goal tiles already reached
   moveCount: number;
@@ -49,27 +49,28 @@ export interface GameState {
 
 /** A level as stored on disk. Bump `version` when the format changes. */
 export interface LevelData {
-  version: 1;
+  /** 2 renamed doors to portals. */
+  version: 2;
   id: string;
   chapter: string;
   order: number;
   /** One string per row: b / w for black / white, uppercase for a goal. */
   grid: string[];
   start: [row: number, column: number];
-  doors?: [row: number, column: number, side: Direction][];
+  portals?: [row: number, column: number, side: Direction][];
   par?: number;
 }
 
 export type BlockReason = 'edge' | 'won';
-export type PushRefusal = 'edge' | 'goal' | 'ownColour' | 'door';
+export type PushRefusal = 'edge' | 'goal' | 'ownColour' | 'portal';
 
 export type GameEvent =
   | { type: 'moved'; from: Cell; to: Cell }
   | { type: 'blocked'; reason: BlockReason; direction: Direction } // the way the player tried to go
   | { type: 'pushed'; tileId: number; from: Cell; to: Cell }
   | { type: 'pushRefused'; reason: PushRefusal; at: Cell }
-  | { type: 'flipped'; colour: Colour; door: Door }
-  | { type: 'doorMoved'; from: Door; to: Door }
+  | { type: 'flipped'; colour: Colour; portal: Portal }
+  | { type: 'portalMoved'; from: Portal; to: Portal }
   | { type: 'collected'; tileId: number; at: Cell }
   | { type: 'won'; moveCount: number };
 

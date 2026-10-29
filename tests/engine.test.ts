@@ -20,10 +20,10 @@ describe('levels', () => {
   });
 
   it('rejects broken levels', () => {
-    const base = { version: 1 as const, id: 'x', chapter: 'x', order: 0, start: [0, 0] as [number, number] };
-    expect(validateLevel({ ...base, grid: ['b w', 'w B'], doors: [[0, 0, 'up']] })).toContain('door-outside');
-    expect(validateLevel({ ...base, grid: ['b b', 'w B'], doors: [[0, 0, 'right']] })).toContain('door-same-colour');
-    expect(validateLevel({ ...base, grid: ['b w', 'w B'], doors: [[0, 0, 'right'], [0, 1, 'left']] })).toContain('door-duplicate');
+    const base = { version: 2 as const, id: 'x', chapter: 'x', order: 0, start: [0, 0] as [number, number] };
+    expect(validateLevel({ ...base, grid: ['b w', 'w B'], portals: [[0, 0, 'up']] })).toContain('portal-outside');
+    expect(validateLevel({ ...base, grid: ['b b', 'w B'], portals: [[0, 0, 'right']] })).toContain('portal-same-colour');
+    expect(validateLevel({ ...base, grid: ['b w', 'w B'], portals: [[0, 0, 'right'], [0, 1, 'left']] })).toContain('portal-duplicate');
     expect(validateLevel({ ...base, grid: ['b w', 'w b'] })).toContain('no-goal');
     expect(validateLevel({ ...base, grid: ['b w', 'w'] })).toContain('grid-ragged');
     expect(validateLevel({ ...base, grid: ['b x', 'w B'] })).toContain('grid-symbol');
@@ -79,45 +79,45 @@ describe('walking and pushing', () => {
   });
 });
 
-describe('doors', () => {
-  it('going through a door flips your colour and leaves the door on its edge', () => {
-    // White player on black; door on the edge between (0,0) black and (0,1) white.
+describe('portals', () => {
+  it('going through a portal flips your colour and leaves the portal on its edge', () => {
+    // White player on black; portal on the edge between (0,0) black and (0,1) white.
     const state = customLevelState(['b w b', 'b w W'], [0, 0], [[0, 0, 'right']]);
     const result = move(state, 'right');
     expect(result.state.player).toEqual({ row: 0, column: 1, colour: 'black' });
-    expect(result.state.doors).toEqual(state.doors);
+    expect(result.state.portals).toEqual(state.portals);
     expect(result.events[0]).toMatchObject({ type: 'flipped', colour: 'black' });
     // And back again.
     const steppedBack = move(result.state, 'left');
     expect(steppedBack.state.player).toEqual({ row: 0, column: 0, colour: 'white' });
   });
 
-  it('a pushed tile carries its doors, including the afterFirstCrystal on its leading edge', () => {
-    // White player at (1,0). (1,1) is white with a door on its top and right edges.
+  it('a pushed tile carries its portals, including the afterFirstCrystal on its leading edge', () => {
+    // White player at (1,0). (1,1) is white with a portal on its top and right edges.
     const state = customLevelState(['b b b b', 'b w b b', 'b b b W'], [1, 0], [[1, 1, 'up'], [1, 1, 'right']]);
     const result = move(state, 'right');
-    expect(result.state.doors).toEqual([
+    expect(result.state.portals).toEqual([
       { row: 0, column: 2, side: 'down' },
       { row: 1, column: 2, side: 'right' },
     ]);
-    expect(result.events.filter((event) => event.type === 'doorMoved')).toHaveLength(2);
+    expect(result.events.filter((event) => event.type === 'portalMoved')).toHaveLength(2);
   });
 
-  it('refuses a push that would leave a door between two tiles of afterFirstCrystal colour, or facing the edge', () => {
-    // Door between (0,1) white and (1,1) black. Pushing (0,1) right would put it
+  it('refuses a push that would leave a portal between two tiles of afterFirstCrystal colour, or facing the edge', () => {
+    // Portal between (0,1) white and (1,1) black. Pushing (0,1) right would put it
     // between (0,2) and (1,2), both white.
     const state = customLevelState(['b w b', 'b b W'], [0, 0], [[0, 1, 'down']]);
     const result = move(state, 'right');
-    expect(result.events[0]).toMatchObject({ type: 'pushRefused', reason: 'door' });
+    expect(result.events[0]).toMatchObject({ type: 'pushRefused', reason: 'portal' });
     expect(result.state).toBe(state);
-    const doorAtEdgeState = customLevelState(['b w b', 'b b W'], [0, 0], [[0, 1, 'right']]);
-    expect(move(doorAtEdgeState, 'right').events[0]).toMatchObject({ reason: 'door' }); // door would face off the board
+    const portalAtEdgeState = customLevelState(['b w b', 'b b W'], [0, 0], [[0, 1, 'right']]);
+    expect(move(portalAtEdgeState, 'right').events[0]).toMatchObject({ reason: 'portal' }); // portal would face off the board
   });
 
-  it('a plain block cannot bury a door (door as a doorstop)', () => {
-    // Door between (0,2) black floor and (0,3) white. Pushing (0,1) white onto (0,2) makes both sides white.
+  it('a plain block cannot bury a portal (portal as a doorstop)', () => {
+    // Portal between (0,2) black floor and (0,3) white. Pushing (0,1) white onto (0,2) makes both sides white.
     const state = customLevelState(['b w b w', 'b b b W'], [0, 0], [[0, 2, 'right']]);
-    expect(move(state, 'right').events[0]).toMatchObject({ type: 'pushRefused', reason: 'door' });
+    expect(move(state, 'right').events[0]).toMatchObject({ type: 'pushRefused', reason: 'portal' });
   });
 });
 
@@ -130,7 +130,7 @@ describe('winning', () => {
     expect(move(result.state, 'up').events).toEqual([{ type: 'blocked', reason: 'won', direction: 'up' }]);
   });
 
-  it('can win by stepping through a door onto the goal', () => {
+  it('can win by stepping through a portal onto the goal', () => {
     const state = customLevelState(['b W', 'b b'], [0, 0], [[0, 0, 'right']]);
     expect(move(state, 'right').state.status).toBe('won');
   });

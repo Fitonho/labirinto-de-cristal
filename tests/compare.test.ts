@@ -8,8 +8,8 @@ import { LegacyGame, legacyLevelNames } from './legacy/rules';
 // Plays the same random moves in the original rules and in the engine and
 // checks they agree, as long as the original game is in a state the agreed
 // spec covers. The two deliberate differences stop a walk early:
-// - a push the engine refuses because it would break a door (portal rule 6);
-// - a door that is not on the player's-colour side, which the old game hid
+// - a push the engine refuses because it would break a portal (portal rule 6);
+// - a portal that is not on the player's-colour side, which the old game hid
 //   and ignored (only level 13 starts like that).
 
 const legacyLevels = new Levels() as any;
@@ -39,9 +39,9 @@ function edgeKey(row: number, column: number, sideName: string) {
   return `${row},${column},${sideName}`;
 }
 
-/** Doors in the old game, as edge keys, or null if any breaks the agreed rules. */
-function legacyDoorKeys(legacyGame: LegacyGame) {
-  const doorKeys: string[] = [];
+/** Portals in the old game, as edge keys, or null if any breaks the agreed rules. */
+function legacyPortalKeys(legacyGame: LegacyGame) {
+  const portalKeys: string[] = [];
   for (let row = 0; row < legacyGame.M; row++) {
     for (let column = 0; column < legacyGame.N; column++) {
       for (let sideIndex = 0; sideIndex < 4; sideIndex++) {
@@ -54,15 +54,15 @@ function legacyDoorKeys(legacyGame: LegacyGame) {
           neighbourRow < 0 || neighbourRow >= legacyGame.M || neighbourColumn < 0 || neighbourColumn >= legacyGame.N;
         if (neighbourOutside) return null;
         if (legacyGame.matriz[neighbourRow][neighbourColumn].color === block.color) return null;
-        doorKeys.push(edgeKey(row, column, sideNames[sideIndex]));
+        portalKeys.push(edgeKey(row, column, sideNames[sideIndex]));
       }
     }
   }
-  return doorKeys.sort();
+  return portalKeys.sort();
 }
 
-function engineDoorKeys(state: GameState) {
-  return state.doors.map((door) => `${door.row},${door.column},${door.side}`).sort();
+function enginePortalKeys(state: GameState) {
+  return state.portals.map((portal) => `${portal.row},${portal.column},${portal.side}`).sort();
 }
 
 function legacySnapshot(legacyGame: LegacyGame) {
@@ -93,10 +93,10 @@ describe('engine matches the original rules', () => {
         const legacyGame = new LegacyGame(legacyLevels[legacyName]);
         let state = loadLevel(levelData);
         for (let moveNumber = 0; moveNumber < MOVES_PER_WALK; moveNumber++) {
-          const legacyDoors = legacyDoorKeys(legacyGame);
-          if (legacyDoors === null) break;
+          const legacyPortals = legacyPortalKeys(legacyGame);
+          if (legacyPortals === null) break;
           expect(legacySnapshot(legacyGame)).toEqual(engineSnapshot(state));
-          expect(legacyDoors).toEqual(engineDoorKeys(state));
+          expect(legacyPortals).toEqual(enginePortalKeys(state));
           comparedStateCount++;
           if (state.status === 'won') {
             expect(legacyGame.won).toBe(true);
@@ -104,7 +104,7 @@ describe('engine matches the original rules', () => {
           }
           const direction = DIRECTIONS[Math.floor(random() * 4)];
           const result = move(state, direction);
-          if (result.events.some((event) => event.type === 'pushRefused' && event.reason === 'door')) break;
+          if (result.events.some((event) => event.type === 'pushRefused' && event.reason === 'portal')) break;
           result.events.forEach((event) => seenEventTypes.add(event.type));
           legacyGame.move(legacySidesByDirection[direction]);
           state = result.state;
@@ -112,7 +112,7 @@ describe('engine matches the original rules', () => {
       }
       if (levelData.id === 'draft-13') return expect(comparedStateCount).toBe(0);
       expect(comparedStateCount).toBeGreaterThan(3000);
-      // The walks must have exercised pushes and door flips, not just walking.
+      // The walks must have exercised pushes and portal flips, not just walking.
       expect([...seenEventTypes]).toEqual(expect.arrayContaining(['moved', 'pushed', 'flipped', 'pushRefused']));
     });
   });

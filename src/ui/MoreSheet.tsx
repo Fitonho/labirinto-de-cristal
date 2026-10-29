@@ -29,6 +29,7 @@ const KEYS: { keys: string; meaning: StringKey }[] = [
   { keys: 'Enter', meaning: 'key.next' },
   { keys: 'M', meaning: 'key.sound' },
   { keys: 'L', meaning: 'key.levels' },
+  { keys: 'Esc', meaning: 'key.back' },
 ];
 
 export function MoreSheet(props: MoreSheetProps) {

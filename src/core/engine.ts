@@ -1,6 +1,6 @@
 // The game rules. `move` is pure: it never changes the state it is given.
-import { doorIsValid, edge, hasDoor, inside, neighbour, opposite, sameDoor, tileAt, tileIndex } from './board';
-import type { BlockReason, Cell, Direction, Door, GameEvent, GameState, PushRefusal, StepResult } from './types';
+import { portalIsValid, edge, hasPortal, inside, neighbour, opposite, samePortal, tileAt, tileIndex } from './board';
+import type { BlockReason, Cell, Direction, Portal, GameEvent, GameState, PushRefusal, StepResult } from './types';
 import { DIRECTIONS } from './types';
 
 export function move(state: GameState, direction: Direction): StepResult {
@@ -10,13 +10,13 @@ export function move(state: GameState, direction: Direction): StepResult {
   const targetCell = neighbour(fromCell, direction);
   if (!inside(state, targetCell)) return blocked(state, 'edge', direction);
 
-  const door = edge(fromCell, direction);
-  if (hasDoor(state, door)) {
-    // Going through a door: you land on the tile behind it and take the
-    // opposite of its colour. Doors stay on their edges.
+  const portal = edge(fromCell, direction);
+  if (hasPortal(state, portal)) {
+    // Going through a portal: you land on the tile behind it and take the
+    // opposite of its colour. Portals stay on their edges.
     const colour = opposite(tileAt(state, targetCell).colour);
     const nextState = { ...state, player: { ...targetCell, colour } };
-    return arrive(nextState, [{ type: 'flipped', colour, door }, { type: 'moved', from: fromCell, to: targetCell }]);
+    return arrive(nextState, [{ type: 'flipped', colour, portal }, { type: 'moved', from: fromCell, to: targetCell }]);
   }
 
   if (tileAt(state, targetCell).colour !== state.player.colour) {
@@ -48,23 +48,23 @@ function push(state: GameState, fromCell: Cell, targetCell: Cell, direction: Dir
   const behindIndex = tileIndex(state, behindCell);
   [tiles[pushedIndex], tiles[behindIndex]] = [tiles[behindIndex], tiles[pushedIndex]];
 
-  // Doors on the pushed tile's edges move one cell with it. The tile that
+  // Portals on the pushed tile's edges move one cell with it. The tile that
   // slides back carries none.
-  const movedDoors: { from: Door; to: Door }[] = [];
-  const doors = state.doors.map((door) => {
-    const pushedTileSide = DIRECTIONS.find((side) => sameDoor(door, edge(targetCell, side)));
-    if (!pushedTileSide) return door;
-    const movedDoor = edge(behindCell, pushedTileSide);
-    movedDoors.push({ from: door, to: movedDoor });
-    return movedDoor;
+  const movedPortals: { from: Portal; to: Portal }[] = [];
+  const portals = state.portals.map((portal) => {
+    const pushedTileSide = DIRECTIONS.find((side) => samePortal(portal, edge(targetCell, side)));
+    if (!pushedTileSide) return portal;
+    const movedPortal = edge(behindCell, pushedTileSide);
+    movedPortals.push({ from: portal, to: movedPortal });
+    return movedPortal;
   });
 
-  const pushedState: GameState = { ...state, tiles, doors, player: { ...state.player, ...targetCell } };
-  if (!doors.every((door) => doorIsValid(pushedState, door))) return refuse('door');
+  const pushedState: GameState = { ...state, tiles, portals, player: { ...state.player, ...targetCell } };
+  if (!portals.every((portal) => portalIsValid(pushedState, portal))) return refuse('portal');
 
   return arrive(pushedState, [
     { type: 'pushed', tileId: tiles[behindIndex].id, from: targetCell, to: behindCell },
-    ...movedDoors.map((movedDoor) => ({ type: 'doorMoved' as const, ...movedDoor })),
+    ...movedPortals.map((movedPortal) => ({ type: 'portalMoved' as const, ...movedPortal })),
     { type: 'moved', from: fromCell, to: targetCell },
   ]);
 }

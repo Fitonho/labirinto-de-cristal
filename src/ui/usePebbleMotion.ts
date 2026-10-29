@@ -1,6 +1,6 @@
 // The Pebble's squish and its eyes. Each move strikes a pose from
 // pieceLooks.ts (stretch on a slide, squash on a bump or push, squeeze
-// through a door) that ends in the same jelly spring, and the eyes turn the
+// through a portal) that ends in the same jelly spring, and the eyes turn the
 // way it goes and squint or widen. Everything runs on shared values started
 // in a layout effect, so no pose redraws anything in React.
 //
