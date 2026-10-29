@@ -7,9 +7,12 @@ import {
   floorColour,
   isBox,
   MAX_TILE_SIZE,
+  MAX_TOUCH_PAD_HEIGHT,
+  MIN_TOUCH_PAD_HEIGHT,
   seamFrame,
   seamPath,
   tileSizeFor,
+  touchPadHeightFor,
 } from '../src/ui/boardLayout';
 import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
 import { hapticCueFor, parCueFor } from '../src/ui/haptics';
@@ -83,11 +86,28 @@ describe('board layout', () => {
 
   it('fits tiles to the screen and caps them', () => {
     const board = { rowCount: 9, columnCount: 10 };
-    expect(tileSizeFor(board, 1280, 900)).toBe(MAX_TILE_SIZE);
+    expect(tileSizeFor(board, 1280, 1400)).toBe(MAX_TILE_SIZE);
     expect(tileSizeFor(board, 375, 812)).toBe(34);
     expect(tileSizeFor(board, 1280, 300)).toBe(21);
     // The controls need 400 of the 800 points, which leaves the board 400.
     expect(tileSizeFor(board, 1280, 800, 1, 400)).toBe(44); // 400 points left for 9 rows
+  });
+
+  it('lets a small board grow past the old 56-point cap to fill a phone', () => {
+    // Sample A, 5 by 4, on a 390-point-wide phone with 400 points free: the width decides.
+    expect(tileSizeFor({ rowCount: 4, columnCount: 5 }, 390, 844, 1, 444)).toBe(71);
+    // A 3 by 3 board stops at the cap.
+    expect(tileSizeFor({ rowCount: 3, columnCount: 3 }, 390, 844, 1, 444)).toBe(MAX_TILE_SIZE);
+  });
+
+  it('sizes the touch area by the phone, within its band', () => {
+    expect(touchPadHeightFor(763)).toBe(MAX_TOUCH_PAD_HEIGHT); // a tall phone, 390 × 844 less its insets
+    expect(touchPadHeightFor(616)).toBe(234); // a short phone, 360 × 640
+    expect(touchPadHeightFor(400)).toBe(MIN_TOUCH_PAD_HEIGHT); // a phone on its side, or a small browser window
+    // A short phone gives the board more room than a fixed 290 would: a 10 by 9 draft gets 23-point tiles, not 17.
+    const draftBoard = { rowCount: 9, columnCount: 10 };
+    expect(tileSizeFor(draftBoard, 360, 640, 1, 24 + 172 + touchPadHeightFor(616))).toBe(23);
+    expect(tileSizeFor(draftBoard, 360, 640, 1, 24 + 172 + MAX_TOUCH_PAD_HEIGHT)).toBe(17);
   });
 
   it('keeps every tile edge on a whole screen pixel', () => {
