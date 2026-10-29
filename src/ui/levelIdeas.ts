@@ -4,12 +4,12 @@
 import { DIRECTIONS, inside, tileAt, type Cell, type GameState, type Portal } from '../core';
 import { neighbour } from '../core/board';
 
-export type LevelIdea = 'push' | 'portal' | 'pushPath' | 'crystalColour' | 'portalPush';
+export type LevelIdea = 'push' | 'portal' | 'bridge' | 'crystalColour' | 'portalPush';
 
 export const ideaByLevelId: Record<string, LevelIdea> = {
   'sample-a': 'push',
   'sample-b': 'portal',
-  'sample-c': 'pushPath',
+  'sample-c': 'bridge',
   'sample-d': 'crystalColour',
   'sample-e': 'portalPush',
 };
@@ -38,9 +38,16 @@ export interface IdeaHighlight {
   portals: Portal[];
 }
 
-/** What glows on the board after the card: the portals, the stars, or the boxes next to the Pebble (for both push ideas). */
+/** What glows on the board after the card: the portals, the stars, every box (the bridge to be), or the boxes next to the Pebble. */
 export function ideaHighlightFor(idea: LevelIdea, state: GameState): IdeaHighlight {
   if (idea === 'portal' || idea === 'portalPush') return { cells: [], portals: state.portals };
+  if (idea === 'bridge') {
+    const cells: Cell[] = [];
+    state.tiles.forEach((tile, tileIndex) => {
+      if (tile.colour === state.player.colour) cells.push({ row: Math.floor(tileIndex / state.columnCount), column: tileIndex % state.columnCount });
+    });
+    return { cells, portals: [] };
+  }
   if (idea === 'crystalColour') {
     const cells: Cell[] = [];
     state.tiles.forEach((tile, tileIndex) => {

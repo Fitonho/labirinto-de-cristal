@@ -63,7 +63,7 @@ describe('new-idea card', () => {
     expect(['sample-a', 'sample-b', 'sample-c', 'sample-d', 'sample-e'].map((levelId) => ideaByLevelId[levelId])).toEqual([
       'push',
       'portal',
-      'pushPath',
+      'bridge',
       'crystalColour',
       'portalPush',
     ]);
@@ -84,7 +84,12 @@ describe('new-idea card', () => {
       { row: 0, column: 1 },
       { row: 1, column: 0 },
     ]);
-    expect(ideaHighlightFor('pushPath', pushLevel)).toEqual(ideaHighlightFor('push', pushLevel));
+    // The bridge to be: every tile in the Pebble's colour.
+    const bridgeLevel = customLevelState(['b w w', 'b b B'], [1, 0]);
+    expect(ideaHighlightFor('bridge', bridgeLevel).cells).toEqual([
+      { row: 0, column: 1 },
+      { row: 0, column: 2 },
+    ]);
   });
 });
 

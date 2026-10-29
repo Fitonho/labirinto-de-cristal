@@ -192,6 +192,8 @@ const SCENE_CELL = 34;
 /** Within one loop: when the Pebble starts and stops moving, and when the moved pieces fade out to start again. */
 const MOVE_START = 0.15;
 const MOVE_END = 0.55;
+const FADE_OUT_START = 0.85;
+const FADE_OUT_END = 0.95;
 
 interface SceneCell {
   row: number;
@@ -203,11 +205,13 @@ interface Scene {
   tileRows: string[];
   /** Every cell the Pebble stands on, one step apart; each step takes the same time. */
   pebble: { path: SceneCell[]; colourBefore: Colour; colourAfter: Colour };
-  /** A box the Pebble pushes one cell on its first step, which may carry a portal on its right side; the cell it leaves can glow as the new path. */
-  box: { fromCell: SceneCell; colour: Colour; carriesPortal: boolean; glowsLeftCell: boolean } | null;
-  /** A portal that stays on the left edge of this cell. */
-  portalBeforeCell: SceneCell | null;
+  /** A box the Pebble pushes one cell on its first step, which may carry a portal on its right side. */
+  box: { fromCell: SceneCell; colour: Colour; carriesPortal: boolean } | null;
+  /** A portal that stays on the edge between two side-by-side cells. */
+  portal: { between: [SceneCell, SceneCell] } | null;
   star: { cell: SceneCell; colour: Colour } | null;
+  /** How long one loop takes, in milliseconds, when its path is longer than a few steps. */
+  loopDuration?: number;
 }
 
 /** Cells along row 0, from one column to another. */
@@ -221,143 +225,107 @@ const SCENES: Record<LevelIdea, Scene> = {
   push: {
     tileRows: ['bwbb'],
     pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
-    box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: false, glowsLeftCell: false },
-    portalBeforeCell: null,
+    box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: false },
+    portal: null,
     star: null,
   },
   portal: {
     tileRows: ['bbww'],
     pebble: { path: rowPath(0, 2), colourBefore: 'white', colourAfter: 'black' },
     box: null,
-    portalBeforeCell: { row: 0, column: 2 },
+    portal: { between: [{ row: 0, column: 1 }, { row: 0, column: 2 }] },
     star: null,
   },
-  // Boxed in by its own colour, the Pebble pushes one box aside; the cell it
-  // leaves is floor now, and that is the way up to the star.
-  pushPath: {
-    tileRows: ['wbbb', 'bwbb'],
+  // Sample 3 in small: the push fills the gap in the top line of boxes, the
+  // portal flips the Pebble, and that line of its old colour is now the bridge to the star.
+  bridge: {
+    tileRows: ['wbww', 'bwbb', 'bbbb'],
     pebble: {
       path: [
-        { row: 1, column: 0 },
+        { row: 2, column: 1 },
         { row: 1, column: 1 },
-        { row: 0, column: 1 },
+        { row: 1, column: 2 },
+        { row: 1, column: 3 },
+        { row: 0, column: 3 },
         { row: 0, column: 2 },
+        { row: 0, column: 1 },
+        { row: 0, column: 0 },
       ],
       colourBefore: 'white',
-      colourAfter: 'white',
+      colourAfter: 'black',
     },
-    box: { fromCell: { row: 1, column: 1 }, colour: 'white', carriesPortal: false, glowsLeftCell: true },
-    portalBeforeCell: null,
-    star: { cell: { row: 0, column: 2 }, colour: 'white' },
+    box: { fromCell: { row: 1, column: 1 }, colour: 'white', carriesPortal: false },
+    portal: { between: [{ row: 0, column: 3 }, { row: 1, column: 3 }] },
+    star: { cell: { row: 0, column: 0 }, colour: 'black' },
+    loopDuration: 4400,
   },
   crystalColour: {
     tileRows: ['wwbb'],
     pebble: { path: rowPath(0, 3), colourBefore: 'black', colourAfter: 'white' },
     box: null,
-    portalBeforeCell: { row: 0, column: 2 },
+    portal: { between: [{ row: 0, column: 1 }, { row: 0, column: 2 }] },
     star: { cell: { row: 0, column: 3 }, colour: 'white' },
   },
   portalPush: {
     tileRows: ['bwbb'],
     pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
-    box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: true, glowsLeftCell: false },
-    portalBeforeCell: null,
+    box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: true },
+    portal: null,
     star: null,
   },
 };
 
 const TILE_COLOURS_BY_LETTER: Record<string, Colour> = { b: 'black', w: 'white' };
 
-interface IdeaSceneProps {
-  idea: LevelIdea;
-  tileColours: Record<Colour, string>;
-  seamColour: string;
-  playing: boolean;
+function sameCell(first: SceneCell, second: SceneCell): boolean {
+  return first.row === second.row && first.column === second.column;
 }
 
-/** The idea played on a few cells: a push, a flip through a portal, a push that opens the way, reaching a star, or a portal carried by a push. */
-function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
-  const scene = SCENES[idea];
-  // One loop of the scene as a share from 0 to 1; a still scene shows its end.
-  const progress = useSharedValue(0.7);
-  useEffect(() => {
-    if (!playing) {
-      cancelAnimation(progress);
-      progress.value = 0.7;
-      return;
-    }
-    progress.value = 0;
-    progress.value = withRepeat(withTiming(1, { duration: IDEA_SCENE_DURATION, easing: Easing.linear }), -1, false);
-    return () => cancelAnimation(progress);
-  }, [playing, progress]);
+/** The scene's tile colours, row by row, after its push: the box's colour and the floor it lands on swap places. */
+function tileColoursAfterPush(scene: Scene): Colour[][] {
+  const tileColourRows = scene.tileRows.map((tileRow) => [...tileRow].map((letter) => TILE_COLOURS_BY_LETTER[letter]));
+  if (!scene.box) return tileColourRows;
+  const { path } = scene.pebble;
+  const fromCell = scene.box.fromCell;
+  const toCell = { row: fromCell.row + path[1].row - path[0].row, column: fromCell.column + path[1].column - path[0].column };
+  const landedOnColour = tileColourRows[toCell.row][toCell.column];
+  tileColourRows[toCell.row][toCell.column] = tileColourRows[fromCell.row][fromCell.column];
+  tileColourRows[fromCell.row][fromCell.column] = landedOnColour;
+  return tileColourRows;
+}
 
-  const { path, colourBefore, colourAfter } = scene.pebble;
-  const stepCount = path.length - 1;
-  const stepDuration = (MOVE_END - MOVE_START) / stepCount;
-  // When the Pebble stands on each cell of its path, and how far that is from where it starts.
-  const pathTimes = path.map((_cell, stepIndex) => MOVE_START + stepIndex * stepDuration);
-  const pathOffsetsX = path.map((cell) => (cell.column - path[0].column) * SCENE_CELL);
-  const pathOffsetsY = path.map((cell) => (cell.row - path[0].row) * SCENE_CELL);
-  // The box moves with the Pebble's first step, the same way.
-  const boxShiftX = (path[1].column - path[0].column) * SCENE_CELL;
-  const boxShiftY = (path[1].row - path[0].row) * SCENE_CELL;
-  const firstStepEnd = MOVE_START + stepDuration;
-  // The share of the loop when the Pebble's centre crosses the portal, where it flips: halfway through the step onto its cell.
-  const portalCell = scene.portalBeforeCell;
-  const crossingStepIndex = portalCell
-    ? path.findIndex((cell) => cell.row === portalCell.row && cell.column === portalCell.column)
-    : -1;
-  const crossing = crossingStepIndex > 0 ? MOVE_START + (crossingStepIndex - 0.5) * stepDuration : null;
-  const starDelay = scene.box ? 0.05 : 0;
+interface SceneTilesProps {
+  tileColourRows: Colour[][];
+  /** Tiles in this colour are boxes, inset on the floor of the other colour; null draws every tile as floor. */
+  boxColour: Colour | null;
+  /** A cell left empty of its box, because that box is drawn moving. */
+  skippedBoxCell: SceneCell | null;
+  tileColours: Record<Colour, string>;
+}
 
-  const fadeStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [0, 0.06, 0.85, 0.95, 1], [0, 1, 1, 0, 0]),
-  }));
-  const pebbleStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(progress.value, pathTimes, pathOffsetsX, 'clamp') },
-      { translateY: interpolate(progress.value, pathTimes, pathOffsetsY, 'clamp') },
-    ],
-  }));
-  const afterColourStyle = useAnimatedStyle(() => ({
-    opacity: crossing === null ? 0 : interpolate(progress.value, [crossing - 0.02, crossing + 0.02], [0, 1], 'clamp'),
-  }));
-  const boxStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: interpolate(progress.value, [MOVE_START, firstStepEnd], [0, boxShiftX], 'clamp') },
-      { translateY: interpolate(progress.value, [MOVE_START, firstStepEnd], [0, boxShiftY], 'clamp') },
-    ],
-  }));
-  // The cell the box leaves lights up as the Pebble arrives on it, then fades as it walks on.
-  const pathGlowStyle = useAnimatedStyle(() => ({
-    opacity: interpolate(progress.value, [MOVE_START, firstStepEnd, firstStepEnd + stepDuration * 2, firstStepEnd + stepDuration * 3], [0, 1, 1, 0], 'clamp'),
-  }));
-  const starStyle = useAnimatedStyle(() => {
-    const burst = interpolate(progress.value, [MOVE_END + starDelay, MOVE_END + starDelay + 0.15], [0, 1], 'clamp');
-    return { opacity: 1 - burst, transform: [{ scale: 1 + burst * 0.6 }] };
-  });
-
-  const pebbleSize = SCENE_CELL * PEBBLE_RADIUS * 2;
-  const pebbleOffset = (SCENE_CELL - pebbleSize) / 2;
+/** One still layer of the scene's tiles. */
+function SceneTiles({ tileColourRows, boxColour, skippedBoxCell, tileColours }: SceneTilesProps) {
   const boxInset = SCENE_CELL * BOX_INSET;
   const boxSize = SCENE_CELL - 2 * boxInset;
-  const seamStyle = { backgroundColor: seamColour, boxShadow: `0 0 6px ${seamColour}` };
-  const columnCount = scene.tileRows[0].length;
   return (
-    <View style={[styles.scene, { width: SCENE_CELL * columnCount, height: SCENE_CELL * scene.tileRows.length }]}>
-      {scene.tileRows.map((tileRow, row) =>
-        [...tileRow].map((letter, column) => {
-          const tileColour = TILE_COLOURS_BY_LETTER[letter];
-          const isBox = scene.box !== null && tileColour === colourBefore;
-          const isPushedBox = scene.box?.fromCell.row === row && scene.box.fromCell.column === column;
-          // A box sits on floor of the other colour, which is what the pushed box leaves behind.
-          const floorColour = isBox ? opposite(tileColour) : tileColour;
+    <>
+      {tileColourRows.map((tileColourRow, row) =>
+        tileColourRow.map((tileColour, column) => {
+          const isBox = tileColour === boxColour;
+          const isSkipped = skippedBoxCell !== null && sameCell(skippedBoxCell, { row, column });
           return (
             <View
               key={`${row}-${column}`}
-              style={{ position: 'absolute', left: column * SCENE_CELL, top: row * SCENE_CELL, width: SCENE_CELL, height: SCENE_CELL, backgroundColor: tileColours[floorColour] }}
+              style={{
+                position: 'absolute',
+                left: column * SCENE_CELL,
+                top: row * SCENE_CELL,
+                width: SCENE_CELL,
+                height: SCENE_CELL,
+                backgroundColor: tileColours[isBox ? opposite(tileColour) : tileColour],
+              }}
             >
-              {isBox && !isPushedBox && (
+              {isBox && !isSkipped && (
                 <View
                   style={{
                     position: 'absolute',
@@ -374,28 +342,112 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
           );
         }),
       )}
-      {scene.box?.glowsLeftCell && (
-        <Animated.View
-          style={[
-            styles.pathGlow,
-            { left: scene.box.fromCell.column * SCENE_CELL, top: scene.box.fromCell.row * SCENE_CELL, borderColor: seamColour, boxShadow: `0 0 6px ${seamColour}` },
-            pathGlowStyle,
-          ]}
-        />
-      )}
-      {portalCell && <View style={[styles.seam, seamStyle, { left: portalCell.column * SCENE_CELL - 1.5, top: portalCell.row * SCENE_CELL + 3 }]} />}
-      {scene.star && (
-        <Animated.View style={[styles.star, { left: scene.star.cell.column * SCENE_CELL, top: scene.star.cell.row * SCENE_CELL }, starStyle]}>
-          <Svg width={SCENE_CELL} height={SCENE_CELL}>
-            <Polygon
-              points={starPoints(SCENE_CELL / 2, SCENE_CELL / 2, SCENE_CELL * STAR_OUTER_RADIUS * 1.3, SCENE_CELL * STAR_INNER_RADIUS)}
-              fill={tileColours[scene.star.colour]}
-              stroke={seamColour}
-              strokeWidth={1}
-            />
-          </Svg>
-        </Animated.View>
-      )}
+    </>
+  );
+}
+
+interface IdeaSceneProps {
+  idea: LevelIdea;
+  tileColours: Record<Colour, string>;
+  seamColour: string;
+  playing: boolean;
+}
+
+/** The idea played on a few cells: a push, a flip through a portal, a bridge, reaching a star, or a portal carried by a push. */
+function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
+  const scene = SCENES[idea];
+  const loopDuration = scene.loopDuration ?? IDEA_SCENE_DURATION;
+  // One loop of the scene as a share from 0 to 1; a still scene shows its end.
+  const progress = useSharedValue(0.7);
+  useEffect(() => {
+    if (!playing) {
+      cancelAnimation(progress);
+      progress.value = 0.7;
+      return;
+    }
+    progress.value = 0;
+    progress.value = withRepeat(withTiming(1, { duration: loopDuration, easing: Easing.linear }), -1, false);
+    return () => cancelAnimation(progress);
+  }, [playing, progress, loopDuration]);
+
+  const { path, colourBefore, colourAfter } = scene.pebble;
+  const stepCount = path.length - 1;
+  const stepDuration = (MOVE_END - MOVE_START) / stepCount;
+  // When the Pebble stands on each cell of its path, and how far that is from where it starts.
+  const pathTimes = path.map((_cell, stepIndex) => MOVE_START + stepIndex * stepDuration);
+  const pathOffsetsX = path.map((cell) => (cell.column - path[0].column) * SCENE_CELL);
+  const pathOffsetsY = path.map((cell) => (cell.row - path[0].row) * SCENE_CELL);
+  // The box moves with the Pebble's first step, the same way.
+  const boxShiftX = (path[1].column - path[0].column) * SCENE_CELL;
+  const boxShiftY = (path[1].row - path[0].row) * SCENE_CELL;
+  const firstStepEnd = MOVE_START + stepDuration;
+  // The share of the loop when the Pebble's centre crosses the portal, where it flips: halfway through that step.
+  const portalCells = scene.portal?.between ?? null;
+  const crossingStepIndex = portalCells
+    ? path.findIndex(
+        (cell, stepIndex) =>
+          stepIndex > 0 &&
+          portalCells.some((portalCell) => sameCell(portalCell, cell)) &&
+          portalCells.some((portalCell) => sameCell(portalCell, path[stepIndex - 1])),
+      )
+    : -1;
+  const crossing = crossingStepIndex > 0 ? MOVE_START + (crossingStepIndex - 0.5) * stepDuration : null;
+  // With boxes on the board, a flip turns them all: the Pebble's old colour is floor now, and the other colour is boxes.
+  const flipsBoxes = scene.box !== null && crossing !== null && colourAfter !== colourBefore;
+  const tileColourRowsBefore = scene.tileRows.map((tileRow) => [...tileRow].map((letter) => TILE_COLOURS_BY_LETTER[letter]));
+  const tileColourRowsAfter = flipsBoxes ? tileColoursAfterPush(scene) : null;
+
+  const fadeStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(progress.value, [0, 0.06, FADE_OUT_START, FADE_OUT_END, 1], [0, 1, 1, 0, 0]),
+  }));
+  const pebbleStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: interpolate(progress.value, pathTimes, pathOffsetsX, 'clamp') },
+      { translateY: interpolate(progress.value, pathTimes, pathOffsetsY, 'clamp') },
+    ],
+  }));
+  const afterColourStyle = useAnimatedStyle(() => ({
+    opacity: crossing === null ? 0 : interpolate(progress.value, [crossing - 0.02, crossing + 0.02], [0, 1], 'clamp'),
+  }));
+  // The flipped board fades back out with the moved pieces, so the loop starts again unflipped.
+  const flippedBoardStyle = useAnimatedStyle(() => ({
+    opacity:
+      crossing === null
+        ? 0
+        : interpolate(progress.value, [crossing - 0.02, crossing + 0.02, FADE_OUT_START, FADE_OUT_END], [0, 1, 1, 0], 'clamp'),
+  }));
+  const boxStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: interpolate(progress.value, [MOVE_START, firstStepEnd], [0, boxShiftX], 'clamp') },
+      { translateY: interpolate(progress.value, [MOVE_START, firstStepEnd], [0, boxShiftY], 'clamp') },
+    ],
+  }));
+  const starStyle = useAnimatedStyle(() => {
+    const burst = interpolate(progress.value, [MOVE_END, MOVE_END + 0.15], [0, 1], 'clamp');
+    return { opacity: 1 - burst, transform: [{ scale: 1 + burst * 0.6 }] };
+  });
+
+  const pebbleSize = SCENE_CELL * PEBBLE_RADIUS * 2;
+  const pebbleOffset = (SCENE_CELL - pebbleSize) / 2;
+  const boxInset = SCENE_CELL * BOX_INSET;
+  const boxSize = SCENE_CELL - 2 * boxInset;
+  const seamStyle = { backgroundColor: seamColour, boxShadow: `0 0 6px ${seamColour}` };
+  let portalSeamPlace = null;
+  if (portalCells) {
+    const [firstCell, secondCell] = portalCells;
+    portalSeamPlace =
+      firstCell.row === secondCell.row
+        ? { left: Math.max(firstCell.column, secondCell.column) * SCENE_CELL - 1.5, top: firstCell.row * SCENE_CELL + 3, width: 3, height: SCENE_CELL - 6 }
+        : { left: firstCell.column * SCENE_CELL + 3, top: Math.max(firstCell.row, secondCell.row) * SCENE_CELL - 1.5, width: SCENE_CELL - 6, height: 3 };
+  }
+  return (
+    <View style={[styles.scene, { width: SCENE_CELL * scene.tileRows[0].length, height: SCENE_CELL * scene.tileRows.length }]}>
+      <SceneTiles
+        tileColourRows={tileColourRowsBefore}
+        boxColour={scene.box ? colourBefore : null}
+        skippedBoxCell={scene.box?.fromCell ?? null}
+        tileColours={tileColours}
+      />
       <Animated.View style={[StyleSheet.absoluteFill, fadeStyle]}>
         {scene.box && (
           <Animated.View
@@ -415,9 +467,29 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
                 backgroundColor: tileColours[scene.box.colour],
               }}
             />
-            {scene.box.carriesPortal && <View style={[styles.seam, seamStyle, { left: SCENE_CELL - 1.5 }]} />}
+            {scene.box.carriesPortal && <View style={[styles.seam, seamStyle, { left: SCENE_CELL - 1.5, top: 3, width: 3, height: SCENE_CELL - 6 }]} />}
           </Animated.View>
         )}
+      </Animated.View>
+      {tileColourRowsAfter && (
+        <Animated.View style={[StyleSheet.absoluteFill, flippedBoardStyle]}>
+          <SceneTiles tileColourRows={tileColourRowsAfter} boxColour={colourAfter} skippedBoxCell={null} tileColours={tileColours} />
+        </Animated.View>
+      )}
+      {portalSeamPlace && <View style={[styles.seam, seamStyle, portalSeamPlace]} />}
+      {scene.star && (
+        <Animated.View style={[styles.star, { left: scene.star.cell.column * SCENE_CELL, top: scene.star.cell.row * SCENE_CELL }, starStyle]}>
+          <Svg width={SCENE_CELL} height={SCENE_CELL}>
+            <Polygon
+              points={starPoints(SCENE_CELL / 2, SCENE_CELL / 2, SCENE_CELL * STAR_OUTER_RADIUS * 1.3, SCENE_CELL * STAR_INNER_RADIUS)}
+              fill={tileColours[scene.star.colour]}
+              stroke={seamColour}
+              strokeWidth={1}
+            />
+          </Svg>
+        </Animated.View>
+      )}
+      <Animated.View style={[StyleSheet.absoluteFill, fadeStyle]}>
         <Animated.View style={[{ position: 'absolute', left: path[0].column * SCENE_CELL + pebbleOffset, top: path[0].row * SCENE_CELL + pebbleOffset }, pebbleStyle]}>
           <View style={{ width: pebbleSize, height: pebbleSize, borderRadius: pebbleSize / 2, backgroundColor: tileColours[colourBefore] }} />
           <Animated.View
@@ -451,9 +523,8 @@ const styles = StyleSheet.create({
   name: { fontSize: 28, fontWeight: '800', textAlign: 'center' },
   tip: { fontSize: 16, lineHeight: 22, textAlign: 'center', maxWidth: 260 },
   scene: { borderRadius: 6, overflow: 'hidden' },
-  seam: { position: 'absolute', top: 3, width: 3, height: SCENE_CELL - 6, borderRadius: 1.5 },
+  seam: { position: 'absolute', borderRadius: 1.5 },
   star: { position: 'absolute', width: SCENE_CELL, height: SCENE_CELL },
-  pathGlow: { position: 'absolute', width: SCENE_CELL, height: SCENE_CELL, borderWidth: 2, borderRadius: 6 },
   button: { alignSelf: 'stretch', borderRadius: 16, paddingVertical: 14, alignItems: 'center', overflow: 'hidden', marginTop: 4 },
   buttonFill: { position: 'absolute', left: 0, top: 0, bottom: 0 },
   buttonText: { fontSize: 17, fontWeight: '800' },
