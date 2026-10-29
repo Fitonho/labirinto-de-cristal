@@ -49,7 +49,7 @@ describe('new-idea card', () => {
     expect(opensIdeaCard('sample-b', {}, '')).toBe(true);
     expect(opensIdeaCard('sample-b', { 'sample-b': 9 }, '')).toBe(false);
     expect(opensIdeaCard('sample-b', {}, 'ur')).toBe(false);
-    expect(opensIdeaCard('sample-d', {}, '')).toBe(false);
+    expect(opensIdeaCard('draft-01', {}, '')).toBe(false);
   });
 
   it('only covers levels that exist, and every idea has a tip in both languages', () => {
@@ -57,6 +57,16 @@ describe('new-idea card', () => {
       expect(levels.some((level) => level.id === levelId)).toBe(true);
       expect(t('pt', `idea.${idea}`)).not.toBe(t('en', `idea.${idea}`));
     }
+  });
+
+  it('brings in the ideas in the order the samples teach them', () => {
+    expect(['sample-a', 'sample-b', 'sample-c', 'sample-d', 'sample-e'].map((levelId) => ideaByLevelId[levelId])).toEqual([
+      'push',
+      'portal',
+      'pushPath',
+      'crystalColour',
+      'portalPush',
+    ]);
   });
 
   it('fills Play before it can be pressed', () => {
@@ -74,6 +84,7 @@ describe('new-idea card', () => {
       { row: 0, column: 1 },
       { row: 1, column: 0 },
     ]);
+    expect(ideaHighlightFor('pushPath', pushLevel)).toEqual(ideaHighlightFor('push', pushLevel));
   });
 });
 

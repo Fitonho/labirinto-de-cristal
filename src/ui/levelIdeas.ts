@@ -4,13 +4,14 @@
 import { DIRECTIONS, inside, tileAt, type Cell, type GameState, type Portal } from '../core';
 import { neighbour } from '../core/board';
 
-export type LevelIdea = 'push' | 'portal' | 'portalPush' | 'crystalColour';
+export type LevelIdea = 'push' | 'portal' | 'pushPath' | 'crystalColour' | 'portalPush';
 
 export const ideaByLevelId: Record<string, LevelIdea> = {
   'sample-a': 'push',
   'sample-b': 'portal',
-  'sample-c': 'portalPush',
-  'sample-e': 'crystalColour',
+  'sample-c': 'pushPath',
+  'sample-d': 'crystalColour',
+  'sample-e': 'portalPush',
 };
 
 /** The card's timeline, in milliseconds from when it opens. */
@@ -37,7 +38,7 @@ export interface IdeaHighlight {
   portals: Portal[];
 }
 
-/** What glows on the board after the card: the portals, the stars, or the boxes next to the Pebble. */
+/** What glows on the board after the card: the portals, the stars, or the boxes next to the Pebble (for both push ideas). */
 export function ideaHighlightFor(idea: LevelIdea, state: GameState): IdeaHighlight {
   if (idea === 'portal' || idea === 'portalPush') return { cells: [], portals: state.portals };
   if (idea === 'crystalColour') {
