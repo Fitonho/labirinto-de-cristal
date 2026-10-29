@@ -1,0 +1,94 @@
+[
+  {
+    "version": 2,
+    "id": "knot",
+    "par": 49,
+    "chapter": "challenges",
+    "order": 1,
+    "grid": [
+      "w w w w b",
+      "w w w w b",
+      "w b w b b",
+      "b b b b b",
+      "b w w b W"
+    ],
+    "start": [0, 4],
+    "portals": [
+      [2, 1, "right"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "watchmaker",
+    "par": 49,
+    "chapter": "challenges",
+    "order": 2,
+    "grid": [
+      "b b b w w",
+      "b w b b b",
+      "w b b b b",
+      "B w w w b",
+      "b w w b w"
+    ],
+    "start": [3, 4],
+    "portals": [
+      [0, 2, "right"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "two-halves",
+    "par": 49,
+    "chapter": "challenges",
+    "order": 3,
+    "grid": [
+      "b w w w w",
+      "W b w w w",
+      "b w b b B",
+      "b w w w b",
+      "w b b b b"
+    ],
+    "start": [4, 0],
+    "portals": [
+      [3, 0, "down"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "anthill",
+    "par": 47,
+    "chapter": "challenges",
+    "order": 4,
+    "grid": [
+      "w w b b b",
+      "w w b b b",
+      "w b b w b",
+      "w b b b w",
+      "w b b b w",
+      "W b b b b"
+    ],
+    "start": [5, 4],
+    "portals": [
+      [2, 2, "right"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "patience",
+    "par": 80,
+    "chapter": "challenges",
+    "order": 5,
+    "grid": [
+      "b b w w w w",
+      "w w b b w w",
+      "b w b w w w",
+      "w w w b b w",
+      "w w b b b w",
+      "w b b w w B"
+    ],
+    "start": [5, 1],
+    "portals": [
+      [2, 2, "right"]
+    ]
+  }
+]

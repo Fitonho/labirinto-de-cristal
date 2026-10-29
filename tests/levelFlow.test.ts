@@ -64,14 +64,9 @@ describe('new-idea card', () => {
     }
   });
 
-  it('brings in the ideas in the order the samples teach them', () => {
-    expect(['sample-a', 'sample-b', 'sample-c', 'sample-d', 'sample-e'].map((levelId) => ideaCardsByLevelId[levelId].idea)).toEqual([
-      'push',
-      'portal',
-      'bridge',
-      'crystalColour',
-      'portalPush',
-    ]);
+  it('brings in the ideas in the order the chapters teach them', () => {
+    const ideas = levels.filter((level) => level.id in ideaCardsByLevelId).map((level) => ideaCardsByLevelId[level.id].idea);
+    expect(ideas).toEqual(['push', 'oneBox', 'undo', 'portal', 'bridge', 'crystalColour', 'allStars', 'portalPush']);
   });
 
   it('fills Play before it can be pressed', () => {

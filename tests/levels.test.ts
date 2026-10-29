@@ -71,7 +71,7 @@ describe('resuming a board', () => {
 });
 
 describe('unlocking', () => {
-  // A small made-up game: two tested chapters and the always-open drafts.
+  // A small made-up game: two chapters, the always-open labyrinths, and the challenges that wait on the moving portals.
   const level = (id: string, chapter: string, order: number, par?: number): LevelData => ({
     version: 2,
     id,
@@ -83,22 +83,23 @@ describe('unlocking', () => {
   });
   const testLevels = [
     ...[1, 2, 3, 4, 5, 6].map((order) => level(`first-${order}`, 'first', order, 4)),
-    ...[1, 2, 3].map((order) => level(`second-${order}`, 'second', order)),
-    ...[1, 2].map((order) => level(`drafts-${order}`, 'drafts', order)),
+    ...[1, 2, 3].map((order) => level(`moving-portals-${order}`, 'moving-portals', order)),
+    ...[1, 2].map((order) => level(`labyrinths-${order}`, 'labyrinths', order)),
+    ...[1, 2].map((order) => level(`challenges-${order}`, 'challenges', order)),
   ];
-  const testChapters = ['first', 'second', 'drafts'];
+  const testChapters = ['first', 'moving-portals', 'labyrinths', 'challenges'];
 
   it('marks a level solved, or at par when the best is at or under its par', () => {
     expect(levelMarkFor(testLevels[0], {})).toBeNull();
     expect(levelMarkFor(testLevels[0], { 'first-1': 4 })).toBe('atPar');
     expect(levelMarkFor(testLevels[0], { 'first-1': 5 })).toBe('solved');
-    expect(levelMarkFor(testLevels[6], { 'second-1': 1 })).toBe('solved'); // no par, no star
+    expect(levelMarkFor(testLevels[6], { 'moving-portals-1': 1 })).toBe('solved'); // no par, no star
   });
 
-  it('opens two unsolved levels ahead in a chapter, and the drafts from the start', () => {
+  it('opens two unsolved levels ahead in a chapter, and the labyrinths from the start', () => {
     const summaries = chapterSummariesFor(testChapters, testLevels, {});
     const openLevelIds = openLevelIdsFor(summaries, {}, 'first-1');
-    expect([...openLevelIds].sort()).toEqual(['drafts-1', 'drafts-2', 'first-1', 'first-2']);
+    expect([...openLevelIds].sort()).toEqual(['first-1', 'first-2', 'labyrinths-1', 'labyrinths-2']);
     const bests = { 'first-1': 4, 'first-3': 9 };
     const openAfterSolves = openLevelIdsFor(chapterSummariesFor(testChapters, testLevels, bests), bests, 'first-1');
     expect(['first-1', 'first-2', 'first-3', 'first-4'].every((levelId) => openAfterSolves.has(levelId))).toBe(true);
@@ -109,25 +110,33 @@ describe('unlocking', () => {
 
   it('opens the next chapter once two thirds of the one before are solved', () => {
     const threeSolved = { 'first-1': 4, 'first-2': 5, 'first-3': 6 };
-    const [first, second, drafts] = chapterSummariesFor(testChapters, testLevels, threeSolved);
+    const [first, movingPortals, labyrinths] = chapterSummariesFor(testChapters, testLevels, threeSolved);
     expect(first).toMatchObject({ open: true, solvedCount: 3, starCount: 1, parCount: 6 });
-    expect(second).toMatchObject({ open: false, solvesToOpenCount: 1, previousChapter: 'first' });
-    expect(drafts.open).toBe(true);
+    expect(movingPortals).toMatchObject({ open: false, solvesToOpenCount: 1, previousChapter: 'first' });
+    expect(labyrinths.open).toBe(true);
     const fourSolved = { ...threeSolved, 'first-6': 4 };
     expect(chapterSummariesFor(testChapters, testLevels, fourSolved)[1].open).toBe(true);
+  });
+
+  it('opens the challenges after the chapter they name, not the labyrinths before them', () => {
+    const movingPortalsSolved = { 'first-1': 4, 'first-2': 4, 'first-3': 4, 'first-4': 4, 'moving-portals-1': 5, 'moving-portals-2': 5 };
+    const challenges = chapterSummariesFor(testChapters, testLevels, movingPortalsSolved)[3];
+    expect(challenges).toMatchObject({ open: true, previousChapter: 'moving-portals' });
+    const firstOnly = { 'first-1': 4, 'first-2': 4, 'first-3': 4, 'first-4': 4 };
+    expect(chapterSummariesFor(testChapters, testLevels, firstOnly)[3]).toMatchObject({ open: false, solvesToOpenCount: 2 });
   });
 
   it('plays the current level, else the first open unsolved one', () => {
     const bests = { 'first-1': 4 };
     const summaries = chapterSummariesFor(testChapters, testLevels, bests);
-    const openLevelIds = openLevelIdsFor(summaries, bests, 'drafts-2');
-    expect(levelToPlayIn(summaries[0], openLevelIds, bests, 'drafts-2')?.id).toBe('first-2');
-    expect(levelToPlayIn(summaries[2], openLevelIds, bests, 'drafts-2')?.id).toBe('drafts-2');
+    const openLevelIds = openLevelIdsFor(summaries, bests, 'labyrinths-2');
+    expect(levelToPlayIn(summaries[0], openLevelIds, bests, 'labyrinths-2')?.id).toBe('first-2');
+    expect(levelToPlayIn(summaries[2], openLevelIds, bests, 'labyrinths-2')?.id).toBe('labyrinths-2');
   });
 
-  it('opens the real samples and drafts on a first launch', () => {
+  it('opens only the first steps and the labyrinths on a first launch', () => {
     const summaries = chapterSummariesFor(chapters, levels, {});
-    expect(summaries.map((summary) => summary.open)).toEqual([true, true]);
+    expect(summaries.filter((summary) => summary.open).map((summary) => summary.chapter)).toEqual(['first-steps', 'labyrinths']);
   });
 });
 

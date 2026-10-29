@@ -8,8 +8,10 @@ import type { LevelData } from '../core';
 export const OPEN_AHEAD_COUNT = 2;
 /** The share of a chapter to solve before the next chapter opens. */
 export const CHAPTER_OPEN_SHARE = 2 / 3;
-/** Chapters open from the start, whatever was solved. The drafts are untested, so nothing should wait on them. */
-export const ALWAYS_OPEN_CHAPTERS: readonly string[] = ['drafts'];
+/** Chapters open from the start, whatever was solved. The labyrinths are still being played through, so nothing should wait on them. */
+export const ALWAYS_OPEN_CHAPTERS: readonly string[] = ['labyrinths'];
+/** Chapters that wait on a chapter other than the one before them. The challenges are an extra, so they open after the moving portals, not after the labyrinths. */
+export const OPENING_CHAPTER_BY_CHAPTER: Readonly<Record<string, string>> = { challenges: 'moving-portals' };
 
 export type LevelMark = 'atPar' | 'solved' | null;
 
@@ -30,7 +32,7 @@ export interface ChapterSummary {
   open: boolean;
   /** For a locked chapter, how many more levels of the chapter before it open it. */
   solvesToOpenCount: number;
-  /** The chapter before, which a locked chapter waits on. */
+  /** The chapter a locked chapter waits on: the one before it, unless it says otherwise. */
   previousChapter: string | null;
 }
 
@@ -47,7 +49,8 @@ export function chapterSummariesFor(
   for (const chapter of chapters) {
     const chapterLevels = levels.filter((level) => level.chapter === chapter);
     const marks = chapterLevels.map((level) => levelMarkFor(level, bestMovesByLevelId));
-    const previousSummary = summaries[summaries.length - 1] ?? null;
+    const openingChapter = OPENING_CHAPTER_BY_CHAPTER[chapter];
+    const previousSummary = (openingChapter ? summaries.find((summary) => summary.chapter === openingChapter) : summaries[summaries.length - 1]) ?? null;
     const solvesToOpenCount = previousSummary ? solvesNeededToOpenNext(previousSummary) : 0;
     summaries.push({
       chapter,

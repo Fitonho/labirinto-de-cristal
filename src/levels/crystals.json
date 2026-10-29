@@ -1,0 +1,110 @@
+[
+  {
+    "version": 2,
+    "id": "star-colour",
+    "par": 12,
+    "chapter": "crystals",
+    "order": 1,
+    "grid": [
+      "b b b w w",
+      "w w w b w",
+      "W w w b w",
+      "w w b b b",
+      "w w b b b"
+    ],
+    "start": [3, 3],
+    "portals": [
+      [0, 3, "down"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "push-the-star",
+    "par": 18,
+    "chapter": "crystals",
+    "order": 2,
+    "grid": [
+      "w w w w w",
+      "w w w w w",
+      "w w b b w",
+      "w w b b b",
+      "w b W b b"
+    ],
+    "start": [1, 2],
+    "portals": [
+      [2, 4, "down"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "stuck-star",
+    "par": 17,
+    "chapter": "crystals",
+    "order": 3,
+    "grid": [
+      "w b b b w",
+      "w W b b w",
+      "b b b w w",
+      "b b b w w",
+      "b b b b b"
+    ],
+    "start": [4, 0],
+    "portals": [
+      [2, 2, "right"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "two-stars",
+    "par": 14,
+    "chapter": "crystals",
+    "order": 4,
+    "grid": [
+      "w w w W b",
+      "b w b b B",
+      "w b b b w",
+      "b w w w w",
+      "w w w w w"
+    ],
+    "start": [3, 0],
+    "portals": [
+      [1, 1, "down"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "colour-swap",
+    "par": 24,
+    "chapter": "crystals",
+    "order": 5,
+    "grid": [
+      "w b b w W",
+      "b b b b w",
+      "w w w b w",
+      "b B w b b",
+      "b b w w b"
+    ],
+    "start": [4, 4],
+    "portals": [
+      [3, 3, "down"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "neighbours",
+    "par": 42,
+    "chapter": "crystals",
+    "order": 6,
+    "grid": [
+      "W w b b b b",
+      "b B w w b b",
+      "w w w w b b",
+      "b b b b w b",
+      "b b b w b w"
+    ],
+    "start": [4, 5],
+    "portals": [
+      [3, 5, "down"]
+    ]
+  }
+]

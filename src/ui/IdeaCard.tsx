@@ -49,7 +49,7 @@ interface IdeaCardProps {
   open: boolean;
   idea: LevelIdea | null;
   levelName: string;
-  /** "Exemplos 2": the chapter and the level's number, under the New label. */
+  /** "Primeiros passos 2": the chapter and the level's number, under the New label. */
   levelPlace: string;
   language: Language;
   tileColours: Record<Colour, string>;
@@ -211,7 +211,8 @@ interface Scene {
   showsBoxes?: boolean;
   /** A portal that stays on the edge between two side-by-side cells. */
   portal: { between: [SceneCell, SceneCell] } | null;
-  star: { cell: SceneCell; colour: Colour } | null;
+  /** Each star bursts as the Pebble first reaches its cell. */
+  stars: { cell: SceneCell; colour: Colour }[];
   /** How long one loop takes, in milliseconds, when its path is longer than a few steps. */
   loopDuration?: number;
 }
@@ -229,14 +230,44 @@ const SCENES: Record<LevelIdea, Scene> = {
     pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
     box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: false },
     portal: null,
-    star: null,
+    stars: [],
+  },
+  // Two boxes in a row don't move, so the Pebble goes round them to the star.
+  oneBox: {
+    tileRows: ['bwwb', 'bbbb'],
+    pebble: {
+      path: [
+        { row: 0, column: 0 },
+        { row: 1, column: 0 },
+        { row: 1, column: 1 },
+        { row: 1, column: 2 },
+        { row: 1, column: 3 },
+        { row: 0, column: 3 },
+      ],
+      colourBefore: 'white',
+      colourAfter: 'white',
+    },
+    box: null,
+    showsBoxes: true,
+    portal: null,
+    stars: [{ cell: { row: 0, column: 3 }, colour: 'white' }],
+    loopDuration: 3200,
+  },
+  // A box pushed into the corner, where nothing can bring it back; the loop
+  // starting over is what Undo does.
+  undo: {
+    tileRows: ['bwb', 'wwb'],
+    pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
+    box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: false },
+    portal: null,
+    stars: [],
   },
   portal: {
     tileRows: ['bbww'],
     pebble: { path: rowPath(0, 2), colourBefore: 'white', colourAfter: 'black' },
     box: null,
     portal: { between: [{ row: 0, column: 1 }, { row: 0, column: 2 }] },
-    star: null,
+    stars: [],
   },
   // The rule behind sample 3's bridge, not its recipe: the line of boxes is
   // already whole, and the flip alone turns it into the path to the star.
@@ -258,7 +289,7 @@ const SCENES: Record<LevelIdea, Scene> = {
     box: null,
     showsBoxes: true,
     portal: { between: [{ row: 1, column: 2 }, { row: 2, column: 2 }] },
-    star: { cell: { row: 1, column: 0 }, colour: 'black' },
+    stars: [{ cell: { row: 1, column: 0 }, colour: 'black' }],
     loopDuration: 3600,
   },
   crystalColour: {
@@ -266,14 +297,36 @@ const SCENES: Record<LevelIdea, Scene> = {
     pebble: { path: rowPath(0, 3), colourBefore: 'black', colourAfter: 'white' },
     box: null,
     portal: { between: [{ row: 0, column: 1 }, { row: 0, column: 2 }] },
-    star: { cell: { row: 0, column: 3 }, colour: 'white' },
+    stars: [{ cell: { row: 0, column: 3 }, colour: 'white' }],
+  },
+  // One star on each side of the portal: one before the flip, one after.
+  allStars: {
+    tileRows: ['bbww'],
+    pebble: {
+      path: [
+        { row: 0, column: 1 },
+        { row: 0, column: 0 },
+        { row: 0, column: 1 },
+        { row: 0, column: 2 },
+        { row: 0, column: 3 },
+      ],
+      colourBefore: 'white',
+      colourAfter: 'black',
+    },
+    box: null,
+    portal: { between: [{ row: 0, column: 1 }, { row: 0, column: 2 }] },
+    stars: [
+      { cell: { row: 0, column: 0 }, colour: 'white' },
+      { cell: { row: 0, column: 3 }, colour: 'black' },
+    ],
+    loopDuration: 3200,
   },
   portalPush: {
     tileRows: ['bwbb'],
     pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
     box: { fromCell: { row: 0, column: 1 }, colour: 'white', carriesPortal: true },
     portal: null,
-    star: null,
+    stars: [],
   },
 };
 
@@ -355,7 +408,7 @@ interface IdeaSceneProps {
   playing: boolean;
 }
 
-/** The idea played on a few cells: a push, a flip through a portal, a bridge, reaching a star, or a portal carried by a push. */
+/** The idea played on a few cells: a push, going round two boxes, a push into a corner, a flip through a portal, a bridge, reaching one star or two, or a portal carried by a push. */
 function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
   const scene = SCENES[idea];
   const loopDuration = scene.loopDuration ?? IDEA_SCENE_DURATION;
@@ -425,10 +478,9 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
       { translateY: interpolate(progress.value, [MOVE_START, firstStepEnd], [0, boxShiftY], 'clamp') },
     ],
   }));
-  const starStyle = useAnimatedStyle(() => {
-    const burst = interpolate(progress.value, [MOVE_END, MOVE_END + 0.15], [0, 1], 'clamp');
-    return { opacity: 1 - burst, transform: [{ scale: 1 + burst * 0.6 }] };
-  });
+  // When the Pebble first stands on each star's cell.
+  const starArrivalTimes = scene.stars.map((star) => pathTimes[path.findIndex((cell) => sameCell(cell, star.cell))]);
+
 
   const pebbleSize = SCENE_CELL * PEBBLE_RADIUS * 2;
   const pebbleOffset = (SCENE_CELL - pebbleSize) / 2;
@@ -480,18 +532,16 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
         </Animated.View>
       )}
       {portalSeamPlace && <View style={[styles.seam, seamStyle, portalSeamPlace]} />}
-      {scene.star && (
-        <Animated.View style={[styles.star, { left: scene.star.cell.column * SCENE_CELL, top: scene.star.cell.row * SCENE_CELL }, starStyle]}>
-          <Svg width={SCENE_CELL} height={SCENE_CELL}>
-            <Polygon
-              points={starPoints(SCENE_CELL / 2, SCENE_CELL / 2, SCENE_CELL * STAR_OUTER_RADIUS * 1.3, SCENE_CELL * STAR_INNER_RADIUS)}
-              fill={tileColours[scene.star.colour]}
-              stroke={seamColour}
-              strokeWidth={1}
-            />
-          </Svg>
-        </Animated.View>
-      )}
+      {scene.stars.map((star, starIndex) => (
+        <SceneStar
+          key={`${star.cell.row}-${star.cell.column}`}
+          cell={star.cell}
+          colour={tileColours[star.colour]}
+          seamColour={seamColour}
+          progress={progress}
+          burstStart={starArrivalTimes[starIndex]}
+        />
+      ))}
       <Animated.View style={[StyleSheet.absoluteFill, fadeStyle]}>
         <Animated.View style={[{ position: 'absolute', left: path[0].column * SCENE_CELL + pebbleOffset, top: path[0].row * SCENE_CELL + pebbleOffset }, pebbleStyle]}>
           <View style={{ width: pebbleSize, height: pebbleSize, borderRadius: pebbleSize / 2, backgroundColor: tileColours[colourBefore] }} />
@@ -504,6 +554,35 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
         </Animated.View>
       </Animated.View>
     </View>
+  );
+}
+
+interface SceneStarProps {
+  cell: SceneCell;
+  colour: string;
+  seamColour: string;
+  progress: SharedValue<number>;
+  /** The share of the loop when the Pebble reaches it and it bursts. */
+  burstStart: number;
+}
+
+/** One star in the scene, bursting as the Pebble arrives. */
+function SceneStar({ cell, colour, seamColour, progress, burstStart }: SceneStarProps) {
+  const starStyle = useAnimatedStyle(() => {
+    const burst = interpolate(progress.value, [burstStart, burstStart + 0.15], [0, 1], 'clamp');
+    return { opacity: 1 - burst, transform: [{ scale: 1 + burst * 0.6 }] };
+  });
+  return (
+    <Animated.View style={[styles.star, { left: cell.column * SCENE_CELL, top: cell.row * SCENE_CELL }, starStyle]}>
+      <Svg width={SCENE_CELL} height={SCENE_CELL}>
+        <Polygon
+          points={starPoints(SCENE_CELL / 2, SCENE_CELL / 2, SCENE_CELL * STAR_OUTER_RADIUS * 1.3, SCENE_CELL * STAR_INNER_RADIUS)}
+          fill={colour}
+          stroke={seamColour}
+          strokeWidth={1}
+        />
+      </Svg>
+    </Animated.View>
   );
 }
 

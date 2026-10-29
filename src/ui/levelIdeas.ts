@@ -4,7 +4,7 @@
 // be worked out from the board. No React here, so Vitest tests it.
 import type { Cell, GameState, Portal } from '../core';
 
-export type LevelIdea = 'push' | 'portal' | 'bridge' | 'crystalColour' | 'portalPush';
+export type LevelIdea = 'push' | 'oneBox' | 'undo' | 'portal' | 'bridge' | 'crystalColour' | 'allStars' | 'portalPush';
 
 /** What lights up on the board after the card: every portal, every star, or the cells listed. */
 export type IdeaGlowTarget = 'portals' | 'stars' | Cell[];
@@ -17,10 +17,16 @@ export interface IdeaCard {
 export const ideaCardsByLevelId: Record<string, IdeaCard> = {
   // The one box that can move, two steps right of the Pebble; the ones beside it are walls.
   'sample-a': { idea: 'push', glow: [{ row: 2, column: 2 }] },
+  // The two boxes in a row straight ahead.
+  'one-at-a-time': { idea: 'oneBox', glow: [{ row: 1, column: 2 }, { row: 1, column: 3 }] },
+  // The box straight ahead: pushing it is the dead end.
+  'dead-end': { idea: 'undo', glow: [{ row: 1, column: 2 }] },
   'sample-b': { idea: 'portal', glow: 'portals' },
   // The portal, not the line of boxes, so the glow doesn't give the bridge away.
   'sample-c': { idea: 'bridge', glow: 'portals' },
-  'sample-d': { idea: 'crystalColour', glow: 'stars' },
+  'star-colour': { idea: 'crystalColour', glow: 'stars' },
+  // Pushing the star gets no card on purpose: its name is the only hint.
+  'two-stars': { idea: 'allStars', glow: 'stars' },
   'sample-e': { idea: 'portalPush', glow: 'portals' },
 };
 

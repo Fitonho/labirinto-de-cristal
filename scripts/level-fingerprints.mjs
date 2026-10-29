@@ -3,7 +3,7 @@
 // because saved best moves are kept per level id: give a changed board a new
 // id, or, if the old bests still hold on it, rerun this script and commit.
 // Run with: node scripts/level-fingerprints.mjs
-import { readFileSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
 const levelsFolder = fileURLToPath(new URL('../src/levels/', import.meta.url));
@@ -21,7 +21,7 @@ export function fingerprintOf(levelData) {
 }
 
 const fingerprintsByLevelId = {};
-for (const chapterFile of ['samples.json', 'drafts.json']) {
+for (const chapterFile of readdirSync(levelsFolder).filter((fileName) => fileName.endsWith('.json')).sort()) {
   for (const levelData of JSON.parse(readFileSync(levelsFolder + chapterFile, 'utf8'))) {
     fingerprintsByLevelId[levelData.id] = fingerprintOf(levelData);
   }

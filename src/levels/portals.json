@@ -1,0 +1,89 @@
+[
+  {
+    "version": 2,
+    "id": "sample-b",
+    "par": 8,
+    "chapter": "portals",
+    "order": 1,
+    "grid": [
+      "b b b w W",
+      "b w b w w",
+      "b b b w w",
+      "b w w w w",
+      "b b b b b"
+    ],
+    "start": [4, 0],
+    "portals": [
+      [0, 3, "left"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "sample-c",
+    "par": 10,
+    "chapter": "portals",
+    "order": 2,
+    "grid": [
+      "W b w w w",
+      "b w b b b",
+      "b b b b b"
+    ],
+    "start": [2, 0],
+    "portals": [
+      [0, 4, "down"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "there-and-back",
+    "par": 16,
+    "chapter": "portals",
+    "order": 3,
+    "grid": [
+      "w w b b w",
+      "w w b b w",
+      "b b w b w",
+      "b b b b W",
+      "w w w b w"
+    ],
+    "start": [4, 3],
+    "portals": [
+      [2, 1, "right"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "detour",
+    "par": 20,
+    "chapter": "portals",
+    "order": 4,
+    "grid": [
+      "w b b b b w",
+      "w w w b b w",
+      "w b w b b b",
+      "w w w b b W"
+    ],
+    "start": [1, 5],
+    "portals": [
+      [0, 4, "right"]
+    ]
+  },
+  {
+    "version": 2,
+    "id": "three-trips",
+    "par": 22,
+    "chapter": "portals",
+    "order": 5,
+    "grid": [
+      "w w b b b",
+      "w w b b w",
+      "w w b w b",
+      "b b b w w",
+      "b b b b W"
+    ],
+    "start": [2, 4],
+    "portals": [
+      [0, 4, "down"]
+    ]
+  }
+]
