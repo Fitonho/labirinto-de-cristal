@@ -11,7 +11,7 @@ const tileColours = (state: GameState) => state.tiles.map((tile) => tile.colour[
 
 describe('levels', () => {
   it('every level loads without errors', () => {
-    expect(levels).toHaveLength(19);
+    expect(levels).toHaveLength(33);
     for (const levelData of levels) expect(validateLevel(levelData), levelData.id).toEqual([]);
   });
 
@@ -144,24 +144,55 @@ describe('winning', () => {
   });
 });
 
-describe('sample levels', () => {
-  // Shortest solutions from the design doc, found by the separate tiny solver.
-  const solvedSamples: [string, string, number][] = [
-    ['sample-a', 'RRRU', 4],
-    ['sample-b', 'UUUURRRR', 8],
-    ['sample-c', 'RURRRULLLL', 10],
-    ['sample-d', 'RDDRUURRUU', 10],
-    ['sample-e', 'URURDRRUUR', 10],
+describe('level solutions', () => {
+  // Shortest solutions of the levels in chapters 1 to 4 and the challenges,
+  // found with src/tools/solver.ts when the boards were designed. Par is the
+  // shortest solution, or about 10% over it in the challenges. Only the
+  // smaller boards are searched again here; the rest take too long.
+  const solutions: [levelId: string, path: string, shortestMoveCount: number, searchAgain: boolean][] = [
+    ['sample-a', 'RRRU', 4, true],
+    ['one-at-a-time', 'RDRRUR', 6, true],
+    ['dead-end', 'RDDRRUUR', 8, true],
+    ['two-walls', 'RRRUULUULLLDD', 13, true],
+    ['sample-b', 'UUUURRRR', 8, false],
+    ['sample-c', 'RURRRULLLL', 10, true],
+    ['there-and-back', 'ULLURDULDRLURRDR', 16, false],
+    ['detour', 'ULLLLDRRURDLDRUURDDD', 20, true],
+    ['three-trips', 'LUURDDUULDLDDRUUURDDDD', 22, false],
+    ['star-colour', 'UUURDDLLULDL', 12, false],
+    ['push-the-star', 'RRDDDLLURRUULLLDDD', 18, true],
+    ['stuck-star', 'UURRUULDDLDRURRDL', 17, true],
+    ['two-stars', 'URUURRLLDDRURR', 14, true],
+    ['colour-swap', 'ULUULLLDDRUURRDDDLUURURU', 24, true],
+    ['neighbours', 'UULDLLLLUDRRRRRDLLUULLULUDRRDRDDRRUUUULLLL', 42, true],
+    ['sample-e', 'URURDRRUUR', 10, false],
+    ['moving-day', 'DLDLLURRDRUULUUR', 16, true],
+    ['double-load', 'DDRDLDRRUURULDDDLLURUU', 22, true],
+    ['two-portals', 'DLLDDRURRUDDLUULURDDDRUUUU', 26, false],
+    ['pocket-maze', 'ULUURDDUUUULDDUULDDDRDDRULLLDL', 30, false],
+    ['knot', 'DDDLLLURDULDRLLDRUURDRUULLLDRURRDLDLDRUURDDR', 44, true],
+    ['watchmaker', 'UULLULLDRRURDDUULDRLDRULURRDDDLLRRUUULLDDLDL', 44, true],
+    ['two-halves', 'UUUDRRDULLDDRLUURRDDRRUUDDLLUULLDDRURURUULLL', 44, true],
+    ['anthill', 'LUULUURRDLULDLDRRLLDRUDRUURULDDLLURULLDDDD', 42, false],
+    ['patience', 'RURUULLURDRDDLURULURULLDDUURRDLDDLDURUURULLDDLDDDRRRLLLUUUURURRDLDRDRDDR', 72, true],
   ];
-  for (const [levelId, path, shortestMoveCount] of solvedSamples) {
-    it(`${levelId} is won by the known solution in ${shortestMoveCount} moves, and no faster`, () => {
-      const startState = loadLevel(levelById(levelId));
+  for (const [levelId, path, shortestMoveCount, searchAgain] of solutions) {
+    it(`${levelId} is won in ${shortestMoveCount} moves${searchAgain ? ', and no faster' : ''}`, () => {
+      const levelData = levelById(levelId);
+      const startState = loadLevel(levelData);
       const endState = play(startState, path);
       expect(endState.status).toBe('won');
       expect(endState.moveCount).toBe(shortestMoveCount);
-      expect(shortestWin(startState)).toBe(shortestMoveCount);
+      const parShare = levelData.chapter === 'challenges' ? 1.1 : 1;
+      expect(levelData.par).toBe(Math.ceil(shortestMoveCount * parShare));
+      if (searchAgain) expect(shortestWin(startState)).toBe(shortestMoveCount);
     });
   }
+
+  it('covers every level outside the labyrinths', () => {
+    const solvedLevelIds = solutions.map(([levelId]) => levelId).sort();
+    expect(levels.filter((levelData) => levelData.chapter !== 'labyrinths').map((levelData) => levelData.id).sort()).toEqual(solvedLevelIds);
+  });
 });
 
 describe('helpers', () => {

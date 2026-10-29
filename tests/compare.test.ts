@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { DIRECTIONS, loadLevel, move, type GameState } from '../src/core';
-import { levels } from '../src/levels/index';
+import { DIRECTIONS, loadLevel, move, type GameState, type LevelData } from '../src/core';
+import drafts from '../src/levels/drafts.json';
 import { side, wallState } from './legacy/block';
 import { Levels } from './legacy/levels';
 import { LegacyGame, legacyLevelNames } from './legacy/rules';
@@ -15,7 +15,7 @@ import { LegacyGame, legacyLevelNames } from './legacy/rules';
 const legacyLevels = new Levels() as any;
 const legacyNames = legacyLevelNames(legacyLevels);
 // The original game had only the draft levels, in this order.
-const draftLevels = levels.filter((level) => level.chapter === 'drafts');
+const draftLevels = drafts as LevelData[];
 const legacySidesByDirection = { up: side.Top, right: side.Right, down: side.Bottom, left: side.Left };
 const sideNames = ['up', 'right', 'down', 'left'] as const;
 const rowOffsets = [-1, 0, 1, 0];

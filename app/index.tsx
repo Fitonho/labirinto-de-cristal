@@ -12,7 +12,8 @@ import { BackHandler, PixelRatio, Platform, Pressable, StyleSheet, Text, useWind
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { levels } from '../src/levels/index';
+import { chapters, levels } from '../src/levels/index';
+import { otherUnsolvedLevelOpen } from '../src/state/levelProgress';
 import { sessionActions } from '../src/state/session';
 import { settingsActions } from '../src/state/settings';
 import { actions, selectNextPaletteId, selectPaletteId, type RootState } from '../src/state/store';
@@ -26,7 +27,7 @@ import { levelNameFor, t, type StringKey } from '../src/ui/i18n';
 import { IconButton } from '../src/ui/IconButton';
 import { IdeaCard } from '../src/ui/IdeaCard';
 import { IdeaGlow } from '../src/ui/IdeaGlow';
-import { ideaCardsByLevelId, ideaHighlightFor, opensIdeaCard, type IdeaHighlight } from '../src/ui/levelIdeas';
+import { IDEA_CARD_CLOSE_DURATION, ideaCardsByLevelId, ideaHighlightFor, opensIdeaCard, opensStuckTip, type IdeaHighlight } from '../src/ui/levelIdeas';
 import { openChapterFromGame, openChapters } from '../src/ui/levelsNavigation';
 import { MoreSheet } from '../src/ui/MoreSheet';
 import { ResultCard } from '../src/ui/ResultCard';
@@ -69,6 +70,9 @@ export default function GameScreen() {
   const ideaCard = ideaCardsByLevelId[level.id] ?? null;
   const idea = ideaCard?.idea ?? null;
   const [ideaCardOpen, setIdeaCardOpen] = useState(false);
+  // The card shows the stuck tip instead of the level's idea while this is on.
+  const [stuckTipShowing, setStuckTipShowing] = useState(false);
+  const stuckTipSeen = useSelector((rootState: RootState) => rootState.settings.stuckTipSeen);
   const [ideaKeyPressCount, setIdeaKeyPressCount] = useState(0);
   const [ideaGlowCount, setIdeaGlowCount] = useState(0);
   const [ideaHighlight, setIdeaHighlight] = useState<IdeaHighlight | null>(null);
@@ -77,13 +81,21 @@ export default function GameScreen() {
   openingFacts.current = { bestMovesByLevelId, steps };
   useEffect(() => {
     if (homeOpen) return;
+    setStuckTipShowing(false);
     setIdeaCardOpen(opensIdeaCard(level.id, openingFacts.current.bestMovesByLevelId, openingFacts.current.steps));
   }, [level.id, homeOpen]);
   // The board is read through a ref, so a move doesn't hand the card a new handler and redraw it.
   const presentStateRef = useRef(state);
   presentStateRef.current = state;
+  const stuckTipShowingRef = useRef(stuckTipShowing);
+  stuckTipShowingRef.current = stuckTipShowing;
   const closeIdeaCard = useCallback(() => {
     setIdeaCardOpen(false);
+    if (stuckTipShowingRef.current) {
+      // Back to the level's own idea once the card has folded away, so the name in the header reopens that.
+      setTimeout(() => setStuckTipShowing(false), IDEA_CARD_CLOSE_DURATION);
+      return;
+    }
     if (ideaCard) setIdeaHighlight(ideaHighlightFor(ideaCard.glow, presentStateRef.current));
     setIdeaGlowCount((count) => count + 1);
   }, [ideaCard]);
@@ -91,6 +103,15 @@ export default function GameScreen() {
   ideaCardOpenRef.current = ideaCardOpen;
   const homeOpenRef = useRef(homeOpen);
   homeOpenRef.current = homeOpen;
+  // A player who keeps restarting one level hears, once ever, that they can leave it for later.
+  useEffect(() => {
+    if (homeOpen || ideaCardOpenRef.current) return;
+    const solved = bestMovesByLevelId[level.id] !== undefined;
+    if (!opensStuckTip(steps, solved, stuckTipSeen, () => otherUnsolvedLevelOpen(chapters, levels, bestMovesByLevelId, level.id))) return;
+    setStuckTipShowing(true);
+    setIdeaCardOpen(true);
+    dispatch(settingsActions.stuckTipShown());
+  }, [steps, stuckTipSeen, homeOpen, bestMovesByLevelId, level.id, dispatch]);
   const { starCount, parCount, allSolved } = useMemo(() => {
     const levelsWithPar = levels.filter((eachLevel) => eachLevel.par !== undefined);
     return {
@@ -275,7 +296,7 @@ export default function GameScreen() {
           />
           <IdeaCard
             open={ideaCardOpen}
-            idea={idea}
+            idea={stuckTipShowing ? 'skip' : idea}
             levelName={levelName}
             levelPlace={`${chapterName} ${level.order}`}
             language={language}

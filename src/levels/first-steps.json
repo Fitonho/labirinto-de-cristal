@@ -1,0 +1,63 @@
+[
+  {
+    "version": 2,
+    "id": "sample-a",
+    "par": 4,
+    "chapter": "first-steps",
+    "order": 1,
+    "grid": [
+      "w w w w w",
+      "w w w B w",
+      "b b w b b",
+      "w w w w w"
+    ],
+    "start": [2, 0],
+    "portals": []
+  },
+  {
+    "version": 2,
+    "id": "one-at-a-time",
+    "par": 6,
+    "chapter": "first-steps",
+    "order": 2,
+    "grid": [
+      "w w w b w",
+      "b b w w B",
+      "w b b w b"
+    ],
+    "start": [1, 0],
+    "portals": []
+  },
+  {
+    "version": 2,
+    "id": "dead-end",
+    "par": 8,
+    "chapter": "first-steps",
+    "order": 3,
+    "grid": [
+      "w w w w w",
+      "b b w b B",
+      "w b w b w",
+      "w b b b w",
+      "w w w w w"
+    ],
+    "start": [1, 0],
+    "portals": []
+  },
+  {
+    "version": 2,
+    "id": "two-walls",
+    "par": 13,
+    "chapter": "first-steps",
+    "order": 4,
+    "grid": [
+      "b b b b w",
+      "b w w b b",
+      "B w b w b",
+      "w w w w w",
+      "w b b b b"
+    ],
+    "start": [4, 1],
+    "portals": []
+  }
+]
