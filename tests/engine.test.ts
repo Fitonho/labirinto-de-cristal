@@ -181,4 +181,17 @@ describe('helpers', () => {
     expect(reset(history).present).toBe(state);
     expect(undo(startHistory(state)).present).toBe(state);
   });
+
+  it('restart can be undone, and restarting at the start changes nothing', () => {
+    const state = customLevelState(['b b b', 'b b W'], [0, 0]);
+    let history = startHistory(state);
+    history = record(history, move(history.present, 'right').state);
+    history = record(history, move(history.present, 'right').state);
+    const beforeRestart = history.present;
+    const restarted = reset(history);
+    expect(restarted.present).toBe(state);
+    expect(undo(restarted).present).toBe(beforeRestart);
+    expect(reset(restarted)).toBe(restarted);
+    expect(reset(startHistory(state)).present).toBe(state);
+  });
 });

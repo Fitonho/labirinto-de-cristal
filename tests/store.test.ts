@@ -18,24 +18,36 @@ describe('web store', () => {
     expect(game().history.present.moveCount).toBe(9);
     store.dispatch(actions.reset());
     expect(game().history.present.moveCount).toBe(0);
-    expect(game().history.pastStates).toEqual([]);
+    store.dispatch(actions.undo());
+    expect(game().history.present.moveCount).toBe(9);
+    store.dispatch(actions.reset());
+    const restartedHistory = game().history;
+    store.dispatch(actions.reset());
+    expect(game().history).toBe(restartedHistory);
   });
 });
 
 describe('settings', () => {
-  it('starts with sound and vibration on and switches each one separately', () => {
+  it('starts with sound, vibration and tap moves on and switches each one separately', () => {
     const store = createStore('en');
-    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: true });
+    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: true, tapMovesOn: true });
     store.dispatch(settingsActions.setSoundOn(false));
-    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true });
+    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: true });
+    store.dispatch(settingsActions.setTapMovesOn(false));
+    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: false });
     store.dispatch(settingsActions.setVibrationOn(false));
-    store.dispatch(settingsActions.loadedSettings({ soundOn: true, vibrationOn: false }));
-    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: false });
+    store.dispatch(settingsActions.loadedSettings({ soundOn: true, vibrationOn: false, tapMovesOn: true }));
+    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: false, tapMovesOn: true });
   });
 
   it('loads saved settings, filling anything missing, mistyped or unreadable with its default', () => {
-    expect(settingsFromSaved(JSON.stringify({ soundOn: false, vibrationOn: false }))).toEqual({ soundOn: false, vibrationOn: false });
-    expect(settingsFromSaved(JSON.stringify({ soundOn: false }))).toEqual({ soundOn: false, vibrationOn: true });
+    expect(settingsFromSaved(JSON.stringify({ soundOn: false, vibrationOn: false, tapMovesOn: false }))).toEqual({
+      soundOn: false,
+      vibrationOn: false,
+      tapMovesOn: false,
+    });
+    // A save from before tap moves existed gets them switched on.
+    expect(settingsFromSaved(JSON.stringify({ soundOn: false, vibrationOn: true }))).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: true });
     expect(settingsFromSaved(JSON.stringify({ soundOn: 'no', unknownSetting: 1 }))).toEqual(DEFAULT_SETTINGS);
     expect(settingsFromSaved('not json')).toEqual(DEFAULT_SETTINGS);
     expect(settingsFromSaved(null)).toEqual(DEFAULT_SETTINGS);

@@ -147,8 +147,8 @@ export function seamPath(side: Direction, size: number): string {
 export const MAX_TILE_SIZE = 56;
 
 /**
- * Tiles fill the width on phones, keep the board under 65% of the height, and
- * stop at 56 points. The size is also a whole number of screen pixels: phones
+ * Tiles fill the width on phones, keep the board under 65% of the height and
+ * clear of the controls' reserved height, and stop at 56 points. The size is also a whole number of screen pixels: phones
  * round each tile's position to pixels, and a fractional size left a one-pixel
  * gap between some rows.
  */
@@ -157,9 +157,10 @@ export function tileSizeFor(
   screenWidth: number,
   screenHeight: number,
   pixelRatio = 1,
+  reservedHeight = 0,
 ): number {
   const sizeByWidth = (screenWidth - 32) / board.columnCount;
-  const sizeByHeight = (screenHeight * 0.65) / board.rowCount;
+  const sizeByHeight = Math.max(0, Math.min(screenHeight * 0.65, screenHeight - reservedHeight)) / board.rowCount;
   const size = Math.min(MAX_TILE_SIZE, sizeByWidth, sizeByHeight);
   return Math.floor(size * pixelRatio) / pixelRatio;
 }

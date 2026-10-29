@@ -14,6 +14,10 @@ export const palette = {
   accent: '#2f6fd6',
   control: '#ffffff',
   controlBorder: '#c8c8cc',
+  /** The touch area under the board: a faint fill, its two diagonals and the four arrows. */
+  touchPadFill: 'rgba(47, 111, 214, 0.05)',
+  touchPadLine: 'rgba(47, 111, 214, 0.25)',
+  touchPadArrow: 'rgba(47, 111, 214, 0.5)',
 };
 
 /** The glowing seam that marks a door. A UI colour, not a game colour: a chapter palette picks one that shows on both tiles. */

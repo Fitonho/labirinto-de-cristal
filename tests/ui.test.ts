@@ -13,7 +13,7 @@ import {
 } from '../src/ui/boardLayout';
 import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
 import { hapticCueFor } from '../src/ui/haptics';
-import { commandsByKey, swipeDirection } from '../src/ui/commands';
+import { commandsByKey, swipeDirection, tapDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
 import { SOUND_CUE_KINDS, soundCueFor } from '../src/ui/sounds';
 import { BUMP_OUT_DURATION, bumpDirectionFor, bumpOffset, FLIP_GROW_DURATION, motionFor, SLIDE_DURATION } from '../src/ui/motion';
@@ -66,6 +66,8 @@ describe('board layout', () => {
     expect(tileSizeFor(board, 1280, 900)).toBe(MAX_TILE_SIZE);
     expect(tileSizeFor(board, 375, 812)).toBe(34);
     expect(tileSizeFor(board, 1280, 300)).toBe(21);
+    // The controls need 400 of the 800 points, which leaves the board 400.
+    expect(tileSizeFor(board, 1280, 800, 1, 400)).toBe(44); // 400 points left for 9 rows
   });
 
   it('keeps every tile edge on a whole screen pixel', () => {
@@ -83,6 +85,18 @@ describe('input and language', () => {
     expect(swipeDirection(40, 10)).toBe('right');
     expect(swipeDirection(-5, -60)).toBe('up');
     expect(swipeDirection(10, 12)).toBeNull();
+  });
+
+  it('reads taps by the triangle they land in and ignores taps on the diagonals', () => {
+    // A wide area, 300 by 100: the diagonals run corner to corner, not at 45 degrees.
+    expect(tapDirection(150, 10, 300, 100)).toBe('up');
+    expect(tapDirection(150, 95, 300, 100)).toBe('down');
+    expect(tapDirection(20, 50, 300, 100)).toBe('left');
+    expect(tapDirection(280, 60, 300, 100)).toBe('right');
+    expect(tapDirection(100, 90, 300, 100)).toBe('down');
+    expect(tapDirection(30, 10, 300, 100)).toBeNull(); // on the diagonal from the top-left corner
+    expect(tapDirection(150, 50, 300, 100)).toBeNull(); // the centre, where every diagonal meets
+    expect(tapDirection(10, 10, 0, 0)).toBeNull();
   });
 
   it('picks Portuguese for any Portuguese locale', () => {

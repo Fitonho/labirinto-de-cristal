@@ -1,13 +1,15 @@
-// The player's settings: sound and vibration on or off. The whole slice is
+// The player's settings: sound, vibration and tap moves on or off. The whole slice is
 // saved as one object, so a new setting only needs a field here and a default.
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export interface Settings {
   soundOn: boolean;
   vibrationOn: boolean;
+  /** Whether tapping a side of the touch area under the board moves that way. Swipes always work. */
+  tapMovesOn: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { soundOn: true, vibrationOn: true };
+export const DEFAULT_SETTINGS: Settings = { soundOn: true, vibrationOn: true, tapMovesOn: true };
 
 /**
  * Settings from saved JSON. Anything missing or of the wrong type takes its
@@ -38,6 +40,9 @@ const settings = createSlice({
     },
     setVibrationOn(state, action: PayloadAction<boolean>) {
       state.vibrationOn = action.payload;
+    },
+    setTapMovesOn(state, action: PayloadAction<boolean>) {
+      state.tapMovesOn = action.payload;
     },
     /** Replaces every setting at once, after loading them from storage. */
     loadedSettings(state, action: PayloadAction<Settings>) {

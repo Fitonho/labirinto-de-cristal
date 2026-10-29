@@ -57,5 +57,9 @@ export function useSettings() {
     () => dispatch(settingsActions.setVibrationOn(!settings.vibrationOn)),
     [dispatch, settings.vibrationOn],
   );
-  return { ...settings, toggleSound, toggleVibration };
+  const toggleTapMoves = useCallback(
+    () => dispatch(settingsActions.setTapMovesOn(!settings.tapMovesOn)),
+    [dispatch, settings.tapMovesOn],
+  );
+  return { ...settings, toggleSound, toggleVibration, toggleTapMoves };
 }

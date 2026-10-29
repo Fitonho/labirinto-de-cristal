@@ -21,7 +21,13 @@ export function undo(history: History): History {
   return { pastStates: history.pastStates.slice(0, -1), present: history.pastStates[history.pastStates.length - 1] };
 }
 
+/**
+ * Goes back to the level's start but keeps the way there, so an Undo right
+ * after a restart brings back the position the player left.
+ */
 export function reset(history: History): History {
-  if (history.pastStates.length === 0) return history;
-  return { pastStates: [], present: history.pastStates[0] };
+  const startState = history.pastStates[0];
+  // Only the start has no moves. Comparing counts instead of objects also works on Redux's draft copies.
+  if (!startState || history.present.moveCount === 0) return history;
+  return { pastStates: [...history.pastStates, history.present], present: startState };
 }
