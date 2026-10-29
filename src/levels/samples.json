@@ -2,6 +2,7 @@
   {
     "version": 1,
     "id": "sample-a",
+    "par": 4,
     "chapter": "samples",
     "order": 1,
     "grid": [
@@ -16,6 +17,7 @@
   {
     "version": 1,
     "id": "sample-b",
+    "par": 8,
     "chapter": "samples",
     "order": 2,
     "grid": [
@@ -33,6 +35,7 @@
   {
     "version": 1,
     "id": "sample-c",
+    "par": 10,
     "chapter": "samples",
     "order": 3,
     "grid": [
@@ -48,6 +51,7 @@
   {
     "version": 1,
     "id": "sample-d",
+    "par": 10,
     "chapter": "samples",
     "order": 4,
     "grid": [
@@ -66,6 +70,7 @@
   {
     "version": 1,
     "id": "sample-e",
+    "par": 10,
     "chapter": "samples",
     "order": 5,
     "grid": [

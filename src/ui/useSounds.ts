@@ -7,6 +7,7 @@ import { createAudioPlayer, preload, setAudioModeAsync, type AudioPlayer } from 
 import { useEffect, useRef } from 'react';
 import { Platform } from 'react-native';
 import { logger } from '../state/logger';
+import { parCueFor } from './haptics';
 import { soundCueFor, type SoundCueKind } from './sounds';
 import { useGameEventsListener } from './useGameEventsListener';
 import { createWebSoundBank, type SoundBank } from './webSounds';
@@ -18,6 +19,7 @@ const SOUND_FILES_BY_CUE_KIND: Record<SoundCueKind, number> = {
   door: require('../../assets/sounds/door.wav'),
   crystal: require('../../assets/sounds/crystal.wav'),
   win: require('../../assets/sounds/win.wav'),
+  par: require('../../assets/sounds/par.wav'),
 };
 
 function createPhoneSoundBank(): SoundBank<SoundCueKind> {
@@ -68,7 +70,8 @@ function play(soundBank: SoundBank<SoundCueKind>, kind: SoundCueKind) {
   }
 }
 
-export function useSounds(soundOn: boolean) {
+/** `par` is the current level's par, for the chime on a win on or under it. */
+export function useSounds(soundOn: boolean, par: number | undefined) {
   const soundBankRef = useRef<SoundBank<SoundCueKind> | null>(null);
 
   useEffect(() => {
@@ -83,15 +86,15 @@ export function useSounds(soundOn: boolean) {
 
   useGameEventsListener((events) => {
     if (!soundOn) return;
-    const cue = soundCueFor(events);
     const soundBank = soundBankRef.current;
-    if (!cue || !soundBank) return;
-    if (cue.delay === 0) {
-      play(soundBank, cue.kind);
-      return;
+    if (!soundBank) return;
+    const cues = [soundCueFor(events), parCueFor(events, par)].filter((cue) => cue !== null);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (const cue of cues) {
+      if (cue.delay === 0) play(soundBank, cue.kind);
+      else timers.push(setTimeout(() => play(soundBank, cue.kind), cue.delay));
     }
-    // The next move cancels a sound that hasn't started yet, so fast play never queues them up.
-    const timer = setTimeout(() => play(soundBank, cue.kind), cue.delay);
-    return () => clearTimeout(timer);
+    // The next action cancels a sound that hasn't started yet, so fast play never queues them up.
+    return () => timers.forEach(clearTimeout);
   });
 }

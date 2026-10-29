@@ -87,3 +87,20 @@ export const BLINK_INTERVAL = 3700;
 export const BLINK_DURATION = 120;
 /** After this long without a move, the Pebble glances at a reachable star or looks around. */
 export const IDLE_GLANCE_DELAY = 2500;
+
+/** The result sheet rises this long after the winning move, once the collect burst has had its moment, and takes this long. */
+export const RESULT_CARD_DELAY = 520;
+export const RESULT_CARD_RISE_DURATION = 380;
+/** The sheet's star spins in this long after it starts rising, over this long, then bursts like a collected star. */
+export const EMBLEM_DELAY = 330;
+export const EMBLEM_SPIN_DURATION = 420;
+export const EMBLEM_BURST_DELAY = RESULT_CARD_DELAY + EMBLEM_DELAY + EMBLEM_SPIN_DURATION;
+/** The par badge lands this long after the sheet starts rising, as the burst flies out, with a stamp this long. */
+export const PAR_BADGE_DELAY = EMBLEM_DELAY + EMBLEM_SPIN_DURATION + 80;
+export const PAR_BADGE_DURATION = 130;
+/** The par chime and tick play as the badge lands. */
+export const PAR_CUE_DELAY = RESULT_CARD_DELAY + PAR_BADGE_DELAY + PAR_BADGE_DURATION;
+/** The card's buttons ignore touches this long after it lands, so a swipe still under way can't press Next. */
+export const RESULT_CARD_INPUT_GUARD = 150;
+/** The card drops away this fast on Next, Undo or Play again. */
+export const RESULT_CARD_DROP_DURATION = 180;

@@ -1,5 +1,5 @@
 // App state: the current level, its undo history, the last move's events, the
-// level's board palette and the player's settings.
+// level's board palette, the player's settings and their progress (best moves).
 // The game reducers only call the engine; all game rules live in src/core.
 import { configureStore, createSlice, type Middleware, type PayloadAction } from '@reduxjs/toolkit';
 import {
@@ -16,6 +16,7 @@ import {
 import { levels } from '../levels/index';
 import { logger } from './logger';
 import { drawPalette, randomSeed, type PaletteId } from './palettes';
+import { EMPTY_PROGRESS, progressActions, progressReducer, type Progress } from './progress';
 import { DEFAULT_SETTINGS, settingsReducer, type Settings } from './settings';
 
 export type Language = 'pt' | 'en';
@@ -89,20 +90,38 @@ const logActions: Middleware<{}, RootState> = (store) => (next) => (action) => {
   return result;
 };
 
+/** Records a win in the player's progress, right after the move that won. */
+const recordWins: Middleware<{}, RootState> = (store) => (next) => (action) => {
+  const result = next(action);
+  if (actions.move.match(action)) {
+    const { events, levelIndex } = store.getState().game;
+    const wonEvent = events.find((event): event is Extract<GameEvent, { type: 'won' }> => event.type === 'won');
+    if (wonEvent) store.dispatch(progressActions.recordWin({ levelId: levels[levelIndex].id, moveCount: wonEvent.moveCount }));
+  }
+  return result;
+};
+
 /** `paletteSeed` starts the palette draws; tests pass one to get the same palettes every run. */
 export function createStore(language: Language, paletteSeed: number = randomSeed()) {
   return configureStore({
-    reducer: { game: game.reducer, settings: settingsReducer },
-    preloadedState: { game: initialState(language, paletteSeed), settings: DEFAULT_SETTINGS },
-    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(logActions),
+    reducer: { game: game.reducer, settings: settingsReducer, progress: progressReducer },
+    preloadedState: { game: initialState(language, paletteSeed), settings: DEFAULT_SETTINGS, progress: EMPTY_PROGRESS },
+    middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(recordWins, logActions),
   });
 }
 
 export type AppStore = ReturnType<typeof createStore>;
-export type RootState = { game: GameSlice; settings: Settings };
+export type RootState = { game: GameSlice; settings: Settings; progress: Progress };
 
 /** The palette the board is drawn in: the player's favourite if they chose one, otherwise the level's draw. */
 export function selectPaletteId(rootState: RootState): PaletteId {
   const { paletteChoice } = rootState.settings;
   return paletteChoice === 'random' ? rootState.game.paletteId : paletteChoice;
+}
+
+/** The palette the next level will draw, or null when the player keeps one favourite. */
+export function selectNextPaletteId(rootState: RootState): PaletteId | null {
+  if (rootState.settings.paletteChoice !== 'random') return null;
+  const { paletteBag, paletteSeed, paletteId } = rootState.game;
+  return drawPalette(paletteBag, paletteSeed, paletteId).paletteId;
 }
