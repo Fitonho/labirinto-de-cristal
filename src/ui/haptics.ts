@@ -2,9 +2,10 @@
 // events, and when it should play so it lands on the animation frame where
 // the thing happens. No React or Expo here, so Vitest tests it.
 import type { GameEvent } from '../core';
-import { BUMP_OUT_DURATION, FLIP_GROW_DURATION, SLIDE_DURATION } from './motion';
+import { BUMP_OUT_DURATION, FLIP_GROW_DURATION, PAR_CUE_DELAY, SLIDE_DURATION } from './motion';
 
-export type HapticCueKind = 'win' | 'door' | 'crystal' | 'push' | 'bump';
+/** 'par' is the extra cue for a win on or under par, played as the result card's badge lands. */
+export type HapticCueKind = 'win' | 'door' | 'crystal' | 'push' | 'bump' | 'par';
 
 export interface HapticCue {
   kind: HapticCueKind;
@@ -21,6 +22,7 @@ const DELAYS_BY_CUE_KIND: Record<HapticCueKind, number> = {
   crystal: SLIDE_DURATION,
   push: 0,
   bump: BUMP_OUT_DURATION,
+  par: PAR_CUE_DELAY,
 };
 
 /** The cue for the last move, or null for a plain step, undo, restart, a new level or a move after winning. */
@@ -47,4 +49,11 @@ function cueKindFor(event: GameEvent): HapticCueKind | null {
     default:
       return null;
   }
+}
+
+/** The extra cue for a winning move on or under the level's par, or null. Levels without par never get it. */
+export function parCueFor(events: GameEvent[], par: number | undefined): HapticCue | null {
+  if (par === undefined) return null;
+  const reachedPar = events.some((event) => event.type === 'won' && event.moveCount <= par);
+  return reachedPar ? { kind: 'par', delay: DELAYS_BY_CUE_KIND.par } : null;
 }

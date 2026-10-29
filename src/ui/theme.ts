@@ -99,6 +99,9 @@ export function appColoursFor(palette: BoardPalette): AppColours {
 
 /** The dimmed backdrop behind the level and colour pickers. */
 export const BACKDROP_COLOUR = 'rgba(0, 0, 0, 0.4)';
+/** The shadow the result card casts up onto the board, and the ring round the next palette's dot on its Next button. */
+export const RESULT_CARD_SHADOW = '0 -6px 24px rgba(0, 0, 0, 0.16)';
+export const PEEK_RING_COLOUR = 'rgba(255, 255, 255, 0.85)';
 /** How long the page takes to fade to a new level's colours, in milliseconds. */
 export const PALETTE_FADE_DURATION = 300;
 

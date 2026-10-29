@@ -12,7 +12,8 @@ import {
   tileSizeFor,
 } from '../src/ui/boardLayout';
 import { BOX_INSET, SEAM_FRAME_WIDTH, SEAM_OVERLAP } from '../src/ui/theme';
-import { hapticCueFor } from '../src/ui/haptics';
+import { hapticCueFor, parCueFor } from '../src/ui/haptics';
+import { reachedPar, winResultFor } from '../src/ui/winResult';
 import { commandsByKey, swipeDirection, tapDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
 import { SOUND_CUE_KINDS, soundCueFor } from '../src/ui/sounds';
@@ -26,7 +27,16 @@ import {
   shardDirections,
   starPoints,
 } from '../src/ui/pieceLooks';
-import { BUMP_OUT_DURATION, bumpDirectionFor, bumpOffset, FLIP_GROW_DURATION, motionFor, SLIDE_DURATION } from '../src/ui/motion';
+import {
+  BUMP_OUT_DURATION,
+  bumpDirectionFor,
+  bumpOffset,
+  FLIP_GROW_DURATION,
+  motionFor,
+  PAR_CUE_DELAY,
+  RESULT_CARD_DELAY,
+  SLIDE_DURATION,
+} from '../src/ui/motion';
 import { customLevelState, levelById } from './helpers';
 
 describe('board layout', () => {
@@ -206,6 +216,16 @@ describe('piece looks', () => {
     expect(pebbleReactionFor(events, state).action).toBeNull();
   });
 
+  it('cheers on the winning move, standing up once the slide is over', () => {
+    const goalState = customLevelState(['w W', 'b b'], [0, 0]);
+    const { state, events } = move(goalState, 'right');
+    expect(state.status).toBe('won');
+    expect(pebbleReactionFor(events, state)).toMatchObject({ action: 'cheer', direction: 'right' });
+    expect(PEBBLE_POSES.cheer.uprightAfter).toBe(SLIDE_DURATION);
+    const slideTime = PEBBLE_POSES.cheer.stretches.slice(0, 2).reduce((total, keyframe) => total + keyframe.duration, 0);
+    expect(slideTime).toBe(SLIDE_DURATION);
+  });
+
   it('names the star collected on a move', () => {
     // The player starts on white, so it is black: the colour that can reach the star on the white tile.
     const goalState = customLevelState(['w W', 'b b'], [0, 0]);
@@ -329,5 +349,40 @@ describe('sounds', () => {
   it('turns sound and vibration on and off with M and V', () => {
     expect(commandsByKey.m).toEqual({ type: 'toggleSound' });
     expect(commandsByKey.v).toEqual({ type: 'toggleVibration' });
+  });
+
+  it('goes to the next level with Enter or Space, and opens the levels with L', () => {
+    expect(commandsByKey.enter).toEqual({ type: 'next' });
+    expect(commandsByKey[' ']).toEqual({ type: 'next' });
+    expect(commandsByKey.l).toEqual({ type: 'levels' });
+  });
+});
+
+describe('win result', () => {
+  it('compares the moves with par', () => {
+    expect(winResultFor(12, 12, null)).toMatchObject({ parBadge: 'onPar', movesOverPar: 0 });
+    expect(winResultFor(11, 12, null)).toMatchObject({ parBadge: 'underPar', movesOverPar: 0 });
+    expect(winResultFor(14, 12, null)).toMatchObject({ parBadge: 'overPar', movesOverPar: 2 });
+    expect(winResultFor(14, undefined, null)).toMatchObject({ par: null, parBadge: null, movesOverPar: 0 });
+    expect([reachedPar('onPar'), reachedPar('underPar'), reachedPar('overPar'), reachedPar(null)]).toEqual([true, true, false, false]);
+  });
+
+  it('shows a new best only when it beats an earlier one, and the standing best otherwise', () => {
+    expect(winResultFor(14, undefined, null)).toMatchObject({ isNewBest: false, standingBestMoves: null });
+    expect(winResultFor(12, undefined, 14)).toMatchObject({ isNewBest: true, standingBestMoves: null });
+    expect(winResultFor(14, undefined, 14)).toMatchObject({ isNewBest: false, standingBestMoves: 14 });
+    expect(winResultFor(16, undefined, 14)).toMatchObject({ isNewBest: false, standingBestMoves: 14 });
+  });
+
+  it('chimes as the badge lands, only for a win on or under par', () => {
+    const won = (moveCount: number) => [{ type: 'won' as const, moveCount }];
+    expect(parCueFor(won(12), 12)).toEqual({ kind: 'par', delay: PAR_CUE_DELAY });
+    expect(parCueFor(won(11), 12)).toEqual({ kind: 'par', delay: PAR_CUE_DELAY });
+    expect(parCueFor(won(13), 12)).toBeNull();
+    expect(parCueFor(won(3), undefined)).toBeNull();
+    expect(parCueFor([], 12)).toBeNull();
+    // The card rises after the collect burst has started, and the chime comes after the card.
+    expect(RESULT_CARD_DELAY).toBeGreaterThan(SLIDE_DURATION);
+    expect(PAR_CUE_DELAY).toBeGreaterThan(RESULT_CARD_DELAY);
   });
 });

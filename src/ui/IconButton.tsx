@@ -1,5 +1,5 @@
 // Round buttons with line icons for the switches above the board and for
-// Undo and Restart. Icons are drawn with react-native-svg on a 24-point grid,
+// Undo and Restart. The result card draws the same icons on its buttons. Icons are drawn with react-native-svg on a 24-point grid,
 // so no icon font has to load. A switch that is off shows its icon crossed out.
 // Colours come from the level's palette.
 import { useMemo } from 'react';
@@ -7,7 +7,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useAppColours } from './AppColours';
 
-export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart';
+export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart' | 'levels';
 
 interface IconButtonProps {
   icon: IconKind;
@@ -47,7 +47,7 @@ export function IconButton({ icon, label, onPress, switchedOn, size = 40 }: Icon
   );
 }
 
-function IconShape({ icon, colour }: { icon: IconKind; colour: string }) {
+export function IconShape({ icon, colour }: { icon: IconKind; colour: string }) {
   const line = { stroke: colour, strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round', fill: 'none' } as const;
   switch (icon) {
     case 'sound':
@@ -94,6 +94,15 @@ function IconShape({ icon, colour }: { icon: IconKind; colour: string }) {
         <>
           <Path d="M19.5 12 A7.5 7.5 0 1 1 17.3 6.7" {...line} />
           <Path d="M19 3 V8 H14" {...line} />
+        </>
+      );
+    case 'levels':
+      return (
+        <>
+          {/* A list: three rows, each with its square. */}
+          {[6, 12, 18].map((rowCentre) => (
+            <Path key={rowCentre} d={`M4 ${rowCentre} H6 M9.5 ${rowCentre} H20`} {...line} />
+          ))}
         </>
       );
   }

@@ -135,6 +135,13 @@ const samplesBySoundName = {
     0.42,
     3000,
   ),
+  // Two bright notes, a fifth apart, as the par badge lands on the result card.
+  par: render(
+    0.8,
+    (samples) => [1568, 2349.3].forEach((frequency, noteIndex) => addBell(samples, noteIndex * 0.07, frequency, 0.8 - noteIndex * 0.1)),
+    0.32,
+    3200,
+  ),
 };
 
 mkdirSync(outputFolder, { recursive: true });

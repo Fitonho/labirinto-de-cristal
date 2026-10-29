@@ -6,7 +6,9 @@ export type Command =
   | { type: 'undo' }
   | { type: 'reset' }
   | { type: 'toggleSound' }
-  | { type: 'toggleVibration' };
+  | { type: 'toggleVibration' }
+  | { type: 'next' } // the next level, once this one is won
+  | { type: 'levels' };
 
 export const commandsByKey: Record<string, Command> = {
   arrowup: { type: 'move', direction: 'up' },
@@ -22,6 +24,9 @@ export const commandsByKey: Record<string, Command> = {
   r: { type: 'reset' },
   m: { type: 'toggleSound' },
   v: { type: 'toggleVibration' },
+  enter: { type: 'next' },
+  ' ': { type: 'next' },
+  l: { type: 'levels' },
 };
 
 export const MIN_SWIPE_PIXELS = 24;

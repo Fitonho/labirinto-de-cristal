@@ -6,7 +6,7 @@
 import * as Haptics from 'expo-haptics';
 import { Platform, Vibration } from 'react-native';
 import { logger } from '../state/logger';
-import { hapticCueFor, type HapticCueKind } from './haptics';
+import { hapticCueFor, parCueFor, type HapticCueKind } from './haptics';
 import { useGameEventsListener } from './useGameEventsListener';
 
 const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
@@ -15,6 +15,7 @@ const IOS_PLAYERS_BY_CUE_KIND: Record<HapticCueKind, () => Promise<void>> = {
   crystal: () => Haptics.selectionAsync(),
   push: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
   bump: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid),
+  par: () => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light),
 };
 
 /**
@@ -33,6 +34,7 @@ const ANDROID_VIBRATIONS_BY_CUE_KIND: Record<HapticCueKind, number[]> = {
   crystal: singlePulse(50),
   push: singlePulse(40),
   bump: singlePulse(60),
+  par: singlePulse(40),
 };
 
 function play(kind: HapticCueKind) {
@@ -46,17 +48,16 @@ function play(kind: HapticCueKind) {
 }
 
 /** Plays as soon as the move happens, not after the board redraws (see useGameEventsListener). */
-export function useHaptics(vibrationOn: boolean) {
+export function useHaptics(vibrationOn: boolean, par: number | undefined) {
   useGameEventsListener((events) => {
     if (Platform.OS === 'web' || !vibrationOn) return;
-    const cue = hapticCueFor(events);
-    if (!cue) return;
-    if (cue.delay === 0) {
-      play(cue.kind);
-      return;
+    const cues = [hapticCueFor(events), parCueFor(events, par)].filter((cue) => cue !== null);
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    for (const cue of cues) {
+      if (cue.delay === 0) play(cue.kind);
+      else timers.push(setTimeout(() => play(cue.kind), cue.delay));
     }
-    // The next move cancels a tap that hasn't played yet, so fast play never queues them up.
-    const timer = setTimeout(() => play(cue.kind), cue.delay);
-    return () => clearTimeout(timer);
+    // The next action cancels a tap that hasn't played yet, so fast play never queues them up.
+    return () => timers.forEach(clearTimeout);
   });
 }

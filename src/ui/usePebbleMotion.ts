@@ -14,6 +14,7 @@ import {
   Easing,
   useReducedMotion,
   useSharedValue,
+  withDelay,
   withSequence,
   withSpring,
   withTiming,
@@ -86,6 +87,7 @@ export function usePebbleMotion(reaction: PebbleReaction, glanceTarget: { lookX:
     }
     const pose = PEBBLE_POSES[action];
     vertical.value = isVertical(direction) ? 1 : 0;
+    if (pose.uprightAfter !== undefined) vertical.value = withDelay(pose.uprightAfter, withTiming(1, { duration: 0 }));
     anchor.value = pose.anchored ? signOf(direction) : 0;
     const stretchSteps = pose.stretches.map((keyframe) => withTiming(keyframe.to, { duration: keyframe.duration, easing: Easing.out(Easing.quad) }));
     stretch.value = withSequence(...stretchSteps, withSpring(0, JELLY_SPRING));

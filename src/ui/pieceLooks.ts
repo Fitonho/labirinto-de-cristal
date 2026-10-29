@@ -6,8 +6,8 @@
 import type { Colour, Direction, GameEvent, GameState } from '../core';
 import { directionBetween } from './motion';
 
-/** What the Pebble does on a move. A flip wins over a push, and a push over a plain slide. */
-export type PebbleAction = 'slide' | 'push' | 'bump' | 'flip';
+/** What the Pebble does on a move. A win wins over everything, a flip over a push, and a push over a plain slide. */
+export type PebbleAction = 'slide' | 'push' | 'bump' | 'flip' | 'cheer';
 
 export interface PebbleReaction {
   action: PebbleAction | null; // null after undo, restart, a new level or a move after winning
@@ -26,7 +26,8 @@ export function pebbleReactionFor(events: GameEvent[], state: GameState): Pebble
     if (event.type === 'collected') collectedTileId = event.tileId;
   }
   let action: PebbleAction | null = null;
-  if (eventTypes.has('flipped')) action = 'flip';
+  if (eventTypes.has('won')) action = 'cheer';
+  else if (eventTypes.has('flipped')) action = 'flip';
   else if (eventTypes.has('pushed')) action = 'push';
   else if (eventTypes.has('moved')) action = 'slide';
   else if (direction) action = 'bump';
@@ -59,6 +60,8 @@ export interface PebblePose {
   anchored: boolean;
   /** The eyes follow these keyframes, then open again. */
   eyeLooks: Keyframe<EyeLook>[];
+  /** Turns to stretch top to bottom this many milliseconds in, whichever way it moved. */
+  uprightAfter?: number;
 }
 
 export const PEBBLE_POSES: Record<PebbleAction, PebblePose> = {
@@ -81,6 +84,18 @@ export const PEBBLE_POSES: Record<PebbleAction, PebblePose> = {
     stretches: [{ to: -0.4, duration: 90 }],
     anchored: false,
     eyeLooks: [{ to: 'squint', duration: 40 }, { to: 'squint', duration: 50 }, { to: 'wide', duration: 40 }, { to: 'wide', duration: 260 }],
+  },
+  // The winning move: the slide, then once on the star it stands up, crouches and springs tall in one cheer.
+  cheer: {
+    stretches: [
+      { to: 0.2, duration: 60 },
+      { to: 0, duration: 60 },
+      { to: -0.22, duration: 70 },
+      { to: 0.24, duration: 100 },
+    ],
+    anchored: false,
+    eyeLooks: [],
+    uprightAfter: 120,
   },
 };
 

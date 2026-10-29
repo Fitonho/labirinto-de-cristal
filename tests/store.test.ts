@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { levels } from '../src/levels/index';
 import { drawPalette, PALETTE_IDS, type PaletteId } from '../src/state/palettes';
+import { bestMovesFromSaved, progressActions, progressToSave } from '../src/state/progress';
 import { DEFAULT_SETTINGS, settingsActions, settingsFromSaved } from '../src/state/settings';
-import { actions, createStore, selectPaletteId } from '../src/state/store';
+import { actions, createStore, selectNextPaletteId, selectPaletteId } from '../src/state/store';
 
 describe('web store', () => {
   it('plays, undoes and resets through Redux actions', () => {
@@ -122,5 +123,56 @@ describe('board palettes', () => {
     expect(selectPaletteId(store.getState())).toBe('clay');
     store.dispatch(settingsActions.setPaletteChoice('random'));
     expect(selectPaletteId(store.getState())).toBe(store.getState().game.paletteId);
+  });
+});
+
+describe('progress', () => {
+  const sampleCMoves = ['right', 'up', 'right', 'right', 'right', 'up', 'left', 'left', 'left', 'left'] as const;
+  const winSampleC = (store: ReturnType<typeof createStore>) => {
+    store.dispatch(actions.selectLevel(levels.findIndex((level) => level.id === 'sample-c')));
+    for (const direction of sampleCMoves) store.dispatch(actions.move(direction));
+    expect(store.getState().game.history.present.status).toBe('won');
+  };
+
+  it('records each win with the best before it, and keeps the fewest moves', () => {
+    const store = createStore('en', 1);
+    winSampleC(store);
+    expect(store.getState().progress.lastWin).toEqual({ levelId: 'sample-c', moveCount: 10, previousBestMoves: null });
+    store.dispatch(progressActions.recordWin({ levelId: 'sample-c', moveCount: 12 }));
+    expect(store.getState().progress.lastWin).toEqual({ levelId: 'sample-c', moveCount: 12, previousBestMoves: 10 });
+    store.dispatch(progressActions.recordWin({ levelId: 'sample-c', moveCount: 8 }));
+    expect(store.getState().progress.lastWin).toEqual({ levelId: 'sample-c', moveCount: 8, previousBestMoves: 10 });
+    expect(store.getState().progress.bestMovesByLevelId).toEqual({ 'sample-c': 8 });
+  });
+
+  it('records nothing for a move that does not win', () => {
+    const store = createStore('en', 1);
+    store.dispatch(actions.move('right'));
+    expect(store.getState().progress).toEqual({ bestMovesByLevelId: {}, lastWin: null });
+  });
+
+  it('saves only the bests, loads them back, and keeps the better best after loading', () => {
+    const store = createStore('en', 1);
+    winSampleC(store);
+    const savedText = progressToSave(store.getState().progress);
+    expect(JSON.parse(savedText)).toEqual({ bestMovesByLevelId: { 'sample-c': 10 } });
+    expect(bestMovesFromSaved(savedText)).toEqual({ 'sample-c': 10 });
+    store.dispatch(progressActions.loadedBests({ 'sample-c': 14, 'sample-a': 6 }));
+    expect(store.getState().progress.bestMovesByLevelId).toEqual({ 'sample-c': 10, 'sample-a': 6 });
+  });
+
+  it('ignores a broken or odd progress file', () => {
+    expect(bestMovesFromSaved(null)).toEqual({});
+    expect(bestMovesFromSaved('not json')).toEqual({});
+    expect(bestMovesFromSaved('{"bestMovesByLevelId": {"a": 3, "b": "4", "c": -1, "d": 2.5}}')).toEqual({ a: 3 });
+  });
+
+  it('peeks at the palette the next level will draw, and at none with a favourite', () => {
+    const store = createStore('en', 7);
+    const peekedPaletteId = selectNextPaletteId(store.getState());
+    store.dispatch(actions.selectLevel(1));
+    expect(selectPaletteId(store.getState())).toBe(peekedPaletteId);
+    store.dispatch(settingsActions.setPaletteChoice('forest'));
+    expect(selectNextPaletteId(store.getState())).toBeNull();
   });
 });
