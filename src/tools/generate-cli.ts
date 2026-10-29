@@ -14,7 +14,7 @@ const HELP = `Finds new levels and writes them to the Lab chapter (src/levels/la
   --size     columns x rows, e.g. 5x5 or 6x5 (required; 7x7 is about the largest that stays quick)
   --needs    mechanics the level can't be won without: ${MECHANICS.join(', ')}
   --stars    1 or 2 (default 1; with 2, each star alone needs a push and both together take longer)
-  --portals  how many portals (default 1 when --needs has portal or carry, else 0); every one must be needed
+  --portals  how many portals (default 1 when --needs has portal, carry or star-push, else 0); every one must be needed
   --par      shortest solution range, e.g. 15-30 (default ${DEFAULT_GENERATOR_OPTIONS.minMoves}-${DEFAULT_GENERATOR_OPTIONS.maxMoves})
   --count    how many levels to find (default 10)
   --time     stop after this many seconds (default 300)
@@ -58,7 +58,8 @@ const starCount = Number(valuesByName.get('stars') ?? DEFAULT_GENERATOR_OPTIONS.
 if (starCount !== 1 && starCount !== 2) fail('--stars is 1 or 2');
 const [minMoves, maxMoves] = (valuesByName.get('par') ?? `${DEFAULT_GENERATOR_OPTIONS.minMoves}-${DEFAULT_GENERATOR_OPTIONS.maxMoves}`).split('-').map(Number);
 if (!(minMoves <= maxMoves)) fail(`Can't read --par ${valuesByName.get('par')}`);
-const needsPortal = mechanics.includes('portal') || mechanics.includes('carry');
+// A star can only be pushed while it is in your colour, and only collected from the other one, so pushing a star needs a flip too.
+const needsPortal = mechanics.some((mechanic) => mechanic === 'portal' || mechanic === 'carry' || mechanic === 'star-push');
 
 const options: GeneratorOptions = {
   ...DEFAULT_GENERATOR_OPTIONS,
