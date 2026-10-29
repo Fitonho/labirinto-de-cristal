@@ -1,5 +1,5 @@
-// Round buttons with line icons for the switches above the board and for
-// Undo and Restart. The result card draws the same icons on its buttons. Icons are drawn with react-native-svg on a 24-point grid,
+// Round buttons with line icons for the header (the way back to the levels,
+// sound, colours and more options) and for Undo and Restart. The result card draws the same icons on its buttons. Icons are drawn with react-native-svg on a 24-point grid,
 // so no icon font has to load. A switch that is off shows its icon crossed out.
 // Colours come from the level's palette.
 import { useMemo } from 'react';
@@ -7,7 +7,7 @@ import { Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 import { useAppColours } from './AppColours';
 
-export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart' | 'levels';
+export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart' | 'levels' | 'back' | 'more';
 
 interface IconButtonProps {
   icon: IconKind;
@@ -94,6 +94,17 @@ export function IconShape({ icon, colour }: { icon: IconKind; colour: string }) 
         <>
           <Path d="M19.5 12 A7.5 7.5 0 1 1 17.3 6.7" {...line} />
           <Path d="M19 3 V8 H14" {...line} />
+        </>
+      );
+    case 'back':
+      // Up one screen: from the game to the levels, as Android's back button does.
+      return <Path d="M14.5 5 L7.5 12 L14.5 19" {...line} />;
+    case 'more':
+      return (
+        <>
+          {[6, 12, 18].map((dotCentre) => (
+            <Circle key={dotCentre} cx={dotCentre} cy={12} r={1.9} fill={colour} />
+          ))}
         </>
       );
     case 'levels':

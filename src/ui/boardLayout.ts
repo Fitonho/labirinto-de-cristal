@@ -144,13 +144,29 @@ export function seamPath(side: Direction, size: number): string {
   ].join(' ');
 }
 
-export const MAX_TILE_SIZE = 56;
+export const MAX_TILE_SIZE = 88;
+
+/** The touch area's share of the screen's usable height, and the band it stays in. */
+export const TOUCH_PAD_SHARE = 0.38;
+export const MIN_TOUCH_PAD_HEIGHT = 190;
+export const MAX_TOUCH_PAD_HEIGHT = 290;
+
+/**
+ * The touch area's height on this phone: a share of the height between the
+ * safe-area insets, so a short phone gives some of it to the board. It depends
+ * only on the screen, never on the level, so the area stays where the thumb
+ * learned it is from one level to the next.
+ */
+export function touchPadHeightFor(usableHeight: number): number {
+  return Math.round(Math.min(MAX_TOUCH_PAD_HEIGHT, Math.max(MIN_TOUCH_PAD_HEIGHT, usableHeight * TOUCH_PAD_SHARE)));
+}
 
 /**
  * Tiles fill the width on phones, keep the board under 65% of the height and
- * clear of the controls' reserved height, and stop at 56 points. The size is also a whole number of screen pixels: phones
- * round each tile's position to pixels, and a fractional size left a one-pixel
- * gap between some rows.
+ * clear of the controls' reserved height, and stop at 88 points, so a small
+ * board grows to fill the width instead of floating in empty page. The size is
+ * also a whole number of screen pixels: phones round each tile's position to
+ * pixels, and a fractional size left a one-pixel gap between some rows.
  */
 export function tileSizeFor(
   board: Pick<GameState, 'rowCount' | 'columnCount'>,
