@@ -12,8 +12,8 @@ import { BackHandler, PixelRatio, Platform, Pressable, StyleSheet, Text, useWind
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
-import { directionsFor, LAB_CHAPTER } from '../src/levels/lab';
-import { chapters, labSolutionsByLevelId, levels } from '../src/levels/index';
+import { directionsFor } from '../src/levels/lab';
+import { chapters, labSolutionsByLevelId, levels, playerLevels } from '../src/levels/index';
 import { otherUnsolvedLevelOpen } from '../src/state/levelProgress';
 import { sessionActions } from '../src/state/session';
 import { settingsActions } from '../src/state/settings';
@@ -135,8 +135,6 @@ export default function GameScreen() {
     dispatch(settingsActions.stuckTipShown());
   }, [steps, stuckTipSeen, homeOpen, bestMovesByLevelId, level.id, dispatch]);
   const { starCount, parCount, allSolved } = useMemo(() => {
-    // The Lab is for judging boards, so it counts toward nothing.
-    const playerLevels = levels.filter((eachLevel) => eachLevel.chapter !== LAB_CHAPTER);
     const levelsWithPar = playerLevels.filter((eachLevel) => eachLevel.par !== undefined);
     return {
       starCount: levelsWithPar.filter((eachLevel) => (bestMovesByLevelId[eachLevel.id] ?? Infinity) <= (eachLevel.par ?? 0)).length,

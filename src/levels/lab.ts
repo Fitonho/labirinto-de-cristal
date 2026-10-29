@@ -1,7 +1,6 @@
 // The Lab: boards from the level generator (npm run generate), to play and
-// judge before any of them becomes a real level. It is a chapter only in dev,
-// in Expo Go, and on the web with ?debug, so players never see it. Each Lab
-// level keeps its shortest solution, which the game's Solve button plays.
+// judge before any of them becomes a real level. LAB_SHOWN in index.ts turns
+// the chapter on or off; it counts toward no totals. Each Lab level keeps its shortest solution, which the game's Solve button plays.
 // A board can also come in through the page address (?board=...), which the
 // generator prints for every board it finds.
 import type { Direction, LevelData } from '../core';

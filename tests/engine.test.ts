@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { legalMoves, loadLevel, move, record, reset, startHistory, undo, validateLevel, type GameState } from '../src/core';
-import { levels } from '../src/levels/index';
+import { levels, playerLevels } from '../src/levels/index';
 import { customLevelState, levelById, play, shortestWin } from './helpers';
 
 const deepFreeze = <ValueType>(object: ValueType): ValueType => {
@@ -11,7 +11,7 @@ const tileColours = (state: GameState) => state.tiles.map((tile) => tile.colour[
 
 describe('levels', () => {
   it('every level loads without errors', () => {
-    expect(levels).toHaveLength(33);
+    expect(playerLevels).toHaveLength(33);
     for (const levelData of levels) expect(validateLevel(levelData), levelData.id).toEqual([]);
   });
 
@@ -191,7 +191,7 @@ describe('level solutions', () => {
 
   it('covers every level outside the labyrinths', () => {
     const solvedLevelIds = solutions.map(([levelId]) => levelId).sort();
-    expect(levels.filter((levelData) => levelData.chapter !== 'labyrinths').map((levelData) => levelData.id).sort()).toEqual(solvedLevelIds);
+    expect(playerLevels.filter((levelData) => levelData.chapter !== 'labyrinths').map((levelData) => levelData.id).sort()).toEqual(solvedLevelIds);
   });
 });
 

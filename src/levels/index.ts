@@ -1,8 +1,7 @@
 // All playable levels, in menu order. Each chapter is a JSON file, except the
-// labyrinths, which are the big drafts worth keeping, and the Lab, which only
-// shows in dev and debug builds (lab.ts).
+// labyrinths, which are the big drafts worth keeping, and the Lab, the level
+// generator's boards (lab.ts).
 import type { LevelData } from '../core';
-import { logging } from '../state/logger';
 import challenges from './challenges.json';
 import crystals from './crystals.json';
 import drafts from './drafts.json';
@@ -31,10 +30,11 @@ const labyrinths: LevelData[] = labyrinthDraftIds.map((draftId, draftIndex) => (
 const pageSearch = typeof window !== 'undefined' && window.location ? window.location.search : '';
 /** The board opened from the page address (?board=...), if any. */
 export const linkedLevel = levelFromLink(pageSearch);
-export const labShown = logging.enabled || new URLSearchParams(pageSearch).has('debug') || linkedLevel !== null;
+/** Whether the Lab is a chapter. On everywhere for now, the live site included; false hides it, apart from a linked board. */
+const LAB_SHOWN = true;
 const savedLabLevels = lab as LabLevel[];
 // The linked board goes last in the Lab, numbered after the saved ones.
-const labLevels: LabLevel[] = labShown ? [...savedLabLevels, ...(linkedLevel ? [{ ...linkedLevel, order: savedLabLevels.length + 1 }] : [])] : [];
+const labLevels: LabLevel[] = [...(LAB_SHOWN ? savedLabLevels : []), ...(linkedLevel ? [{ ...linkedLevel, order: savedLabLevels.length + 1 }] : [])];
 
 export const chapters: readonly string[] = labLevels.length ? [...playerChapters, LAB_CHAPTER] : playerChapters;
 
@@ -50,3 +50,6 @@ export const levels: LevelData[] = [
   ...challenges,
   ...labLevels.map(({ solution, ...level }) => level),
 ] as LevelData[];
+
+/** Every level but the Lab's: what players' totals and the level tests cover. */
+export const playerLevels = levels.filter((level) => level.chapter !== LAB_CHAPTER);
