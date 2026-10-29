@@ -1,18 +1,24 @@
-// The card that rises over the touch area, covering it exactly, once a level is won: the moves, a
-// par badge, the best, a big Next button and Play again, Undo and Levels. It is
-// always mounted, hidden below the screen, so the winning move mounts nothing;
-// the rise and the badge stamp run on shared values with UI-thread delays.
+// The tall sheet that rises over two thirds of the screen once a level is won:
+// a star emblem that spins in and bursts like a collected star, a big
+// headline, the moves, a par badge, the best, a big Next button and Play
+// again, Undo and Levels. It is always mounted, hidden below the screen, so
+// the winning move mounts nothing; the rise, the spin and the badge stamp run
+// on shared values with UI-thread delays, and the burst mounts a frame later.
 // Colours come from the level's palette.
-import { memo, useLayoutEffect, useRef } from 'react';
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming } from 'react-native-reanimated';
-import Svg from 'react-native-svg';
+import Svg, { Polygon } from 'react-native-svg';
 import type { Colour } from '../core';
 import type { Language } from '../state/store';
 import { useAppColours } from './AppColours';
+import { CollectBurst } from './CollectBurst';
 import { t } from './i18n';
 import { IconShape, type IconKind } from './IconButton';
 import {
+  EMBLEM_BURST_DELAY,
+  EMBLEM_DELAY,
+  EMBLEM_SPIN_DURATION,
   PAR_BADGE_DELAY,
   PAR_BADGE_DURATION,
   RESULT_CARD_DELAY,
@@ -20,7 +26,8 @@ import {
   RESULT_CARD_INPUT_GUARD,
   RESULT_CARD_RISE_DURATION,
 } from './motion';
-import { PEEK_RING_COLOUR, RESULT_CARD_SHADOW } from './theme';
+import { starPoints } from './pieceLooks';
+import { PEEK_RING_COLOUR, RESULT_CARD_SHADOW, STAR_INNER_RADIUS, STAR_OUTER_RADIUS } from './theme';
 import type { WinResult } from './winResult';
 
 interface ResultCardProps {
@@ -35,6 +42,8 @@ interface ResultCardProps {
   nextTileColours: Record<Colour, string> | null;
   /** Goes up by one when the player taps or swipes during the win moment, which lands the card at once. */
   skipCount: number;
+  /** The phone's bottom safe area, kept clear of the buttons. */
+  bottomInset: number;
   onNext: () => void;
   onPlayAgain: () => void;
   onUndo: () => void;
@@ -49,6 +58,7 @@ export const ResultCard = memo(function ResultCard({
   seamColour,
   nextTileColours,
   skipCount,
+  bottomInset,
   onNext,
   onPlayAgain,
   onUndo,
@@ -57,6 +67,9 @@ export const ResultCard = memo(function ResultCard({
   const appColours = useAppColours();
   const rise = useSharedValue(0); // 0 hidden below the screen, 1 landed
   const badgeStamp = useSharedValue(0);
+  const emblemSpin = useSharedValue(0); // 0 hidden and turned back, 1 landed
+  // The emblem's burst: a new key plays it again, and null takes it away.
+  const [emblemBurst, setEmblemBurst] = useState<{ key: number; delay: number } | null>(null);
   const cardHeight = useSharedValue(400);
   // When the buttons start taking touches, in Date.now() time.
   const pressableAfter = useRef(0);
@@ -67,6 +80,11 @@ export const ResultCard = memo(function ResultCard({
   useLayoutEffect(() => {
     if (won) {
       rise.value = withDelay(RESULT_CARD_DELAY, withTiming(1, { duration: RESULT_CARD_RISE_DURATION, easing: Easing.out(Easing.back(1.4)) }));
+      emblemSpin.value = 0;
+      emblemSpin.value = withDelay(
+        RESULT_CARD_DELAY + EMBLEM_DELAY,
+        withTiming(1, { duration: EMBLEM_SPIN_DURATION, easing: Easing.out(Easing.back(1.8)) }),
+      );
       badgeStamp.value = 0;
       badgeStamp.value = withDelay(
         RESULT_CARD_DELAY + PAR_BADGE_DELAY,
@@ -76,12 +94,24 @@ export const ResultCard = memo(function ResultCard({
     } else {
       rise.value = withTiming(0, { duration: RESULT_CARD_DROP_DURATION });
     }
-  }, [won, rise, badgeStamp]);
+  }, [won, rise, badgeStamp, emblemSpin]);
+
+  // The burst mounts a frame after the win, so building it never delays the winning move's first frame.
+  useEffect(() => {
+    if (!won) {
+      setEmblemBurst(null);
+      return;
+    }
+    const frame = requestAnimationFrame(() => setEmblemBurst((lastBurst) => ({ key: (lastBurst?.key ?? 0) + 1, delay: EMBLEM_BURST_DELAY - 16 })));
+    return () => cancelAnimationFrame(frame);
+  }, [won]);
 
   useLayoutEffect(() => {
     if (!won || skipCount === 0) return;
     rise.value = 1;
     badgeStamp.value = 1;
+    emblemSpin.value = 1;
+    setEmblemBurst((lastBurst) => ({ key: (lastBurst?.key ?? 0) + 1, delay: 0 }));
     pressableAfter.current = Date.now() + RESULT_CARD_INPUT_GUARD;
     // Only a new skip lands the card; a win itself starts the rise above.
   }, [skipCount]);
@@ -94,6 +124,14 @@ export const ResultCard = memo(function ResultCard({
     opacity: Math.min(1, badgeStamp.value * 2),
     transform: [{ scale: 1.6 - 0.6 * badgeStamp.value }],
   }));
+  const emblemStyle = useAnimatedStyle(() => ({
+    opacity: emblemSpin.value > 0 ? 1 : 0,
+    transform: [{ scale: emblemSpin.value }, { rotate: `${(1 - emblemSpin.value) * -120}deg` }],
+  }));
+  const emblemPoints = useMemo(
+    () => starPoints(EMBLEM_BOX_SIZE / 2, EMBLEM_BOX_SIZE / 2, EMBLEM_BOX_SIZE * STAR_OUTER_RADIUS, EMBLEM_BOX_SIZE * STAR_INNER_RADIUS),
+    [],
+  );
   const onLayout = (layoutEvent: LayoutChangeEvent) => {
     cardHeight.value = layoutEvent.nativeEvent.layout.height;
   };
@@ -126,15 +164,34 @@ export const ResultCard = memo(function ResultCard({
   const badge = shown.parBadge ? badgeLooks[shown.parBadge] : null;
 
   return (
-    <Animated.View
-      pointerEvents={won ? 'auto' : 'none'}
-      onLayout={onLayout}
-      style={[styles.card, { backgroundColor: appColours.control, borderColor: appColours.controlBorder }, cardStyle]}
-    >
-      <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.title, { color: appColours.ink }]}>
-        {t(language, isLastLevel ? 'allDone' : 'won')}
-      </Text>
-      <View style={styles.scoreRow}>
+    <Animated.View pointerEvents={won ? 'box-none' : 'none'} onLayout={onLayout} style={[styles.sheetFrame, cardStyle]}>
+      <View
+        style={[
+          styles.sheet,
+          { backgroundColor: appColours.control, borderColor: appColours.controlBorder, paddingBottom: 14 + bottomInset },
+        ]}
+      >
+        <View style={styles.emblemSlot}>
+          {/* The burst sits behind the emblem, so its swelling copy of the star glows out from under it. */}
+          {emblemBurst && (
+            <CollectBurst
+              key={emblemBurst.key}
+              size={EMBLEM_BOX_SIZE}
+              left={0}
+              top={(EMBLEM_SLOT_HEIGHT - EMBLEM_BOX_SIZE) / 2}
+              colour={appColours.accent}
+              delay={emblemBurst.delay}
+            />
+          )}
+          <Animated.View style={[styles.emblem, emblemStyle]}>
+            <Svg width={EMBLEM_BOX_SIZE} height={EMBLEM_BOX_SIZE}>
+              <Polygon points={emblemPoints} fill={appColours.accent} />
+            </Svg>
+          </Animated.View>
+        </View>
+        <Text accessibilityRole="header" accessibilityLiveRegion="polite" style={[styles.title, { color: appColours.ink }]}>
+          {t(language, isLastLevel ? 'allDone' : 'won')}
+        </Text>
         <View style={styles.moveFigure}>
           <Text style={[styles.moveNumber, { color: appColours.ink }]}>{shown.moveCount}</Text>
           <Text style={[styles.moveUnit, { color: appColours.quiet }]}>{t(language, 'movesUnit')}</Text>
@@ -144,34 +201,36 @@ export const ResultCard = memo(function ResultCard({
             <Text style={[styles.badgeText, { color: badge.ink }]}>{badge.text}</Text>
           </Animated.View>
         )}
-      </View>
-      {(parts.length > 0 || shown.isNewBest) && (
-        <Text style={[styles.details, { color: appColours.quiet }]}>
-          {parts.join(' · ')}
-          {shown.isNewBest && (
-            <Text style={[styles.newBest, { color: appColours.accent }]}>{`${parts.length > 0 ? ' · ' : ''}${t(language, 'newBest')}`}</Text>
-          )}
-        </Text>
-      )}
-      <Pressable
-        accessibilityRole="button"
-        onPress={pressWith(isLastLevel ? onLevels : onNext, !isLastLevel)}
-        style={({ pressed }) => [styles.primary, { backgroundColor: appColours.accent }, pressed && styles.pressed]}
-      >
-        {!isLastLevel && nextTileColours && (
-          // A peek at the next level's colours: its dark half over its light one.
-          <View style={[styles.peek, { backgroundColor: nextTileColours.white }]}>
-            <View style={[styles.peekHalf, { backgroundColor: nextTileColours.black }]} />
-          </View>
+        {(parts.length > 0 || shown.isNewBest) && (
+          <Text style={[styles.details, { color: appColours.quiet }]}>
+            {parts.join(' · ')}
+            {shown.isNewBest && (
+              <Text style={[styles.newBest, { color: appColours.accent }]}>{`${parts.length > 0 ? ' · ' : ''}${t(language, 'newBest')}`}</Text>
+            )}
+          </Text>
         )}
-        <Text style={[styles.primaryText, { color: appColours.onAccent }]}>
-          {isLastLevel ? t(language, 'backToLevels') : `${t(language, 'nextLevel')} →`}
-        </Text>
-      </Pressable>
-      <View style={styles.secondaryRow}>
-        <SecondaryButton icon="restart" label={t(language, 'playAgain')} onPress={pressWith(onPlayAgain, true)} />
-        <SecondaryButton icon="undo" label={t(language, 'undo')} onPress={pressWith(onUndo, true)} />
-        <SecondaryButton icon="levels" label={t(language, 'levels')} onPress={pressWith(onLevels, false)} />
+        <View style={styles.actions}>
+          <Pressable
+            accessibilityRole="button"
+            onPress={pressWith(isLastLevel ? onLevels : onNext, !isLastLevel)}
+            style={({ pressed }) => [styles.primary, { backgroundColor: appColours.accent }, pressed && styles.pressed]}
+          >
+            {!isLastLevel && nextTileColours && (
+              // A peek at the next level's colours: its dark half over its light one.
+              <View style={[styles.peek, { backgroundColor: nextTileColours.white }]}>
+                <View style={[styles.peekHalf, { backgroundColor: nextTileColours.black }]} />
+              </View>
+            )}
+            <Text style={[styles.primaryText, { color: appColours.onAccent }]}>
+              {isLastLevel ? t(language, 'backToLevels') : `${t(language, 'nextLevel')} →`}
+            </Text>
+          </Pressable>
+          <View style={styles.secondaryRow}>
+            <SecondaryButton icon="restart" label={t(language, 'playAgain')} onPress={pressWith(onPlayAgain, true)} />
+            <SecondaryButton icon="undo" label={t(language, 'undo')} onPress={pressWith(onUndo, true)} />
+            <SecondaryButton icon="levels" label={t(language, 'levels')} onPress={pressWith(onLevels, false)} />
+          </View>
+        </View>
       </View>
     </Animated.View>
   );
@@ -196,35 +255,46 @@ function SecondaryButton({ icon, label, onPress }: { icon: IconKind; label: stri
   );
 }
 
+/** The emblem's box. The star inside takes the same share of it as a goal star of its tile, so the collect burst fits. */
+const EMBLEM_BOX_SIZE = 120;
+/** The height the emblem takes in the sheet; the rest of its box overhangs, so the burst can fly past the sheet's edge. */
+const EMBLEM_SLOT_HEIGHT = 70;
+
 const styles = StyleSheet.create({
-  card: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    borderRadius: 16,
+  // Two thirds of the screen, rising from the bottom edge, as wide as the game column.
+  sheetFrame: { position: 'absolute', left: 0, right: 0, bottom: 0, height: '64%', alignItems: 'center' },
+  sheet: {
+    flex: 1,
+    width: '100%',
+    maxWidth: 640,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     borderWidth: 1,
-    padding: 14,
+    borderBottomWidth: 0,
+    paddingTop: 18,
+    paddingHorizontal: 18,
+    alignItems: 'center',
     gap: 8,
-    justifyContent: 'space-between',
     boxShadow: RESULT_CARD_SHADOW,
   },
-  title: { fontSize: 18, fontWeight: '800' },
-  scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  moveFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  moveNumber: { fontSize: 34, fontWeight: '800', fontVariant: ['tabular-nums'] },
-  moveUnit: { fontSize: 15 },
-  badge: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 12 },
-  badgeText: { fontSize: 14, fontWeight: '800' },
-  details: { fontSize: 15 },
+  emblemSlot: { width: EMBLEM_BOX_SIZE, height: EMBLEM_SLOT_HEIGHT, alignItems: 'center', justifyContent: 'center' },
+  emblem: { position: 'absolute', left: 0, top: (EMBLEM_SLOT_HEIGHT - EMBLEM_BOX_SIZE) / 2, width: EMBLEM_BOX_SIZE, height: EMBLEM_BOX_SIZE },
+  title: { fontSize: 30, fontWeight: '800', textAlign: 'center' },
+  moveFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 8 },
+  moveNumber: { fontSize: 56, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  moveUnit: { fontSize: 17 },
+  badge: { borderRadius: 999, paddingVertical: 6, paddingHorizontal: 14 },
+  badgeText: { fontSize: 15, fontWeight: '800' },
+  details: { fontSize: 15, textAlign: 'center' },
   newBest: { fontWeight: '700' },
-  primary: { borderRadius: 14, paddingVertical: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  // The buttons sit at the bottom of the sheet, under the thumb.
+  actions: { marginTop: 'auto', width: '100%', gap: 8 },
+  primary: { borderRadius: 16, paddingVertical: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   primaryText: { fontSize: 18, fontWeight: '800' },
   peek: { width: 18, height: 18, borderRadius: 9, overflow: 'hidden', borderWidth: 1.5, borderColor: PEEK_RING_COLOUR, transform: [{ rotate: '45deg' }] },
   peekHalf: { position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' },
   secondaryRow: { flexDirection: 'row', gap: 8 },
-  secondary: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 6, alignItems: 'center', gap: 2 },
+  secondary: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 7, alignItems: 'center', gap: 2 },
   secondaryText: { fontSize: 13 },
   pressed: { opacity: 0.6 },
 });

@@ -1,8 +1,8 @@
 // The small burst when the Pebble collects a star: the star stays on its
 // cell while the Pebble slides in, then swells and fades as eight small stars
-// fly out. A stand-in until the win screen exists. It belongs to the move that
-// collected the star and fades to nothing, so it needs no timer to clean up:
-// the next action drops it.
+// fly out. The result card fires the same burst on its star emblem. It belongs
+// to the move that collected the star and fades to nothing, so it needs no
+// timer to clean up: the next action drops it.
 //
 // The layer mounts the burst a frame after the move, so building it never
 // delays the move's first frame; the burst only starts once the slide ends.
@@ -24,6 +24,8 @@ export interface CollectBurstProps {
   left: number; // the star's cell
   top: number;
   colour: string; // the star's colour on screen
+  /** How long after mounting it bursts; by default when the Pebble's slide ends. */
+  delay?: number;
 }
 
 /** `burst` is a new object for each move that collected a star, and null after any other action. */
@@ -41,12 +43,12 @@ export function CollectBurstLayer({ burst }: { burst: CollectBurstProps | null }
   return shownBurst && <CollectBurst key={JSON.stringify(shownBurst)} {...shownBurst} />;
 }
 
-function CollectBurst({ size, left, top, colour }: CollectBurstProps) {
+// Mounted a frame after the move, so by default it waits a frame less for the slide to end.
+export function CollectBurst({ size, left, top, colour, delay = SLIDE_DURATION - 16 }: CollectBurstProps) {
   const progress = useSharedValue(0);
   useLayoutEffect(() => {
-    // Mounted a frame after the move, so it waits a frame less for the slide to end.
-    progress.value = withDelay(SLIDE_DURATION - 16, withTiming(1, { duration: COLLECT_BURST_DURATION, easing: Easing.linear }));
-  }, [progress]);
+    progress.value = withDelay(delay, withTiming(1, { duration: COLLECT_BURST_DURATION, easing: Easing.linear }));
+  }, [progress, delay]);
   const points = useMemo(() => starPoints(size / 2, size / 2, size * STAR_OUTER_RADIUS, size * STAR_INNER_RADIUS), [size]);
   const starStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value, transform: [{ scale: 1 + progress.value * 0.7 }] }));
   return (

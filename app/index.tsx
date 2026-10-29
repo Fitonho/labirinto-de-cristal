@@ -1,8 +1,8 @@
 // The game screen: the switches and level picker on top, the board, then
-// Undo, the move counter and Restart over the touch area, and the result card
-// that rises over them once the level is won. Plays the move's sound and
-// vibration. All game changes go through the Redux store. The board and the
-// app around it take their colours from the level's palette.
+// Undo, the move counter and Restart over the touch area, and the result sheet
+// that rises over two thirds of the screen once the level is won. Plays the
+// move's sound and vibration. All game changes go through the Redux store. The
+// board and the app around it take their colours from the level's palette.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
@@ -189,25 +189,25 @@ export default function GameScreen() {
               </Text>
               <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
             </View>
-            {/* The result card covers the touch area exactly. */}
             <View style={styles.padArea}>
               <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
-              <ResultCard
-                won={won}
-                result={result}
-                isLastLevel={isLastLevel}
-                language={language}
-                seamColour={boardPalette.seamColour}
-                nextTileColours={nextPaletteId ? boardPalettes[nextPaletteId].tileColours : null}
-                skipCount={skipCount}
-                onNext={goToNextLevel}
-                onPlayAgain={playAgain}
-                onUndo={undo}
-                onLevels={openLevels}
-              />
             </View>
             {Platform.OS === 'web' && <Text style={[styles.help, paletteStyles.quiet]}>{t(language, 'help')}</Text>}
           </View>
+          <ResultCard
+            won={won}
+            result={result}
+            isLastLevel={isLastLevel}
+            language={language}
+            seamColour={boardPalette.seamColour}
+            nextTileColours={nextPaletteId ? boardPalettes[nextPaletteId].tileColours : null}
+            skipCount={skipCount}
+            bottomInset={safeAreaInsets.bottom}
+            onNext={goToNextLevel}
+            onPlayAgain={playAgain}
+            onUndo={undo}
+            onLevels={openLevels}
+          />
           <LevelPicker
             visible={pickerVisible}
             language={language}
