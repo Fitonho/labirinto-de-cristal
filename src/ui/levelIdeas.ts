@@ -4,7 +4,10 @@
 // be worked out from the board. No React here, so Vitest tests it.
 import type { Cell, GameState, Portal } from '../core';
 
-export type LevelIdea = 'push' | 'oneBox' | 'undo' | 'portal' | 'bridge' | 'crystalColour' | 'allStars' | 'portalPush';
+export type LevelIdea = 'push' | 'oneBox' | 'undo' | 'portal' | 'bridge' | 'crystalColour' | 'allStars' | 'skip' | 'portalPush';
+
+/** Ideas that are advice, not a rule of the board: their card says Tip instead of New and has no scene. */
+export const ADVICE_IDEAS: readonly LevelIdea[] = ['skip'];
 
 /** What lights up on the board after the card: every portal, every star, or the cells listed. */
 export type IdeaGlowTarget = 'portals' | 'stars' | Cell[];
@@ -27,6 +30,9 @@ export const ideaCardsByLevelId: Record<string, IdeaCard> = {
   'star-colour': { idea: 'crystalColour', glow: 'stars' },
   // Pushing the star gets no card on purpose: its name is the only hint.
   'two-stars': { idea: 'allStars', glow: 'stars' },
+  // The chapter's long finale, where players get stuck: by now the next chapter
+  // is open (levelProgress.ts), so the card says they can move on. Nothing glows.
+  neighbours: { idea: 'skip', glow: [] },
   'sample-e': { idea: 'portalPush', glow: 'portals' },
 };
 

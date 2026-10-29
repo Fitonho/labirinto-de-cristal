@@ -138,6 +138,21 @@ describe('unlocking', () => {
     const summaries = chapterSummariesFor(chapters, levels, {});
     expect(summaries.filter((summary) => summary.open).map((summary) => summary.chapter)).toEqual(['first-steps', 'labyrinths']);
   });
+
+  it('has the moving portals open whenever Neighbours is, as its skip tip says', () => {
+    const earlierBests = Object.fromEntries(levels.filter((level) => ['first-steps', 'portals'].includes(level.chapter)).map((level) => [level.id, 99]));
+    const otherCrystalIds = levels.filter((level) => level.chapter === 'crystals' && level.id !== 'neighbours').map((level) => level.id);
+    // Every mix of solved and unsolved crystal levels before it.
+    for (let solvedMask = 0; solvedMask < 2 ** otherCrystalIds.length; solvedMask++) {
+      const bests: Record<string, number> = { ...earlierBests };
+      otherCrystalIds.forEach((levelId, levelIndex) => {
+        if (solvedMask & (2 ** levelIndex)) bests[levelId] = 99;
+      });
+      const summaries = chapterSummariesFor(chapters, levels, bests);
+      if (!openLevelIdsFor(summaries, bests, 'sample-a').has('neighbours')) continue;
+      expect(summaries.find((summary) => summary.chapter === 'moving-portals')?.open).toBe(true);
+    }
+  });
 });
 
 describe('board pictures', () => {

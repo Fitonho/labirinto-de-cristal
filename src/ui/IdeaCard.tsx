@@ -35,6 +35,7 @@ import {
   IDEA_CARD_PART_DURATION,
   IDEA_CARD_RISE_DURATION,
   IDEA_SCENE_DURATION,
+  ADVICE_IDEAS,
   type LevelIdea,
 } from './levelIdeas';
 import { starPoints } from './pieceLooks';
@@ -71,6 +72,7 @@ export const IdeaCard = memo(function IdeaCard({
   onClose,
 }: IdeaCardProps) {
   const appColours = useAppColours();
+  const scene = idea ? SCENES[idea] : null;
   const reducedMotion = useReducedMotion();
   const rise = useSharedValue(0); // 0 below and small, 1 in place
   const clock = useSharedValue(0); // milliseconds since the card opened, up to the hold
@@ -151,7 +153,7 @@ export const IdeaCard = memo(function IdeaCard({
             style={[styles.card, { backgroundColor: appColours.page, borderColor: appColours.controlBorder }, cardStyle]}
           >
             <CardPart clock={clock} order={0}>
-              <Text style={[styles.label, { color: appColours.accent }]}>{`${t(language, 'ideaNew')} · ${levelPlace}`.toUpperCase()}</Text>
+              <Text style={[styles.label, { color: appColours.accent }]}>{`${t(language, idea && ADVICE_IDEAS.includes(idea) ? 'ideaTip' : 'ideaNew')} · ${levelPlace}`.toUpperCase()}</Text>
             </CardPart>
             <CardPart clock={clock} order={1}>
               <Text accessibilityRole="header" style={[styles.name, { color: appColours.ink }]}>
@@ -159,7 +161,7 @@ export const IdeaCard = memo(function IdeaCard({
               </Text>
             </CardPart>
             <CardPart clock={clock} order={2}>
-              {idea && <IdeaScene idea={idea} tileColours={tileColours} seamColour={seamColour} playing={open && !reducedMotion} />}
+              {scene && <IdeaScene scene={scene} tileColours={tileColours} seamColour={seamColour} playing={open && !reducedMotion} />}
             </CardPart>
             <CardPart clock={clock} order={3}>
               <Text style={[styles.tip, { color: appColours.ink }]}>{idea ? t(language, `idea.${idea}`) : ''}</Text>
@@ -224,7 +226,7 @@ function rowPath(fromColumn: number, toColumn: number): SceneCell[] {
   return path;
 }
 
-const SCENES: Record<LevelIdea, Scene> = {
+const SCENES: Record<LevelIdea, Scene | null> = {
   push: {
     tileRows: ['bwbb'],
     pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
@@ -321,6 +323,8 @@ const SCENES: Record<LevelIdea, Scene> = {
     ],
     loopDuration: 3200,
   },
+  // Advice, not a rule, so there is nothing to play.
+  skip: null,
   portalPush: {
     tileRows: ['bwbb'],
     pebble: { path: rowPath(0, 1), colourBefore: 'white', colourAfter: 'white' },
@@ -402,15 +406,14 @@ function SceneTiles({ tileColourRows, boxColour, skippedBoxCell, tileColours }: 
 }
 
 interface IdeaSceneProps {
-  idea: LevelIdea;
+  scene: Scene;
   tileColours: Record<Colour, string>;
   seamColour: string;
   playing: boolean;
 }
 
 /** The idea played on a few cells: a push, going round two boxes, a push into a corner, a flip through a portal, a bridge, reaching one star or two, or a portal carried by a push. */
-function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
-  const scene = SCENES[idea];
+function IdeaScene({ scene, tileColours, seamColour, playing }: IdeaSceneProps) {
   const loopDuration = scene.loopDuration ?? IDEA_SCENE_DURATION;
   // One loop of the scene as a share from 0 to 1; a still scene shows its end.
   const progress = useSharedValue(0.7);
