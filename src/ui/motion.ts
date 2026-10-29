@@ -67,7 +67,8 @@ export function bumpOffset(direction: Direction, distance: number): { offsetLeft
   return offsets[direction];
 }
 
-function directionBetween(fromCell: { row: number; column: number }, toCell: { row: number; column: number }): Direction | null {
+/** The direction from one cell to a neighbouring one, or null if they aren't neighbours. */
+export function directionBetween(fromCell: { row: number; column: number }, toCell: { row: number; column: number }): Direction | null {
   const rowChange = toCell.row - fromCell.row;
   const columnChange = toCell.column - fromCell.column;
   if (rowChange === -1 && columnChange === 0) return 'up';
@@ -76,3 +77,13 @@ function directionBetween(fromCell: { row: number; column: number }, toCell: { r
   if (rowChange === 0 && columnChange === -1) return 'left';
   return null;
 }
+
+/** How long one Beacon star ring takes to grow and fade; two rings run half a period apart. */
+export const RING_PERIOD = 1400;
+/** The collected star swells and fades, and small stars fly out, over this long once the Pebble arrives. */
+export const COLLECT_BURST_DURATION = 600;
+/** The Pebble blinks this often while you play, and a blink takes this long. */
+export const BLINK_INTERVAL = 3700;
+export const BLINK_DURATION = 120;
+/** After this long without a move, the Pebble glances at a reachable star or looks around. */
+export const IDLE_GLANCE_DELAY = 2500;

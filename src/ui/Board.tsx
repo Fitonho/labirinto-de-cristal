@@ -2,15 +2,17 @@
 // a box or as floor with its doors and crystal, then the player. Reads the
 // state only; swipes on the board are turned into commands for the screen.
 // The last action's engine events decide whether pieces slide, jump, bump or
-// flip.
+// flip, how the Pebble reacts, and whether a collected star bursts.
 import { memo, useMemo } from 'react';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
-import type { GameEvent, GameState } from '../core';
+import { opposite, type GameEvent, type GameState } from '../core';
 import { doorSidesByTileIndex, floorColour } from './boardLayout';
 import { BoardTile } from './BoardTile';
+import { CollectBurstLayer } from './CollectBurst';
 import type { Command } from './commands';
 import { motionFor } from './motion';
+import { glanceTargetFor, pebbleReactionFor } from './pieceLooks';
 import { Player } from './Player';
 import { tileColours } from './theme';
 import { drawnColourOf, useBoxAmounts } from './useBoxAmounts';
@@ -30,11 +32,19 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
   const { boxAmountsByColour, drawnBoxColour } = useBoxAmounts(state.player.colour, motion);
   const floorStyle = useAnimatedStyle(() => ({ backgroundColor: tileColours[floorColour(drawnColourOf(drawnBoxColour.value))] }));
   const swipe = useSwipeGesture(onCommand);
+  const reaction = useMemo(() => pebbleReactionFor(events, state), [events, state]);
+  const glanceTarget = useMemo(() => glanceTargetFor(state), [state]);
 
   const cellPosition = (tileIndex: number) => ({
     left: (tileIndex % state.columnCount) * tileSize,
     top: Math.floor(tileIndex / state.columnCount) * tileSize,
   });
+  const burst = useMemo(() => {
+    const collectedTileIndex = state.tiles.findIndex((tile) => tile.id === reaction.collectedTileId);
+    if (collectedTileIndex < 0) return null;
+    // The star is the colour the player needed to be, the opposite of its tile.
+    return { size: tileSize, ...cellPosition(collectedTileIndex), colour: opposite(state.tiles[collectedTileIndex].colour) };
+  }, [reaction, state, tileSize]);
   const showsCrystal = (tileIndex: number) => {
     const tile = state.tiles[tileIndex];
     return Boolean(tile.goal) && !state.collectedGoalIds.includes(tile.id);
@@ -59,14 +69,20 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
             motion={motion}
           />
         ))}
+        {/* Under the Pebble, which has just arrived on the star. */}
+        <CollectBurstLayer burst={burst} />
         <Player
           drawnBoxColour={drawnBoxColour}
           tileSize={tileSize}
           left={state.player.column * tileSize}
           top={state.player.row * tileSize}
           motion={motion}
+          reaction={reaction}
+          glanceTarget={glanceTarget}
+          won={state.status === 'won'}
         />
       </Animated.View>
     </GestureDetector>
   );
 });
+

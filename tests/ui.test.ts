@@ -16,6 +16,16 @@ import { hapticCueFor } from '../src/ui/haptics';
 import { commandsByKey, swipeDirection, tapDirection } from '../src/ui/commands';
 import { languageForLocale } from '../src/ui/i18n';
 import { SOUND_CUE_KINDS, soundCueFor } from '../src/ui/sounds';
+import {
+  beaconStateFor,
+  EYE_SCALES,
+  glanceTargetFor,
+  JELLY_SPRING,
+  PEBBLE_POSES,
+  pebbleReactionFor,
+  shardDirections,
+  starPoints,
+} from '../src/ui/pieceLooks';
 import { BUMP_OUT_DURATION, bumpDirectionFor, bumpOffset, FLIP_GROW_DURATION, motionFor, SLIDE_DURATION } from '../src/ui/motion';
 import { customLevelState, levelById } from './helpers';
 
@@ -159,6 +169,85 @@ describe('board motion', () => {
   it('offsets a bump in its direction', () => {
     expect(bumpOffset('left', 5)).toEqual({ offsetLeft: -5, offsetTop: 0 });
     expect(bumpOffset('down', 5)).toEqual({ offsetLeft: 0, offsetTop: 5 });
+  });
+});
+
+describe('piece looks', () => {
+  // Player is white (stands on black). Black is floor, white blocks.
+  const startState = customLevelState(['b w b b', 'b b b W'], [0, 0]);
+
+  it('slides the Pebble on a plain move, facing the way it went', () => {
+    const { state, events } = move(startState, 'down');
+    expect(pebbleReactionFor(events, state)).toEqual({ action: 'slide', direction: 'down', collectedTileId: null });
+  });
+
+  it('leans into a push', () => {
+    const { state, events } = move(startState, 'right');
+    expect(pebbleReactionFor(events, state)).toMatchObject({ action: 'push', direction: 'right' });
+  });
+
+  it('bumps at the board edge and against a box that will not move', () => {
+    const edge = move(startState, 'up');
+    expect(pebbleReactionFor(edge.events, edge.state)).toMatchObject({ action: 'bump', direction: 'up' });
+    const blockedState = customLevelState(['b w w b', 'b b b W'], [0, 0]);
+    const refused = move(blockedState, 'right');
+    expect(pebbleReactionFor(refused.events, refused.state)).toMatchObject({ action: 'bump', direction: 'right' });
+  });
+
+  it('squeezes through a door rather than just sliding', () => {
+    const doorState = { ...startState, doors: [{ row: 1, column: 0, side: 'right' as const }], player: { row: 1, column: 0, colour: 'white' as const } };
+    const { state, events } = move(doorState, 'right');
+    expect(pebbleReactionFor(events, state)).toMatchObject({ action: 'flip', direction: 'right' });
+  });
+
+  it('strikes no pose after undo, restart, a new level or a move after winning', () => {
+    expect(pebbleReactionFor([], startState)).toEqual({ action: null, direction: null, collectedTileId: null });
+    const { state, events } = move({ ...startState, status: 'won' }, 'up');
+    expect(pebbleReactionFor(events, state).action).toBeNull();
+  });
+
+  it('names the star collected on a move', () => {
+    // The player starts on white, so it is black: the colour that can reach the star on the white tile.
+    const goalState = customLevelState(['w W', 'b b'], [0, 0]);
+    expect(goalState.player.colour).toBe('black');
+    const { state, events } = move(goalState, 'right');
+    expect(pebbleReactionFor(events, state).collectedTileId).toBe(state.tiles[1].id);
+  });
+
+  it('ends every pose back at rest, with the flip squeezing thin until the colour swap', () => {
+    expect(PEBBLE_POSES.flip.stretches.reduce((total, keyframe) => total + keyframe.duration, 0)).toBe(FLIP_GROW_DURATION);
+    expect(PEBBLE_POSES.flip.stretches.at(-1)?.to).toBeLessThan(0);
+    expect(PEBBLE_POSES.slide.stretches.reduce((total, keyframe) => total + keyframe.duration, 0)).toBe(SLIDE_DURATION);
+    expect(EYE_SCALES.open).toEqual({ width: 1, height: 1 });
+    // The jelly settles within about half a second: its wobble is under 1% of the squash by then.
+    expect(Math.exp((-JELLY_SPRING.damping / (2 * JELLY_SPRING.mass)) * 0.5)).toBeLessThan(0.01);
+  });
+
+  it('wakes a star only while its tile is floor, which is when the player is its colour', () => {
+    expect(beaconStateFor('white', 'black')).toBe('awake');
+    expect(beaconStateFor('white', 'white')).toBe('resting');
+  });
+
+  it('glances at the nearest star the player can reach, and at none it cannot', () => {
+    // The goal is a white tile, so only a black player can reach it.
+    const blackPlayer = customLevelState(['w w W', 'w w w'], [1, 0]);
+    expect(blackPlayer.player.colour).toBe('black');
+    const target = glanceTargetFor(blackPlayer);
+    expect(target?.lookX).toBeCloseTo(2 / Math.sqrt(5));
+    expect(target?.lookY).toBeCloseTo(-1 / Math.sqrt(5));
+    const whitePlayer = customLevelState(['b b W', 'b b b'], [1, 0]);
+    expect(whitePlayer.player.colour).toBe('white');
+    expect(glanceTargetFor(whitePlayer)).toBeNull();
+  });
+
+  it('sends the burst evenly around and draws a four-point star', () => {
+    const directions = shardDirections(8);
+    expect(directions).toHaveLength(8);
+    expect(directions[2].offsetX).toBeCloseTo(0);
+    expect(directions[2].offsetY).toBeCloseTo(1);
+    const points = starPoints(10, 10, 5, 1).split(' ');
+    expect(points).toHaveLength(8);
+    expect(points[0]).toBe('10,5');
   });
 });
 

@@ -88,7 +88,9 @@ export const BoardTile = memo(function BoardTile({
       {doorSides.map((doorSide) => (
         <DoorSeam key={doorSide} side={doorSide} size={size} boxAmount={boxAmount} />
       ))}
-      {showCrystal && <Crystal size={size} colour={opposite(tile.colour)} />}
+      {showCrystal && (
+        <Crystal size={size} colour={opposite(tile.colour)} tileColour={tile.colour} drawnBoxColour={drawnBoxColour} />
+      )}
     </Animated.View>
   );
 }, drawsTheSame);
