@@ -1,8 +1,7 @@
 // The levels that bring in a new idea, and how the new-idea card shows it: its
 // timeline, and what lights up on the real board once the card closes. Only
 // these levels get a card. No React here, so Vitest tests it.
-import { DIRECTIONS, inside, tileAt, type Cell, type GameState, type Portal } from '../core';
-import { neighbour } from '../core/board';
+import { DIRECTIONS, move, type Cell, type GameState, type Portal } from '../core';
 
 export type LevelIdea = 'push' | 'portal' | 'bridge' | 'crystalColour' | 'portalPush';
 
@@ -38,7 +37,7 @@ export interface IdeaHighlight {
   portals: Portal[];
 }
 
-/** What glows on the board after the card: the portals (the bridge's too, so the glow doesn't point at the answer), the stars, or the boxes next to the Pebble. */
+/** What glows on the board after the card: the portals (the bridge's too, so the glow doesn't point at the answer), the stars, or the boxes the Pebble can push. */
 export function ideaHighlightFor(idea: LevelIdea, state: GameState): IdeaHighlight {
   if (idea === 'portal' || idea === 'bridge' || idea === 'portalPush') return { cells: [], portals: state.portals };
   if (idea === 'crystalColour') {
@@ -48,8 +47,32 @@ export function ideaHighlightFor(idea: LevelIdea, state: GameState): IdeaHighlig
     });
     return { cells, portals: [] };
   }
-  const cells = DIRECTIONS.map((direction) => neighbour(state.player, direction)).filter(
-    (cell) => inside(state, cell) && tileAt(state, cell).colour === state.player.colour,
-  );
-  return { cells, portals: [] };
+  return { cells: pushableBoxes(state), portals: [] };
+}
+
+/**
+ * The boxes the Pebble can push from where it can walk now, found with the
+ * engine itself: a box against the edge or another box is a wall, and doesn't
+ * glow. The walk stops at anything but a plain step, so it stays on this floor.
+ */
+export function pushableBoxes(state: GameState): Cell[] {
+  const boxes: Cell[] = [];
+  const seenCellKeys = new Set([`${state.player.row},${state.player.column}`]);
+  const walkStates = [state];
+  for (const walkState of walkStates) {
+    for (const direction of DIRECTIONS) {
+      const { state: nextState, events } = move(walkState, direction);
+      const push = events.find((event) => event.type === 'pushed');
+      if (push && push.type === 'pushed') {
+        if (!boxes.some((box) => box.row === push.from.row && box.column === push.from.column)) boxes.push(push.from);
+        continue;
+      }
+      if (events.length !== 1 || events[0].type !== 'moved') continue;
+      const cellKey = `${nextState.player.row},${nextState.player.column}`;
+      if (seenCellKeys.has(cellKey)) continue;
+      seenCellKeys.add(cellKey);
+      walkStates.push(nextState);
+    }
+  }
+  return boxes;
 }

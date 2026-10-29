@@ -2,7 +2,7 @@
 // the levels that open with a new-idea card and what glows after it, level
 // names in both languages, the picture of a board as it stands, and the keys.
 import { describe, expect, it } from 'vitest';
-import { move } from '../src/core';
+import { loadLevel, move } from '../src/core';
 import { levels } from '../src/levels/index';
 import { isReturningPlayer, sessionActions } from '../src/state/session';
 import { createStore } from '../src/state/store';
@@ -73,18 +73,20 @@ describe('new-idea card', () => {
     expect(IDEA_CARD_FILL_START).toBeLessThan(IDEA_CARD_HOLD);
   });
 
-  it('lights up the portals, the stars, or the boxes next to the Pebble', () => {
+  it('lights up the portals, the stars, or the boxes the Pebble can push', () => {
     const portalLevel = customLevelState(['b w B'], [0, 0], [[0, 0, 'right']]);
     expect(ideaHighlightFor('portal', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
+    expect(ideaHighlightFor('bridge', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
     const starLevel = customLevelState(['b b B'], [0, 0]);
     expect(ideaHighlightFor('crystalColour', starLevel).cells).toEqual([{ row: 0, column: 2 }]);
-    // A white Pebble on black floor: the white tiles beside it are the boxes it could push.
+    // A white Pebble on black floor: of the white boxes beside it, only the one with floor behind it can move.
     const pushLevel = customLevelState(['b w b', 'w b B'], [0, 0]);
-    expect(ideaHighlightFor('push', pushLevel).cells).toEqual([
-      { row: 0, column: 1 },
-      { row: 1, column: 0 },
-    ]);
-    expect(ideaHighlightFor('bridge', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
+    expect(ideaHighlightFor('push', pushLevel).cells).toEqual([{ row: 0, column: 1 }]);
+  });
+
+  it('lights only the box on sample 1 that can be pushed, not the walls beside the Pebble', () => {
+    const firstLevel = levels.find((level) => level.id === 'sample-a')!;
+    expect(ideaHighlightFor('push', loadLevel(firstLevel)).cells).toEqual([{ row: 2, column: 2 }]);
   });
 });
 
