@@ -1,0 +1,80 @@
+[
+  {
+    "version": 2,
+    "id": "lab-1-1",
+    "chapter": "lab",
+    "order": 1,
+    "grid": [
+      "b w w w b",
+      "b b w w b",
+      "w b w w b",
+      "b b b b W",
+      "b b b b w"
+    ],
+    "start": [
+      1,
+      0
+    ],
+    "portals": [
+      [
+        0,
+        0,
+        "right"
+      ]
+    ],
+    "par": 30,
+    "solution": "urrddlruulldrdldrrluulurrrdddr"
+  },
+  {
+    "version": 2,
+    "id": "lab-1-2",
+    "chapter": "lab",
+    "order": 2,
+    "grid": [
+      "B w w w w",
+      "b b b w w",
+      "w w w w w",
+      "w w b w w",
+      "w b b b b"
+    ],
+    "start": [
+      4,
+      4
+    ],
+    "portals": [
+      [
+        4,
+        0,
+        "right"
+      ]
+    ],
+    "par": 28,
+    "solution": "lllluurudrrulrddlullddruuulu"
+  },
+  {
+    "version": 2,
+    "id": "lab-1-3",
+    "chapter": "lab",
+    "order": 3,
+    "grid": [
+      "w W b b b",
+      "b b b b b",
+      "w w w w b",
+      "w w b w b",
+      "b b b w w"
+    ],
+    "start": [
+      4,
+      0
+    ],
+    "portals": [
+      [
+        1,
+        2,
+        "down"
+      ]
+    ],
+    "par": 24,
+    "solution": "rruruuldlludrruulrddlluu"
+  }
+]

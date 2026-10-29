@@ -9,7 +9,8 @@
     "build": "tsc && node scripts/build.mjs",
     "test": "vitest run",
     "typecheck": "tsc",
-    "solve": "node scripts/solve.mjs"
+    "solve": "node scripts/solve.mjs",
+    "generate": "node scripts/generate.mjs"
   },
   "devDependencies": {
     "@types/node": "22.10.1",

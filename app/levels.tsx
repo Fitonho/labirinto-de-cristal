@@ -9,6 +9,7 @@ import { useFocusEffect } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDispatch } from 'react-redux';
 import type { ChapterSummary } from '../src/state/levelProgress';
+import { LAB_CHAPTER } from '../src/levels/lab';
 import { progressActions } from '../src/state/progress';
 import type { Language } from '../src/state/store';
 import { AppColoursProvider, useAppColours } from '../src/ui/AppColours';
@@ -28,10 +29,12 @@ export default function ChaptersScreen() {
   const dispatch = useDispatch();
   const { language, appColours, palette, summaries } = useLevelProgress();
   const [confirmVisible, setConfirmVisible] = useState(false);
-  const solvedCount = summaries.reduce((total, summary) => total + summary.solvedCount, 0);
-  const levelCount = summaries.reduce((total, summary) => total + summary.levels.length, 0);
-  const starCount = summaries.reduce((total, summary) => total + summary.starCount, 0);
-  const parCount = summaries.reduce((total, summary) => total + summary.parCount, 0);
+  // The Lab is for judging boards, so it counts toward nothing.
+  const playerSummaries = summaries.filter((summary) => summary.chapter !== LAB_CHAPTER);
+  const solvedCount = playerSummaries.reduce((total, summary) => total + summary.solvedCount, 0);
+  const levelCount = playerSummaries.reduce((total, summary) => total + summary.levels.length, 0);
+  const starCount = playerSummaries.reduce((total, summary) => total + summary.starCount, 0);
+  const parCount = playerSummaries.reduce((total, summary) => total + summary.parCount, 0);
 
   const goBack = useCallback(() => backToHome(dispatch), [dispatch]);
   // L, the key that opens the levels, closes them again; Escape goes up, like the back arrow.

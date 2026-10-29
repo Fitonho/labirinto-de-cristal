@@ -7,7 +7,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useEffect } from 'react';
 import { AppState, Platform } from 'react-native';
-import { levels } from '../levels/index';
+import { levels, linkedLevel } from '../levels/index';
+import { LINKED_LEVEL_ID } from '../levels/lab';
 import { logger } from '../state/logger';
 import { progressActions, progressFromSaved, progressToSave, type SavedProgress } from '../state/progress';
 import { replaySteps, resumeFromSaved, resumeToSave, type SavedResume } from '../state/resume';
@@ -65,7 +66,10 @@ export function useSavedProgress(store: AppStore) {
         // A player who already moved or picked a level before loading finished keeps what they did.
         const { levelIndex, steps } = store.getState().game;
         if (levelIndex === 0 && steps === '') openSavedLevel(store, progress, resume);
-        store.dispatch(sessionActions.savedLoaded({ returning: isReturningPlayer(progress, resume, levels[0].id) }));
+        // A board in the page address opens straight away, without home.
+        if (linkedLevel) store.dispatch(actions.selectLevel(levels.findIndex((level) => level.id === LINKED_LEVEL_ID)));
+        const returning = !linkedLevel && isReturningPlayer(progress, resume, levels[0].id);
+        store.dispatch(sessionActions.savedLoaded({ returning }));
 
         let lastSavedBests = store.getState().progress.bestMovesByLevelId;
         let lastSavedLevelIndex = store.getState().game.levelIndex;

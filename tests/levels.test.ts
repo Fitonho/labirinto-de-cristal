@@ -3,7 +3,7 @@
 // fingerprints that guard saved bests against edited levels.
 import { describe, expect, it } from 'vitest';
 import { DIRECTIONS, move, type LevelData } from '../src/core';
-import { chapters, levels } from '../src/levels/index';
+import { chapters, levels, playerLevels } from '../src/levels/index';
 import { chapterSummariesFor, levelMarkFor, levelToPlayIn, openLevelIdsFor, otherUnsolvedLevelOpen } from '../src/state/levelProgress';
 import { replaySteps, resumeFromSaved, resumeToSave } from '../src/state/resume';
 import { actions, createStore } from '../src/state/store';
@@ -134,9 +134,9 @@ describe('unlocking', () => {
     expect(levelToPlayIn(summaries[2], openLevelIds, bests, 'labyrinths-2')?.id).toBe('labyrinths-2');
   });
 
-  it('opens only the first steps and the labyrinths on a first launch', () => {
+  it('opens only the first steps, the labyrinths and the Lab on a first launch', () => {
     const summaries = chapterSummariesFor(chapters, levels, {});
-    expect(summaries.filter((summary) => summary.open).map((summary) => summary.chapter)).toEqual(['first-steps', 'labyrinths']);
+    expect(summaries.filter((summary) => summary.open).map((summary) => summary.chapter)).toEqual(['first-steps', 'labyrinths', 'lab']);
   });
 
   it('knows when a level other than the current one is open and unsolved', () => {
@@ -179,7 +179,7 @@ function fingerprintOf(levelData: LevelData): string {
 
 describe('level fingerprints', () => {
   it('match every board, so saved bests never belong to a board that changed', () => {
-    const changedLevelIds = levels
+    const changedLevelIds = playerLevels
       .filter((levelData) => (fingerprintsByLevelId as Record<string, string>)[levelData.id] !== fingerprintOf(levelData))
       .map((levelData) => levelData.id);
     // A changed board keeps the saved bests of its id. Give it a new id, or, if the old bests still hold on it,

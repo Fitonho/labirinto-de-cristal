@@ -21,7 +21,9 @@ export function fingerprintOf(levelData) {
 }
 
 const fingerprintsByLevelId = {};
-for (const chapterFile of readdirSync(levelsFolder).filter((fileName) => fileName.endsWith('.json')).sort()) {
+// The Lab's boards (lab.json) come and go with each generator run and are never a player's, so they have no fingerprints.
+const chapterFiles = readdirSync(levelsFolder).filter((fileName) => fileName.endsWith('.json') && fileName !== 'lab.json');
+for (const chapterFile of chapterFiles.sort()) {
   for (const levelData of JSON.parse(readFileSync(levelsFolder + chapterFile, 'utf8'))) {
     fingerprintsByLevelId[levelData.id] = fingerprintOf(levelData);
   }

@@ -3,7 +3,7 @@
 // names in both languages, the picture of a board as it stands, and the keys.
 import { describe, expect, it } from 'vitest';
 import { move } from '../src/core';
-import { levels } from '../src/levels/index';
+import { levels, playerLevels } from '../src/levels/index';
 import { isReturningPlayer, sessionActions } from '../src/state/session';
 import { createStore } from '../src/state/store';
 import { boardPictureShapesForState } from '../src/ui/boardPicture';
@@ -94,7 +94,7 @@ describe('new-idea card', () => {
 
 describe('level names', () => {
   it('names every level in Portuguese and English', () => {
-    for (const level of levels) {
+    for (const level of playerLevels) {
       const fallback = `${t('pt', 'level')} ${level.order}`;
       expect(levelNameFor('pt', level.id, level.order)).not.toBe(fallback);
       expect(levelNameFor('en', level.id, level.order)).not.toBe(`${t('en', 'level')} ${level.order}`);

@@ -8,8 +8,8 @@ import type { LevelData } from '../core';
 export const OPEN_AHEAD_COUNT = 2;
 /** The share of a chapter to solve before the next chapter opens. */
 export const CHAPTER_OPEN_SHARE = 2 / 3;
-/** Chapters open from the start, whatever was solved. The labyrinths are still being played through, so nothing should wait on them. */
-export const ALWAYS_OPEN_CHAPTERS: readonly string[] = ['labyrinths'];
+/** Chapters open from the start, whatever was solved. The labyrinths are still being played through, so nothing should wait on them, and the Lab is for judging boards. */
+export const ALWAYS_OPEN_CHAPTERS: readonly string[] = ['labyrinths', 'lab'];
 /** Chapters that wait on a chapter other than the one before them. The challenges are an extra, so they open after the moving portals, not after the labyrinths. */
 export const OPENING_CHAPTER_BY_CHAPTER: Readonly<Record<string, string>> = { challenges: 'moving-portals' };
 
