@@ -1,19 +1,23 @@
 // The game screen: the switches and level picker on top, the board, then
 // Undo, the move counter and Restart over the touch area. Plays the move's
-// sound and vibration. All game changes go through the Redux store.
-import { useCallback, useEffect, useState } from 'react';
+// sound and vibration. All game changes go through the Redux store. The board
+// and the app around it take their colours from the level's palette.
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { levels } from '../src/levels/index';
-import { actions, type RootState } from '../src/state/store';
+import { actions, selectPaletteId, type RootState } from '../src/state/store';
+import { AppColoursProvider } from '../src/ui/AppColours';
 import { Board } from '../src/ui/Board';
 import { tileSizeFor } from '../src/ui/boardLayout';
+import { ColourPicker } from '../src/ui/ColourPicker';
 import type { Command } from '../src/ui/commands';
 import { t } from '../src/ui/i18n';
 import { IconButton } from '../src/ui/IconButton';
 import { LevelPicker } from '../src/ui/LevelPicker';
-import { palette } from '../src/ui/theme';
+import { appColoursFor, boardPalettes, PALETTE_FADE_DURATION } from '../src/ui/theme';
 import { TouchPad } from '../src/ui/TouchPad';
 import { useHaptics } from '../src/ui/useHaptics';
 import { useKeyboardCommands } from '../src/ui/useKeyboardCommands';
@@ -35,7 +39,29 @@ export default function GameScreen() {
   const level = levels[levelIndex];
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const [pickerVisible, setPickerVisible] = useState(false);
-  const { soundOn, vibrationOn, tapMovesOn, toggleSound, toggleVibration, toggleTapMoves } = useSettings();
+  const [colourPickerVisible, setColourPickerVisible] = useState(false);
+  const { soundOn, vibrationOn, tapMovesOn, paletteChoice, toggleSound, toggleVibration, toggleTapMoves, choosePalette } = useSettings();
+  const boardPalette = boardPalettes[useSelector(selectPaletteId)];
+  // The colour choice from when the colour picker opened, put back if the player cancels.
+  const choiceBeforePicker = useRef(paletteChoice);
+  const openColourPicker = useCallback(() => {
+    choiceBeforePicker.current = paletteChoice;
+    setColourPickerVisible(true);
+  }, [paletteChoice]);
+  const appColours = useMemo(() => appColoursFor(boardPalette), [boardPalette]);
+  // Built once per palette, so a move hands the same style objects to the screen and restyles nothing.
+  const paletteStyles = useMemo(
+    () => ({
+      page: { backgroundColor: appColours.page, transitionProperty: 'backgroundColor', transitionDuration: PALETTE_FADE_DURATION } as const,
+      control: { borderColor: appColours.controlBorder, backgroundColor: appColours.control },
+      ink: { color: appColours.ink },
+      accent: { color: appColours.accent },
+      quiet: { color: appColours.quiet },
+      // A thin edge round the board, so a floor close to the page colour still shows where the board ends.
+      boardEdge: { boxShadow: `0 0 0 1px ${appColours.boardEdge}, 0 2px 8px ${appColours.boardEdge}` },
+    }),
+    [appColours],
+  );
 
   const run = useCallback(
     (command: Command) => {
@@ -47,7 +73,7 @@ export default function GameScreen() {
     },
     [dispatch, toggleSound, toggleVibration],
   );
-  useKeyboardCommands(run, !pickerVisible);
+  useKeyboardCommands(run, !pickerVisible && !colourPickerVisible);
   useHaptics(vibrationOn);
   useSounds(soundOn);
   useEffect(() => {
@@ -64,79 +90,101 @@ export default function GameScreen() {
   const hint = state.moveCount === 0 ? t(language, tapMovesOn ? 'hintTapOrSwipe' : 'hintSwipe') : null;
 
   return (
-    <SafeAreaView style={styles.page}>
-      <View style={styles.column}>
-        <View style={styles.header}>
-          <View style={styles.titleBlock}>
-            <Text accessibilityRole="header" style={styles.title}>
-              {t(language, 'title')}
-            </Text>
-            <Pressable accessibilityRole="button" onPress={() => setPickerVisible(true)} hitSlop={8}>
-              <Text style={styles.link}>{`${t(language, 'level')} ${level.order} ▾`}</Text>
-            </Pressable>
+    <AppColoursProvider value={appColours}>
+      {/* The page fades to a new level's colours; the board itself switches at once with its new tiles. */}
+      <Animated.View style={[styles.page, paletteStyles.page]}>
+        <SafeAreaView style={styles.page}>
+          <View style={styles.column}>
+            <View style={styles.header}>
+              <View style={styles.titleBlock}>
+                <Text accessibilityRole="header" style={[styles.title, paletteStyles.ink]}>
+                  {t(language, 'title')}
+                </Text>
+                <Pressable accessibilityRole="button" onPress={() => setPickerVisible(true)} hitSlop={8}>
+                  <Text style={[styles.link, paletteStyles.accent]}>{`${t(language, 'level')} ${level.order} ▾`}</Text>
+                </Pressable>
+              </View>
+              <View style={styles.switches}>
+                <IconButton icon="sound" label={t(language, 'sound')} switchedOn={soundOn} onPress={toggleSound} size={36} />
+                {/* The web never vibrates, so it has no vibration switch. */}
+                {Platform.OS !== 'web' && (
+                  <IconButton
+                    icon="vibration"
+                    label={t(language, 'vibration')}
+                    switchedOn={vibrationOn}
+                    onPress={toggleVibration}
+                    size={36}
+                  />
+                )}
+                <IconButton icon="tapMoves" label={t(language, 'tapMoves')} switchedOn={tapMovesOn} onPress={toggleTapMoves} size={36} />
+                <IconButton icon="colours" label={t(language, 'colours')} onPress={openColourPicker} size={36} />
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={t(language, 'language')}
+                  onPress={() => dispatch(actions.setLanguage(language === 'pt' ? 'en' : 'pt'))}
+                  hitSlop={4}
+                  style={({ pressed }) => [styles.languageButton, paletteStyles.control, pressed && styles.pressed]}
+                >
+                  <Text style={[styles.languageText, paletteStyles.ink]}>{t(language, 'languageShort')}</Text>
+                </Pressable>
+              </View>
+            </View>
+            <View style={styles.boardArea}>
+              <View style={paletteStyles.boardEdge}>
+                <Board state={state} events={events} tileSize={tileSize} palette={boardPalette} onCommand={run} />
+              </View>
+            </View>
+            {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping.
+                Undo, pressed far more often, is on the right, under most players' thumb. */}
+            <View style={styles.statusRow}>
+              <IconButton icon="restart" label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} size={48} />
+              <Text
+                accessibilityLiveRegion="polite"
+                style={[styles.status, won ? paletteStyles.accent : paletteStyles.quiet, won && styles.wonStatus]}
+              >
+                {won ? `${t(language, 'won')} ${moveText}` : moveText}
+              </Text>
+              <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
+            </View>
+            <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
+            {Platform.OS === 'web' && <Text style={[styles.help, paletteStyles.quiet]}>{t(language, 'help')}</Text>}
           </View>
-          <View style={styles.switches}>
-            <IconButton icon="sound" label={t(language, 'sound')} switchedOn={soundOn} onPress={toggleSound} size={36} />
-            {/* The web never vibrates, so it has no vibration switch. */}
-            {Platform.OS !== 'web' && (
-              <IconButton
-                icon="vibration"
-                label={t(language, 'vibration')}
-                switchedOn={vibrationOn}
-                onPress={toggleVibration}
-                size={36}
-              />
-            )}
-            <IconButton icon="tapMoves" label={t(language, 'tapMoves')} switchedOn={tapMovesOn} onPress={toggleTapMoves} size={36} />
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={t(language, 'language')}
-              onPress={() => dispatch(actions.setLanguage(language === 'pt' ? 'en' : 'pt'))}
-              hitSlop={4}
-              style={({ pressed }) => [styles.languageButton, pressed && styles.pressed]}
-            >
-              <Text style={styles.languageText}>{t(language, 'languageShort')}</Text>
-            </Pressable>
-          </View>
-        </View>
-        <View style={styles.boardArea}>
-          <Board state={state} events={events} tileSize={tileSize} onCommand={run} />
-        </View>
-        {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping.
-            Undo, pressed far more often, is on the right, under most players' thumb. */}
-        <View style={styles.statusRow}>
-          <IconButton icon="restart" label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} size={48} />
-          <Text accessibilityLiveRegion="polite" style={[styles.status, won && styles.wonStatus]}>
-            {won ? `${t(language, 'won')} ${moveText}` : moveText}
-          </Text>
-          <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
-        </View>
-        <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
-        {Platform.OS === 'web' && <Text style={styles.help}>{t(language, 'help')}</Text>}
-      </View>
-      <LevelPicker
-        visible={pickerVisible}
-        language={language}
-        currentLevelIndex={levelIndex}
-        onClose={() => setPickerVisible(false)}
-        onPick={(pickedLevelIndex) => {
-          // Close the picker first and build the new board on a later frame. Building it redraws every tile,
-          // and doing that in the same frame held the picker on screen after the tap.
-          setPickerVisible(false);
-          requestAnimationFrame(() => requestAnimationFrame(() => dispatch(actions.selectLevel(pickedLevelIndex))));
-        }}
-      />
-    </SafeAreaView>
+          <LevelPicker
+            visible={pickerVisible}
+            language={language}
+            currentLevelIndex={levelIndex}
+            onClose={() => setPickerVisible(false)}
+            onPick={(pickedLevelIndex) => {
+              // Close the picker first and build the new board on a later frame. Building it redraws every tile,
+              // and doing that in the same frame held the picker on screen after the tap.
+              setPickerVisible(false);
+              requestAnimationFrame(() => requestAnimationFrame(() => dispatch(actions.selectLevel(pickedLevelIndex))));
+            }}
+          />
+          <ColourPicker
+            visible={colourPickerVisible}
+            language={language}
+            paletteChoice={paletteChoice}
+            onPick={choosePalette}
+            onConfirm={() => setColourPickerVisible(false)}
+            onCancel={() => {
+              choosePalette(choiceBeforePicker.current);
+              setColourPickerVisible(false);
+            }}
+          />
+        </SafeAreaView>
+      </Animated.View>
+    </AppColoursProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  page: { flex: 1, backgroundColor: palette.page },
+  page: { flex: 1 },
   column: { flex: 1, width: '100%', maxWidth: 640, alignSelf: 'center', padding: 16, gap: 12 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   titleBlock: { flexShrink: 1, gap: 2 },
-  title: { fontSize: 20, fontWeight: '700', color: palette.ink },
-  link: { color: palette.accent, fontSize: 16 },
+  title: { fontSize: 20, fontWeight: '700' },
+  link: { fontSize: 16 },
   switches: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   languageButton: {
     height: 36,
@@ -144,16 +192,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     borderRadius: 18,
     borderWidth: 1,
-    borderColor: palette.controlBorder,
-    backgroundColor: palette.control,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  languageText: { fontSize: 13, fontWeight: '600', color: palette.ink },
+  languageText: { fontSize: 13, fontWeight: '600' },
   pressed: { opacity: 0.6 },
   boardArea: { alignItems: 'center' },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  status: { flex: 1, textAlign: 'center', color: palette.quiet, fontSize: 16 },
-  wonStatus: { color: palette.accent, fontWeight: '600' },
-  help: { textAlign: 'center', color: palette.quiet, fontSize: 13.5 },
+  status: { flex: 1, textAlign: 'center', fontSize: 16 },
+  wonStatus: { fontWeight: '600' },
+  help: { textAlign: 'center', fontSize: 13.5 },
 });

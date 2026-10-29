@@ -1,27 +1,106 @@
 // Colours and spacing for the app. The engine only knows 'black' and 'white';
-// this is the one place that turns them into screen colours.
+// this is the one place that turns them into screen colours. Each level is
+// drawn in a board palette, a dark and a light colour, and the app around the
+// board takes its colours from the same palette.
 import type { Colour } from '../core';
+import type { PaletteId } from '../state/palettes';
 
-export const tileColours: Record<Colour, string> = {
-  black: '#000000',
-  white: '#ffffff',
+export interface BoardPalette {
+  id: PaletteId;
+  /** 'black' is always the dark colour and 'white' the light one, so the board never relies on hue alone. */
+  tileColours: Record<Colour, string>;
+  /** The glowing seam that marks a door: amber, or another colour where amber is too close to the light colour. */
+  seamColour: string;
+  /** Links, the current level and the touch area in the app around the board. */
+  accent: string;
+}
+
+function boardPalette(id: PaletteId, dark: string, light: string, seamColour: string, accent: string): BoardPalette {
+  return { id, tileColours: { black: dark, white: light }, seamColour, accent };
+}
+
+const AMBER = '#e8a317';
+const DEEP_AMBER = '#e8920c';
+
+/**
+ * Every pair keeps at least 7.8:1 contrast between its two colours, also as seen with protanopia,
+ * deuteranopia and tritanopia, and its seam stands apart from both colours (tests/theme.test.ts).
+ */
+export const boardPalettes: Record<PaletteId, BoardPalette> = {
+  ink: boardPalette('ink', '#1d2b4f', '#f2ead9', AMBER, '#3557a8'),
+  forest: boardPalette('forest', '#173d2f', '#dcece0', '#f0a020', '#236b4a'),
+  ocean: boardPalette('ocean', '#0b3550', '#d6eef2', '#f2a51a', '#17628c'),
+  plum: boardPalette('plum', '#3a1838', '#fde2cf', '#19b6c9', '#8e3b86'),
+  clay: boardPalette('clay', '#6e2614', '#f3e1c0', '#22b5c8', '#a83f22'),
+  night: boardPalette('night', '#221a45', '#e4daf6', DEEP_AMBER, '#5b47b8'),
+  cocoa: boardPalette('cocoa', '#3a2216', '#f4e7d6', '#2bb3c6', '#8a5233'),
+  moss: boardPalette('moss', '#253312', '#f4f0b0', '#e0457b', '#4f6a18'),
+  wine: boardPalette('wine', '#4a0d22', '#f9dbe2', DEEP_AMBER, '#b0284f'),
+  slate: boardPalette('slate', '#26313f', '#cfe3f6', DEEP_AMBER, '#2f629c'),
+  teal: boardPalette('teal', '#053c3e', '#ffdcbf', '#4d7cff', '#0b6b6c'),
+  ember: boardPalette('ember', '#2b1d1a', '#e6e2dc', DEEP_AMBER, '#a8503a'),
+  indigo: boardPalette('indigo', '#1c1f5c', '#d2f4e3', '#f2a81c', '#3c46c4'),
 };
 
-export const palette = {
-  page: '#f4f4f2',
-  ink: '#1d1d1f',
-  quiet: '#6b6b70',
-  accent: '#2f6fd6',
-  control: '#ffffff',
-  controlBorder: '#c8c8cc',
+/** The colours of the app around the board, all taken from the level's palette. */
+export interface AppColours {
+  page: string;
+  ink: string;
+  quiet: string;
+  accent: string;
+  /** Text on an accent background. */
+  onAccent: string;
+  control: string;
+  controlBorder: string;
   /** The touch area under the board: a faint fill, its two diagonals and the four arrows. */
-  touchPadFill: 'rgba(47, 111, 214, 0.05)',
-  touchPadLine: 'rgba(47, 111, 214, 0.25)',
-  touchPadArrow: 'rgba(47, 111, 214, 0.5)',
-};
+  touchPadFill: string;
+  touchPadLine: string;
+  touchPadArrow: string;
+  /** A thin line and soft shadow round the board, so a floor close to the page colour still has an edge. */
+  boardEdge: string;
+}
 
-/** The glowing seam that marks a door. A UI colour, not a game colour: a chapter palette picks one that shows on both tiles. */
-export const seamColour = '#e8a317';
+function channelsOf(hexColour: string): number[] {
+  return [1, 3, 5].map((offset) => parseInt(hexColour.slice(offset, offset + 2), 16));
+}
+
+/** A colour part of the way from one to the other, as a hex code. */
+export function mixColours(fromColour: string, toColour: string, shareOfTo: number): string {
+  const toChannels = channelsOf(toColour);
+  const mixedChannels = channelsOf(fromColour).map((channel, channelIndex) =>
+    Math.round(channel + (toChannels[channelIndex] - channel) * shareOfTo),
+  );
+  return '#' + mixedChannels.map((channel) => channel.toString(16).padStart(2, '0')).join('');
+}
+
+function withOpacity(hexColour: string, opacity: number): string {
+  const [red, green, blue] = channelsOf(hexColour);
+  return `rgba(${red}, ${green}, ${blue}, ${opacity})`;
+}
+
+/** The page is a pale wash of the light colour, text is the dark colour, and highlights use the accent. */
+export function appColoursFor(palette: BoardPalette): AppColours {
+  const { black: dark, white: light } = palette.tileColours;
+  const page = mixColours(light, '#fbfbfa', 0.45);
+  return {
+    page,
+    ink: mixColours(dark, '#000000', 0.15),
+    quiet: mixColours(dark, page, 0.25),
+    accent: palette.accent,
+    onAccent: '#ffffff',
+    control: mixColours(page, '#ffffff', 0.6),
+    controlBorder: mixColours(dark, page, 0.75),
+    touchPadFill: withOpacity(palette.accent, 0.05),
+    touchPadLine: withOpacity(palette.accent, 0.25),
+    touchPadArrow: withOpacity(palette.accent, 0.5),
+    boardEdge: withOpacity(dark, 0.35),
+  };
+}
+
+/** The dimmed backdrop behind the level and colour pickers. */
+export const BACKDROP_COLOUR = 'rgba(0, 0, 0, 0.4)';
+/** How long the page takes to fade to a new level's colours, in milliseconds. */
+export const PALETTE_FADE_DURATION = 300;
 
 /** How far a box sits inside its cell, and how round its corners are, as shares of the tile size. */
 export const BOX_INSET = 0.1;

@@ -1,11 +1,10 @@
-// A list of levels grouped by chapter, shown over the game. Stands in for the
-// web <select>, which React Native does not have. It opens and closes without
-// a fade: the fade held it on screen for about 300 ms after a level was picked.
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+// A list of levels grouped by chapter, shown over the game.
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { chapters, levels } from '../levels/index';
 import type { Language } from '../state/store';
+import { useAppColours } from './AppColours';
 import { t, type StringKey } from './i18n';
-import { palette } from './theme';
+import { PickerSheet, SheetButton } from './PickerSheet';
 
 interface LevelPickerProps {
   visible: boolean;
@@ -16,64 +15,63 @@ interface LevelPickerProps {
 }
 
 export function LevelPicker({ visible, language, currentLevelIndex, onPick, onClose }: LevelPickerProps) {
+  const appColours = useAppColours();
+  const levelButtonColours = { borderColor: appColours.controlBorder, backgroundColor: appColours.control };
+  const currentLevelButtonColours = { borderColor: appColours.accent, backgroundColor: appColours.accent };
   return (
-    <Modal visible={visible} transparent animationType="none" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <Pressable style={styles.sheet} onPress={() => {}}>
-          <Text style={styles.heading}>{t(language, 'chooseLevel')}</Text>
-          <ScrollView>
-            {chapters.map((chapter) => (
-              <View key={chapter} style={styles.chapter}>
-                <Text style={styles.chapterName}>{t(language, `chapter.${chapter}` as StringKey)}</Text>
-                <View style={styles.levelButtons}>
-                  {levels.map((level, levelIndex) =>
-                    level.chapter !== chapter ? null : (
-                      <Pressable
-                        key={level.id}
-                        accessibilityRole="button"
-                        accessibilityLabel={`${t(language, 'level')} ${level.order}`}
-                        onPress={() => onPick(levelIndex)}
-                        style={[styles.levelButton, levelIndex === currentLevelIndex && styles.currentLevelButton]}
-                      >
-                        <Text style={[styles.levelNumber, levelIndex === currentLevelIndex && styles.currentLevelNumber]}>
-                          {level.order}
-                        </Text>
-                      </Pressable>
-                    ),
-                  )}
-                </View>
-              </View>
-            ))}
-          </ScrollView>
-          <Pressable accessibilityRole="button" onPress={onClose} style={styles.closeButton}>
-            <Text style={styles.closeText}>{t(language, 'close')}</Text>
-          </Pressable>
-        </Pressable>
-      </Pressable>
-    </Modal>
+    <PickerSheet
+      visible={visible}
+      heading={t(language, 'chooseLevel')}
+      onBackdropPress={onClose}
+      onRequestClose={onClose}
+      buttons={<SheetButton label={t(language, 'close')} onPress={onClose} />}
+    >
+      {chapters.map((chapter) => (
+        <View key={chapter} style={styles.chapter}>
+          <Text style={[styles.chapterName, { color: appColours.quiet }]}>{t(language, `chapter.${chapter}` as StringKey)}</Text>
+          <View style={styles.levelButtons}>
+            {levels.map((level, levelIndex) => {
+              if (level.chapter !== chapter) return null;
+              const isCurrent = levelIndex === currentLevelIndex;
+              return (
+                <Pressable
+                  key={level.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${t(language, 'level')} ${level.order}`}
+                  onPress={() => onPick(levelIndex)}
+                  style={[styles.levelButton, isCurrent ? currentLevelButtonColours : levelButtonColours]}
+                >
+                  <Text
+                    style={[
+                      styles.levelNumber,
+                      { color: isCurrent ? appColours.onAccent : appColours.ink },
+                      isCurrent && styles.currentLevelNumber,
+                    ]}
+                  >
+                    {level.order}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ))}
+    </PickerSheet>
   );
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 16 },
-  sheet: { backgroundColor: palette.page, borderRadius: 12, padding: 16, width: '100%', maxWidth: 420, maxHeight: '80%' },
-  heading: { fontSize: 18, fontWeight: '600', color: palette.ink, marginBottom: 8 },
   chapter: { marginTop: 8 },
-  chapterName: { color: palette.quiet, marginBottom: 6 },
+  chapterName: { marginBottom: 6 },
   levelButtons: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   levelButton: {
     width: 44,
     height: 44,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: palette.controlBorder,
-    backgroundColor: palette.control,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  currentLevelButton: { backgroundColor: palette.accent, borderColor: palette.accent },
-  levelNumber: { fontSize: 16, color: palette.ink },
-  currentLevelNumber: { color: '#ffffff', fontWeight: '600' },
-  closeButton: { alignSelf: 'flex-end', marginTop: 12, paddingVertical: 8, paddingHorizontal: 12 },
-  closeText: { color: palette.accent, fontSize: 16 },
+  levelNumber: { fontSize: 16 },
+  currentLevelNumber: { fontWeight: '600' },
 });

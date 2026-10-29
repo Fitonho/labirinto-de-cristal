@@ -9,10 +9,9 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withTiming, type SharedValue } from 'react-native-reanimated';
 import Svg, { Polygon } from 'react-native-svg';
-import type { Colour } from '../core';
 import { COLLECT_BURST_DURATION, SLIDE_DURATION } from './motion';
 import { shardDirections, starPoints } from './pieceLooks';
-import { STAR_INNER_RADIUS, STAR_OUTER_RADIUS, tileColours } from './theme';
+import { STAR_INNER_RADIUS, STAR_OUTER_RADIUS } from './theme';
 
 const SHARD_COUNT = 8;
 /** The small stars start this far from the centre and fly this much further, as shares of the tile size. */
@@ -24,7 +23,7 @@ export interface CollectBurstProps {
   size: number;
   left: number; // the star's cell
   top: number;
-  colour: Colour; // the star's colour
+  colour: string; // the star's colour on screen
 }
 
 /** `burst` is a new object for each move that collected a star, and null after any other action. */
@@ -57,7 +56,7 @@ function CollectBurst({ size, left, top, colour }: CollectBurstProps) {
       ))}
       <Animated.View style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size }, starStyle]}>
         <Svg width={size} height={size}>
-          <Polygon points={points} fill={tileColours[colour]} />
+          <Polygon points={points} fill={colour} />
         </Svg>
       </Animated.View>
     </Animated.View>
@@ -66,7 +65,7 @@ function CollectBurst({ size, left, top, colour }: CollectBurstProps) {
 
 interface ShardProps {
   size: number;
-  colour: Colour;
+  colour: string;
   progress: SharedValue<number>;
   offsetX: number;
   offsetY: number;
@@ -93,7 +92,7 @@ function Shard({ size, colour, progress, offsetX, offsetY }: ShardProps) {
           width: shardSize,
           height: shardSize,
           borderRadius: shardSize * 0.2,
-          backgroundColor: tileColours[colour],
+          backgroundColor: colour,
         },
         shardStyle,
       ]}

@@ -2,7 +2,8 @@
 // a box or as floor with its doors and crystal, then the player. Reads the
 // state only; swipes on the board are turned into commands for the screen.
 // The last action's engine events decide whether pieces slide, jump, bump or
-// flip, how the Pebble reacts, and whether a collected star bursts.
+// flip, how the Pebble reacts, and whether a collected star bursts. Every
+// colour comes from the level's palette.
 import { memo, useMemo } from 'react';
 import { GestureDetector } from 'react-native-gesture-handler';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
@@ -14,7 +15,7 @@ import type { Command } from './commands';
 import { motionFor } from './motion';
 import { glanceTargetFor, pebbleReactionFor } from './pieceLooks';
 import { Player } from './Player';
-import { tileColours } from './theme';
+import type { BoardPalette } from './theme';
 import { drawnColourOf, useBoxAmounts } from './useBoxAmounts';
 import { useSwipeGesture } from './useSwipeGesture';
 
@@ -22,14 +23,16 @@ interface BoardProps {
   state: GameState;
   events: GameEvent[]; // what the last action caused; empty after undo, restart or a new level
   tileSize: number;
+  palette: BoardPalette; // changes only when a level starts or the player picks other colours
   onCommand: (command: Command) => void;
 }
 
 // Memoised so opening the level picker or switching language doesn't redraw every tile.
-export const Board = memo(function Board({ state, events, tileSize, onCommand }: BoardProps) {
+export const Board = memo(function Board({ state, events, tileSize, palette, onCommand }: BoardProps) {
   const doorSides = useMemo(() => doorSidesByTileIndex(state), [state]);
   const motion = useMemo(() => motionFor(events, state), [events, state]);
   const { boxAmountsByColour, drawnBoxColour } = useBoxAmounts(state.player.colour, motion);
+  const { tileColours, seamColour } = palette;
   const floorStyle = useAnimatedStyle(() => ({ backgroundColor: tileColours[floorColour(drawnColourOf(drawnBoxColour.value))] }));
   const swipe = useSwipeGesture(onCommand);
   const reaction = useMemo(() => pebbleReactionFor(events, state), [events, state]);
@@ -43,8 +46,8 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
     const collectedTileIndex = state.tiles.findIndex((tile) => tile.id === reaction.collectedTileId);
     if (collectedTileIndex < 0) return null;
     // The star is the colour the player needed to be, the opposite of its tile.
-    return { size: tileSize, ...cellPosition(collectedTileIndex), colour: opposite(state.tiles[collectedTileIndex].colour) };
-  }, [reaction, state, tileSize]);
+    return { size: tileSize, ...cellPosition(collectedTileIndex), colour: tileColours[opposite(state.tiles[collectedTileIndex].colour)] };
+  }, [reaction, state, tileSize, tileColours]);
   const showsCrystal = (tileIndex: number) => {
     const tile = state.tiles[tileIndex];
     return Boolean(tile.goal) && !state.collectedGoalIds.includes(tile.id);
@@ -65,6 +68,8 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
             doorSides={doorSides.get(tileIndex) ?? []}
             boxAmount={boxAmountsByColour[tile.colour]}
             drawnBoxColour={drawnBoxColour}
+            tileColours={tileColours}
+            seamColour={seamColour}
             showCrystal={showsCrystal(tileIndex)}
             motion={motion}
           />
@@ -73,6 +78,7 @@ export const Board = memo(function Board({ state, events, tileSize, onCommand }:
         <CollectBurstLayer burst={burst} />
         <Player
           drawnBoxColour={drawnBoxColour}
+          tileColours={tileColours}
           tileSize={tileSize}
           left={state.player.column * tileSize}
           top={state.player.row * tileSize}

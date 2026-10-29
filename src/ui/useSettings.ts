@@ -4,6 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useCallback, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import type { PaletteChoice } from '../state/palettes';
 import { settingsActions, settingsFromSaved, type Settings } from '../state/settings';
 import { logger } from '../state/logger';
 import type { AppStore, RootState } from '../state/store';
@@ -61,5 +62,9 @@ export function useSettings() {
     () => dispatch(settingsActions.setTapMovesOn(!settings.tapMovesOn)),
     [dispatch, settings.tapMovesOn],
   );
-  return { ...settings, toggleSound, toggleVibration, toggleTapMoves };
+  const choosePalette = useCallback(
+    (paletteChoice: PaletteChoice) => dispatch(settingsActions.setPaletteChoice(paletteChoice)),
+    [dispatch],
+  );
+  return { ...settings, toggleSound, toggleVibration, toggleTapMoves, choosePalette };
 }

@@ -14,7 +14,7 @@ import Svg, { Polygon } from 'react-native-svg';
 import type { Colour } from '../core';
 import { RING_PERIOD } from './motion';
 import { beaconStateFor, starPoints } from './pieceLooks';
-import { RING_GROWTH, RING_START_RADIUS, RING_WIDTH, STAR_INNER_RADIUS, STAR_OUTER_RADIUS, tileColours } from './theme';
+import { RING_GROWTH, RING_START_RADIUS, RING_WIDTH, STAR_INNER_RADIUS, STAR_OUTER_RADIUS } from './theme';
 import { drawnColourOf, type DrawnBoxColour } from './useBoxAmounts';
 
 const RING_END_RADIUS = RING_START_RADIUS + RING_GROWTH;
@@ -28,10 +28,12 @@ interface CrystalProps {
   size: number;
   colour: Colour; // the colour the player needs to be to reach it
   tileColour: Colour;
+  tileColours: Record<Colour, string>; // the level's palette
   drawnBoxColour: DrawnBoxColour;
 }
 
-export function Crystal({ size, colour, tileColour, drawnBoxColour }: CrystalProps) {
+export function Crystal({ size, colour, tileColour, tileColours, drawnBoxColour }: CrystalProps) {
+  const starColour = tileColours[colour];
   const reducedMotion = useReducedMotion();
   const points = useMemo(() => starPoints(size / 2, size / 2, size * STAR_OUTER_RADIUS, size * STAR_INNER_RADIUS), [size]);
   const awakeStyle = useAnimatedStyle(() => ({
@@ -41,16 +43,16 @@ export function Crystal({ size, colour, tileColour, drawnBoxColour }: CrystalPro
     <>
       <Animated.View pointerEvents="none" style={[{ position: 'absolute', left: 0, top: 0, width: size, height: size }, awakeStyle]}>
         {reducedMotion ? (
-          <Ring size={size} colour={colour} still />
+          <Ring size={size} colour={starColour} still />
         ) : (
           <>
-            <Ring size={size} colour={colour} delay={0} />
-            <Ring size={size} colour={colour} delay={RING_PERIOD / 2} />
+            <Ring size={size} colour={starColour} delay={0} />
+            <Ring size={size} colour={starColour} delay={RING_PERIOD / 2} />
           </>
         )}
       </Animated.View>
       <Svg width={size} height={size} style={{ position: 'absolute', top: 0, left: 0 }}>
-        <Polygon points={points} fill={tileColours[colour]} />
+        <Polygon points={points} fill={starColour} />
       </Svg>
     </>
   );
@@ -58,7 +60,7 @@ export function Crystal({ size, colour, tileColour, drawnBoxColour }: CrystalPro
 
 interface RingProps {
   size: number;
-  colour: Colour;
+  colour: string; // the star's colour on screen
   delay?: number; // when this ring starts its first cycle, in milliseconds
   still?: boolean; // with reduced motion: one faint ring that doesn't grow
 }
@@ -74,7 +76,7 @@ function Ring({ size, colour, delay = 0, still = false }: RingProps) {
     borderRadius: diameter / 2,
     // Thicker at full size, so it looks about RING_WIDTH thick in the middle of its growth.
     borderWidth: Math.max(1, (size * RING_WIDTH) / 0.66),
-    borderColor: tileColours[colour],
+    borderColor: colour,
   };
   if (still) return <Animated.View style={[ringShape, { opacity: 0.35, transform: [{ scale: 0.66 }] }]} />;
   return (
