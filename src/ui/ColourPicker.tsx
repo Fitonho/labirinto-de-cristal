@@ -1,12 +1,15 @@
 // The board colours setting: random, a new palette every level, or one
 // favourite palette for every level. Each palette shows as a tile split into
-// its dark and light colours, with its name.
+// its dark and light colours, with its name. A pick recolours the game behind
+// the sheet straight away, so the player can try palettes before choosing:
+// OK or a tap outside the sheet keeps the pick, Cancel or the back button
+// puts back the choice from when the sheet opened.
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { PALETTE_IDS, type PaletteChoice } from '../state/palettes';
 import type { Language } from '../state/store';
 import { useAppColours } from './AppColours';
 import { t, type StringKey } from './i18n';
-import { PickerSheet } from './PickerSheet';
+import { PickerSheet, SheetButton } from './PickerSheet';
 import { boardPalettes } from './theme';
 
 interface ColourPickerProps {
@@ -14,17 +17,29 @@ interface ColourPickerProps {
   language: Language;
   paletteChoice: PaletteChoice;
   onPick: (paletteChoice: PaletteChoice) => void;
-  onClose: () => void;
+  onConfirm: () => void;
+  onCancel: () => void;
 }
 
 const SWATCH_SIZE = 28;
 
-export function ColourPicker({ visible, language, paletteChoice, onPick, onClose }: ColourPickerProps) {
+export function ColourPicker({ visible, language, paletteChoice, onPick, onConfirm, onCancel }: ColourPickerProps) {
   const appColours = useAppColours();
   const optionColours = (isChosen: boolean) =>
     isChosen ? { borderColor: appColours.accent, borderWidth: 2 } : { borderColor: appColours.controlBorder, borderWidth: 1 };
   return (
-    <PickerSheet visible={visible} heading={t(language, 'colours')} closeLabel={t(language, 'close')} onClose={onClose}>
+    <PickerSheet
+      visible={visible}
+      heading={t(language, 'colours')}
+      onBackdropPress={onConfirm}
+      onRequestClose={onCancel}
+      buttons={
+        <>
+          <SheetButton label={t(language, 'cancel')} onPress={onCancel} />
+          <SheetButton label={t(language, 'ok')} onPress={onConfirm} emphasised />
+        </>
+      }
+    >
       <View style={styles.options}>
         <Pressable
           accessibilityRole="radio"

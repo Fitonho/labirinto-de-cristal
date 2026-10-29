@@ -4,7 +4,7 @@ import { chapters, levels } from '../levels/index';
 import type { Language } from '../state/store';
 import { useAppColours } from './AppColours';
 import { t, type StringKey } from './i18n';
-import { PickerSheet } from './PickerSheet';
+import { PickerSheet, SheetButton } from './PickerSheet';
 
 interface LevelPickerProps {
   visible: boolean;
@@ -19,7 +19,13 @@ export function LevelPicker({ visible, language, currentLevelIndex, onPick, onCl
   const levelButtonColours = { borderColor: appColours.controlBorder, backgroundColor: appColours.control };
   const currentLevelButtonColours = { borderColor: appColours.accent, backgroundColor: appColours.accent };
   return (
-    <PickerSheet visible={visible} heading={t(language, 'chooseLevel')} closeLabel={t(language, 'close')} onClose={onClose}>
+    <PickerSheet
+      visible={visible}
+      heading={t(language, 'chooseLevel')}
+      onBackdropPress={onClose}
+      onRequestClose={onClose}
+      buttons={<SheetButton label={t(language, 'close')} onPress={onClose} />}
+    >
       {chapters.map((chapter) => (
         <View key={chapter} style={styles.chapter}>
           <Text style={[styles.chapterName, { color: appColours.quiet }]}>{t(language, `chapter.${chapter}` as StringKey)}</Text>

@@ -2,7 +2,7 @@
 // Undo, the move counter and Restart over the touch area. Plays the move's
 // sound and vibration. All game changes go through the Redux store. The board
 // and the app around it take their colours from the level's palette.
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -42,6 +42,12 @@ export default function GameScreen() {
   const [colourPickerVisible, setColourPickerVisible] = useState(false);
   const { soundOn, vibrationOn, tapMovesOn, paletteChoice, toggleSound, toggleVibration, toggleTapMoves, choosePalette } = useSettings();
   const boardPalette = boardPalettes[useSelector(selectPaletteId)];
+  // The colour choice from when the colour picker opened, put back if the player cancels.
+  const choiceBeforePicker = useRef(paletteChoice);
+  const openColourPicker = useCallback(() => {
+    choiceBeforePicker.current = paletteChoice;
+    setColourPickerVisible(true);
+  }, [paletteChoice]);
   const appColours = useMemo(() => appColoursFor(boardPalette), [boardPalette]);
   // Built once per palette, so a move hands the same style objects to the screen and restyles nothing.
   const paletteStyles = useMemo(
@@ -111,7 +117,7 @@ export default function GameScreen() {
                   />
                 )}
                 <IconButton icon="tapMoves" label={t(language, 'tapMoves')} switchedOn={tapMovesOn} onPress={toggleTapMoves} size={36} />
-                <IconButton icon="colours" label={t(language, 'colours')} onPress={() => setColourPickerVisible(true)} size={36} />
+                <IconButton icon="colours" label={t(language, 'colours')} onPress={openColourPicker} size={36} />
                 <Pressable
                   accessibilityRole="button"
                   accessibilityLabel={t(language, 'language')}
@@ -159,10 +165,11 @@ export default function GameScreen() {
             visible={colourPickerVisible}
             language={language}
             paletteChoice={paletteChoice}
-            onClose={() => setColourPickerVisible(false)}
-            onPick={(pickedChoice) => {
+            onPick={choosePalette}
+            onConfirm={() => setColourPickerVisible(false)}
+            onCancel={() => {
+              choosePalette(choiceBeforePicker.current);
               setColourPickerVisible(false);
-              requestAnimationFrame(() => requestAnimationFrame(() => choosePalette(pickedChoice)));
             }}
           />
         </SafeAreaView>
