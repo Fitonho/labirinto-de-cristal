@@ -3,20 +3,22 @@
 // when a move goes nowhere, and on top of that it squishes and its eyes react
 // (usePebbleMotion). Its colours are the board's drawn box colour, so on a
 // flip they swap with the floor halfway through. Once the level is won it
-// smiles.
+// smiles. The colours come from the level's palette.
 import { memo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle } from 'react-native-reanimated';
+import type { Colour } from '../core';
 import { floorColour } from './boardLayout';
 import { PLAYER_BUMP_DISTANCE, type BoardMotion } from './motion';
 import { ACROSS_RATIO, type PebbleReaction } from './pieceLooks';
-import { PEBBLE_HEIGHT_RATIO, PEBBLE_RADIUS, tileColours } from './theme';
+import { PEBBLE_HEIGHT_RATIO, PEBBLE_RADIUS } from './theme';
 import { useAnimatedPosition } from './useAnimatedPosition';
 import { drawnColourOf, type DrawnBoxColour } from './useBoxAmounts';
 import { usePebbleMotion, type PebbleMotion } from './usePebbleMotion';
 
 interface PlayerProps {
   drawnBoxColour: DrawnBoxColour;
+  tileColours: Record<Colour, string>;
   tileSize: number;
   left: number; // the cell's position; the Pebble is centred inside it
   top: number;
@@ -26,7 +28,7 @@ interface PlayerProps {
   won: boolean;
 }
 
-export function Player({ drawnBoxColour, tileSize, left, top, motion, reaction, glanceTarget, won }: PlayerProps) {
+export function Player({ drawnBoxColour, tileColours, tileSize, left, top, motion, reaction, glanceTarget, won }: PlayerProps) {
   const radius = tileSize * PEBBLE_RADIUS;
   const bodyWidth = radius * 2;
   const bodyHeight = bodyWidth * PEBBLE_HEIGHT_RATIO;
@@ -44,7 +46,7 @@ export function Player({ drawnBoxColour, tileSize, left, top, motion, reaction, 
       pointerEvents="none"
       style={[{ position: 'absolute', left: 0, top: 0, width: bodyWidth, height: bodyHeight }, positionStyle]}
     >
-      <PebbleBody radius={radius} drawnBoxColour={drawnBoxColour} pebbleMotion={pebbleMotion} won={won} />
+      <PebbleBody radius={radius} drawnBoxColour={drawnBoxColour} tileColours={tileColours} pebbleMotion={pebbleMotion} won={won} />
     </Animated.View>
   );
 }
@@ -52,12 +54,13 @@ export function Player({ drawnBoxColour, tileSize, left, top, motion, reaction, 
 interface PebbleBodyProps {
   radius: number;
   drawnBoxColour: DrawnBoxColour;
+  tileColours: Record<Colour, string>;
   pebbleMotion: PebbleMotion;
   won: boolean;
 }
 
 /** The body and eyes. Its props stay the same from move to move, so a move redraws only the Player around it. */
-const PebbleBody = memo(function PebbleBody({ radius, drawnBoxColour, pebbleMotion, won }: PebbleBodyProps) {
+const PebbleBody = memo(function PebbleBody({ radius, drawnBoxColour, tileColours, pebbleMotion, won }: PebbleBodyProps) {
   const { stretch, vertical, anchor, eyeWidth, eyeHeight, blink, lookX, lookY } = pebbleMotion;
   const bodyWidth = radius * 2;
   const bodyHeight = bodyWidth * PEBBLE_HEIGHT_RATIO;

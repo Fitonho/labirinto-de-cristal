@@ -13,11 +13,11 @@ import { memo, useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedProps, useAnimatedStyle, type SharedValue } from 'react-native-reanimated';
 import Svg, { G, Path } from 'react-native-svg';
-import { opposite, type Direction, type Tile } from '../core';
+import { opposite, type Colour, type Direction, type Tile } from '../core';
 import { boxOutline, seamFrame, seamPath } from './boardLayout';
 import { Crystal } from './Crystal';
 import { BOX_BUMP_DISTANCE, bumpDirectionFor, type BoardMotion } from './motion';
-import { BOX_CORNER_RADIUS, BOX_INSET, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_OVERLAP, SEAM_WIDTH, seamColour, tileColours } from './theme';
+import { BOX_CORNER_RADIUS, BOX_INSET, SEAM_CAP_LENGTH, SEAM_FRAME_WIDTH, SEAM_GLOW, SEAM_OVERLAP, SEAM_WIDTH } from './theme';
 import { useAnimatedPosition } from './useAnimatedPosition';
 import { drawnColourOf, type DrawnBoxColour } from './useBoxAmounts';
 
@@ -32,6 +32,8 @@ interface BoardTileProps {
   doorSides: Direction[];
   boxAmount: SharedValue<number>; // shared by every tile of this colour: 1 is a box, 0 is floor
   drawnBoxColour: DrawnBoxColour; // boxes sit above floor tiles; during a flip this switches halfway
+  tileColours: Record<Colour, string>; // the level's palette
+  seamColour: string;
   showCrystal: boolean;
   motion: BoardMotion;
 }
@@ -50,6 +52,8 @@ function drawsTheSame(previous: BoardTileProps, next: BoardTileProps): boolean {
     previous.top === next.top &&
     previous.boxAmount === next.boxAmount &&
     previous.drawnBoxColour === next.drawnBoxColour &&
+    previous.tileColours === next.tileColours &&
+    previous.seamColour === next.seamColour &&
     previous.showCrystal === next.showCrystal &&
     previous.doorSides.join() === next.doorSides.join()
   );
@@ -63,6 +67,8 @@ export const BoardTile = memo(function BoardTile({
   doorSides,
   boxAmount,
   drawnBoxColour,
+  tileColours,
+  seamColour,
   showCrystal,
   motion,
 }: BoardTileProps) {
@@ -86,10 +92,16 @@ export const BoardTile = memo(function BoardTile({
         <RoundedShape size={size} colour={tileColours[tile.colour]} boxAmount={boxAmount} />
       )}
       {doorSides.map((doorSide) => (
-        <DoorSeam key={doorSide} side={doorSide} size={size} boxAmount={boxAmount} />
+        <DoorSeam key={doorSide} side={doorSide} size={size} seamColour={seamColour} boxAmount={boxAmount} />
       ))}
       {showCrystal && (
-        <Crystal size={size} colour={opposite(tile.colour)} tileColour={tile.colour} drawnBoxColour={drawnBoxColour} />
+        <Crystal
+          size={size}
+          colour={opposite(tile.colour)}
+          tileColour={tile.colour}
+          tileColours={tileColours}
+          drawnBoxColour={drawnBoxColour}
+        />
       )}
     </Animated.View>
   );
@@ -165,7 +177,14 @@ const seamShapes: Record<Direction, { roundedCorners: object; transformOrigin: s
  * its box. It pulls back into the edge as its box turns into floor, and comes
  * out as a new box forms.
  */
-function DoorSeam({ side, size, boxAmount }: { side: Direction; size: number; boxAmount: SharedValue<number> }) {
+interface DoorSeamProps {
+  side: Direction;
+  size: number;
+  seamColour: string;
+  boxAmount: SharedValue<number>;
+}
+
+function DoorSeam({ side, size, seamColour, boxAmount }: DoorSeamProps) {
   const frame = seamFrame(side, size);
   const shape = seamShapes[side];
   const isVertical = side === 'left' || side === 'right';

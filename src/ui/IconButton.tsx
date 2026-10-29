@@ -1,11 +1,13 @@
 // Round buttons with line icons for the switches above the board and for
 // Undo and Restart. Icons are drawn with react-native-svg on a 24-point grid,
 // so no icon font has to load. A switch that is off shows its icon crossed out.
+// Colours come from the level's palette.
+import { useMemo } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
-import { palette } from './theme';
+import { useAppColours } from './AppColours';
 
-export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'undo' | 'restart';
+export type IconKind = 'sound' | 'vibration' | 'tapMoves' | 'colours' | 'undo' | 'restart';
 
 interface IconButtonProps {
   icon: IconKind;
@@ -17,8 +19,13 @@ interface IconButtonProps {
 }
 
 export function IconButton({ icon, label, onPress, switchedOn, size = 40 }: IconButtonProps) {
+  const appColours = useAppColours();
   const isSwitch = switchedOn !== undefined;
-  const iconColour = switchedOn === false ? palette.quiet : palette.ink;
+  const iconColour = switchedOn === false ? appColours.quiet : appColours.ink;
+  const buttonStyle = useMemo(
+    () => ({ width: size, height: size, borderRadius: size / 2, borderColor: appColours.controlBorder, backgroundColor: appColours.control }),
+    [size, appColours],
+  );
   return (
     <Pressable
       accessibilityRole={isSwitch ? 'switch' : 'button'}
@@ -28,7 +35,7 @@ export function IconButton({ icon, label, onPress, switchedOn, size = 40 }: Icon
       hitSlop={4}
       style={({ pressed }) => [
         styles.button,
-        { width: size, height: size, borderRadius: size / 2 },
+        buttonStyle,
         pressed && styles.pressed,
       ]}
     >
@@ -67,6 +74,14 @@ function IconShape({ icon, colour }: { icon: IconKind; colour: string }) {
           <Circle cx={12} cy={12} r={8} {...line} strokeDasharray="3 2.5" />
         </>
       );
+    case 'colours':
+      return (
+        <>
+          {/* A tile split into the board's two colours. */}
+          <Circle cx={12} cy={12} r={8} {...line} />
+          <Path d="M12 4 A8 8 0 0 0 12 20 Z" fill={colour} />
+        </>
+      );
     case 'undo':
       return (
         <>
@@ -89,8 +104,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: palette.controlBorder,
-    backgroundColor: palette.control,
   },
   pressed: { opacity: 0.6 },
 });
