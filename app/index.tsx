@@ -26,7 +26,7 @@ import { levelNameFor, t, type StringKey } from '../src/ui/i18n';
 import { IconButton } from '../src/ui/IconButton';
 import { IdeaCard } from '../src/ui/IdeaCard';
 import { IdeaGlow } from '../src/ui/IdeaGlow';
-import { ideaByLevelId, ideaHighlightFor, opensIdeaCard, type IdeaHighlight } from '../src/ui/levelIdeas';
+import { ideaCardsByLevelId, ideaHighlightFor, opensIdeaCard, type IdeaHighlight } from '../src/ui/levelIdeas';
 import { openChapterFromGame, openChapters } from '../src/ui/levelsNavigation';
 import { MoreSheet } from '../src/ui/MoreSheet';
 import { ResultCard } from '../src/ui/ResultCard';
@@ -66,7 +66,8 @@ export default function GameScreen() {
   const chapterDone = isLastLevel || levels[levelIndex + 1].chapter !== level.chapter;
   const levelName = levelNameFor(language, level.id, level.order);
   const chapterName = t(language, `chapter.${level.chapter}` as StringKey);
-  const idea = ideaByLevelId[level.id] ?? null;
+  const ideaCard = ideaCardsByLevelId[level.id] ?? null;
+  const idea = ideaCard?.idea ?? null;
   const [ideaCardOpen, setIdeaCardOpen] = useState(false);
   const [ideaKeyPressCount, setIdeaKeyPressCount] = useState(0);
   const [ideaGlowCount, setIdeaGlowCount] = useState(0);
@@ -83,9 +84,9 @@ export default function GameScreen() {
   presentStateRef.current = state;
   const closeIdeaCard = useCallback(() => {
     setIdeaCardOpen(false);
-    if (idea) setIdeaHighlight(ideaHighlightFor(idea, presentStateRef.current));
+    if (ideaCard) setIdeaHighlight(ideaHighlightFor(ideaCard.glow, presentStateRef.current));
     setIdeaGlowCount((count) => count + 1);
-  }, [idea]);
+  }, [ideaCard]);
   const ideaCardOpenRef = useRef(ideaCardOpen);
   ideaCardOpenRef.current = ideaCardOpen;
   const homeOpenRef = useRef(homeOpen);

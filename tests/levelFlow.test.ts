@@ -2,14 +2,14 @@
 // the levels that open with a new-idea card and what glows after it, level
 // names in both languages, the picture of a board as it stands, and the keys.
 import { describe, expect, it } from 'vitest';
-import { loadLevel, move } from '../src/core';
+import { move } from '../src/core';
 import { levels } from '../src/levels/index';
 import { isReturningPlayer, sessionActions } from '../src/state/session';
 import { createStore } from '../src/state/store';
 import { boardPictureShapesForState } from '../src/ui/boardPicture';
 import { commandsByKey } from '../src/ui/commands';
 import { levelNameFor, t } from '../src/ui/i18n';
-import { ideaByLevelId, ideaHighlightFor, IDEA_CARD_FILL_START, IDEA_CARD_HOLD, opensIdeaCard } from '../src/ui/levelIdeas';
+import { ideaCardsByLevelId, ideaHighlightFor, IDEA_CARD_FILL_START, IDEA_CARD_HOLD, opensIdeaCard } from '../src/ui/levelIdeas';
 import { customLevelState } from './helpers';
 
 const noProgress = { bestMovesByLevelId: {}, currentLevelId: null };
@@ -53,14 +53,19 @@ describe('new-idea card', () => {
   });
 
   it('only covers levels that exist, and every idea has a tip in both languages', () => {
-    for (const [levelId, idea] of Object.entries(ideaByLevelId)) {
-      expect(levels.some((level) => level.id === levelId)).toBe(true);
+    for (const [levelId, { idea, glow }] of Object.entries(ideaCardsByLevelId)) {
+      const level = levels.find((candidateLevel) => candidateLevel.id === levelId);
+      expect(level).toBeDefined();
+      // Listed glow cells are on the board, so a reshaped level can't light thin air.
+      if (Array.isArray(glow)) {
+        for (const cell of glow) expect(level!.grid[cell.row]?.split(' ')[cell.column]).toBeDefined();
+      }
       expect(t('pt', `idea.${idea}`)).not.toBe(t('en', `idea.${idea}`));
     }
   });
 
   it('brings in the ideas in the order the samples teach them', () => {
-    expect(['sample-a', 'sample-b', 'sample-c', 'sample-d', 'sample-e'].map((levelId) => ideaByLevelId[levelId])).toEqual([
+    expect(['sample-a', 'sample-b', 'sample-c', 'sample-d', 'sample-e'].map((levelId) => ideaCardsByLevelId[levelId].idea)).toEqual([
       'push',
       'portal',
       'bridge',
@@ -73,20 +78,12 @@ describe('new-idea card', () => {
     expect(IDEA_CARD_FILL_START).toBeLessThan(IDEA_CARD_HOLD);
   });
 
-  it('lights up the portals, the stars, or the boxes the Pebble can push', () => {
+  it('lights up the portals, the stars, or the cells a level lists', () => {
     const portalLevel = customLevelState(['b w B'], [0, 0], [[0, 0, 'right']]);
-    expect(ideaHighlightFor('portal', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
-    expect(ideaHighlightFor('bridge', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
+    expect(ideaHighlightFor('portals', portalLevel)).toEqual({ cells: [], portals: portalLevel.portals });
     const starLevel = customLevelState(['b b B'], [0, 0]);
-    expect(ideaHighlightFor('crystalColour', starLevel).cells).toEqual([{ row: 0, column: 2 }]);
-    // A white Pebble on black floor: of the white boxes beside it, only the one with floor behind it can move.
-    const pushLevel = customLevelState(['b w b', 'w b B'], [0, 0]);
-    expect(ideaHighlightFor('push', pushLevel).cells).toEqual([{ row: 0, column: 1 }]);
-  });
-
-  it('lights only the box on sample 1 that can be pushed, not the walls beside the Pebble', () => {
-    const firstLevel = levels.find((level) => level.id === 'sample-a')!;
-    expect(ideaHighlightFor('push', loadLevel(firstLevel)).cells).toEqual([{ row: 2, column: 2 }]);
+    expect(ideaHighlightFor('stars', starLevel).cells).toEqual([{ row: 0, column: 2 }]);
+    expect(ideaHighlightFor([{ row: 0, column: 1 }], starLevel)).toEqual({ cells: [{ row: 0, column: 1 }], portals: [] });
   });
 });
 

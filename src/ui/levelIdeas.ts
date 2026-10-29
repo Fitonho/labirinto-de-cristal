@@ -1,16 +1,27 @@
 // The levels that bring in a new idea, and how the new-idea card shows it: its
 // timeline, and what lights up on the real board once the card closes. Only
-// these levels get a card. No React here, so Vitest tests it.
-import { DIRECTIONS, move, type Cell, type GameState, type Portal } from '../core';
+// these levels get a card, and each one says what glows, so nothing has to
+// be worked out from the board. No React here, so Vitest tests it.
+import type { Cell, GameState, Portal } from '../core';
 
 export type LevelIdea = 'push' | 'portal' | 'bridge' | 'crystalColour' | 'portalPush';
 
-export const ideaByLevelId: Record<string, LevelIdea> = {
-  'sample-a': 'push',
-  'sample-b': 'portal',
-  'sample-c': 'bridge',
-  'sample-d': 'crystalColour',
-  'sample-e': 'portalPush',
+/** What lights up on the board after the card: every portal, every star, or the cells listed. */
+export type IdeaGlowTarget = 'portals' | 'stars' | Cell[];
+
+export interface IdeaCard {
+  idea: LevelIdea;
+  glow: IdeaGlowTarget;
+}
+
+export const ideaCardsByLevelId: Record<string, IdeaCard> = {
+  // The one box that can move, two steps right of the Pebble; the ones beside it are walls.
+  'sample-a': { idea: 'push', glow: [{ row: 2, column: 2 }] },
+  'sample-b': { idea: 'portal', glow: 'portals' },
+  // The portal, not the line of boxes, so the glow doesn't give the bridge away.
+  'sample-c': { idea: 'bridge', glow: 'portals' },
+  'sample-d': { idea: 'crystalColour', glow: 'stars' },
+  'sample-e': { idea: 'portalPush', glow: 'portals' },
 };
 
 /** The card's timeline, in milliseconds from when it opens. */
@@ -29,7 +40,7 @@ export const IDEA_GLOW_DURATION = 350;
 
 /** Whether the card opens on its own: a level with an idea, not solved yet, on a fresh board. */
 export function opensIdeaCard(levelId: string, bestMovesByLevelId: Record<string, number>, steps: string): boolean {
-  return levelId in ideaByLevelId && bestMovesByLevelId[levelId] === undefined && steps === '';
+  return levelId in ideaCardsByLevelId && bestMovesByLevelId[levelId] === undefined && steps === '';
 }
 
 export interface IdeaHighlight {
@@ -37,42 +48,15 @@ export interface IdeaHighlight {
   portals: Portal[];
 }
 
-/** What glows on the board after the card: the portals (the bridge's too, so the glow doesn't point at the answer), the stars, or the boxes the Pebble can push. */
-export function ideaHighlightFor(idea: LevelIdea, state: GameState): IdeaHighlight {
-  if (idea === 'portal' || idea === 'bridge' || idea === 'portalPush') return { cells: [], portals: state.portals };
-  if (idea === 'crystalColour') {
+/** The portals or cells to light for a glow target on the board as it stands. */
+export function ideaHighlightFor(glow: IdeaGlowTarget, state: GameState): IdeaHighlight {
+  if (glow === 'portals') return { cells: [], portals: state.portals };
+  if (glow === 'stars') {
     const cells: Cell[] = [];
     state.tiles.forEach((tile, tileIndex) => {
       if (tile.goal) cells.push({ row: Math.floor(tileIndex / state.columnCount), column: tileIndex % state.columnCount });
     });
     return { cells, portals: [] };
   }
-  return { cells: pushableBoxes(state), portals: [] };
-}
-
-/**
- * The boxes the Pebble can push from where it can walk now, found with the
- * engine itself: a box against the edge or another box is a wall, and doesn't
- * glow. The walk stops at anything but a plain step, so it stays on this floor.
- */
-export function pushableBoxes(state: GameState): Cell[] {
-  const boxes: Cell[] = [];
-  const seenCellKeys = new Set([`${state.player.row},${state.player.column}`]);
-  const walkStates = [state];
-  for (const walkState of walkStates) {
-    for (const direction of DIRECTIONS) {
-      const { state: nextState, events } = move(walkState, direction);
-      const push = events.find((event) => event.type === 'pushed');
-      if (push && push.type === 'pushed') {
-        if (!boxes.some((box) => box.row === push.from.row && box.column === push.from.column)) boxes.push(push.from);
-        continue;
-      }
-      if (events.length !== 1 || events[0].type !== 'moved') continue;
-      const cellKey = `${nextState.player.row},${nextState.player.column}`;
-      if (seenCellKeys.has(cellKey)) continue;
-      seenCellKeys.add(cellKey);
-      walkStates.push(nextState);
-    }
-  }
-  return boxes;
+  return { cells: glow, portals: [] };
 }
