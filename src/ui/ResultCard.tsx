@@ -1,4 +1,4 @@
-// The card that rises over the touch area once a level is won: the moves, a
+// The card that rises over the touch area, covering it exactly, once a level is won: the moves, a
 // par badge, the best, a big Next button and Play again, Undo and Levels. It is
 // always mounted, hidden below the screen, so the winning move mounts nothing;
 // the rise and the badge stamp run on shared values with UI-thread delays.
@@ -199,30 +199,32 @@ function SecondaryButton({ icon, label, onPress }: { icon: IconKind; label: stri
 const styles = StyleSheet.create({
   card: {
     position: 'absolute',
-    left: 12,
-    right: 12,
-    bottom: 12,
-    borderRadius: 22,
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    borderRadius: 16,
     borderWidth: 1,
-    padding: 16,
-    gap: 12,
+    padding: 14,
+    gap: 8,
+    justifyContent: 'space-between',
     boxShadow: RESULT_CARD_SHADOW,
   },
-  title: { fontSize: 20, fontWeight: '800' },
+  title: { fontSize: 18, fontWeight: '800' },
   scoreRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   moveFigure: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
-  moveNumber: { fontSize: 40, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  moveNumber: { fontSize: 34, fontWeight: '800', fontVariant: ['tabular-nums'] },
   moveUnit: { fontSize: 15 },
   badge: { borderRadius: 999, paddingVertical: 5, paddingHorizontal: 12 },
   badgeText: { fontSize: 14, fontWeight: '800' },
   details: { fontSize: 15 },
   newBest: { fontWeight: '700' },
-  primary: { borderRadius: 16, paddingVertical: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  primary: { borderRadius: 14, paddingVertical: 12, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   primaryText: { fontSize: 18, fontWeight: '800' },
   peek: { width: 18, height: 18, borderRadius: 9, overflow: 'hidden', borderWidth: 1.5, borderColor: PEEK_RING_COLOUR, transform: [{ rotate: '45deg' }] },
   peekHalf: { position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' },
   secondaryRow: { flexDirection: 'row', gap: 8 },
-  secondary: { flex: 1, borderWidth: 1, borderRadius: 14, paddingVertical: 8, alignItems: 'center', gap: 2 },
+  secondary: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 6, alignItems: 'center', gap: 2 },
   secondaryText: { fontSize: 13 },
   pressed: { opacity: 0.6 },
 });

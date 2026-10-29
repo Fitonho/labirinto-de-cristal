@@ -96,7 +96,6 @@ export function TouchPad({ tapMovesOn, hint, label, onCommand }: TouchPadProps) 
 const styles = StyleSheet.create({
   pad: {
     flex: 1,
-    minHeight: 140,
     borderRadius: 12,
     borderWidth: 1,
     borderStyle: 'dashed',

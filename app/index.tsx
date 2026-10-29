@@ -28,10 +28,15 @@ import { useSounds } from '../src/ui/useSounds';
 import { winResultFor } from '../src/ui/winResult';
 
 /**
- * Height kept free of the board for everything else: the header, the Undo and
- * Restart row, the smallest touch area, and the padding and gaps between them.
+ * The touch area keeps one size on every level, so a small board doesn't hand
+ * it the rest of the screen. Spare height goes round the board instead.
  */
-const CONTROLS_HEIGHT = 330;
+const TOUCH_PAD_HEIGHT = 240;
+/**
+ * Height kept free of the board for everything else: the header, the Undo and
+ * Restart row, the touch area, and the padding and gaps between them.
+ */
+const CONTROLS_HEIGHT = 190 + TOUCH_PAD_HEIGHT;
 /** The web's keyboard help line under the touch area. */
 const HELP_HEIGHT = 48;
 
@@ -184,21 +189,24 @@ export default function GameScreen() {
               </Text>
               <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
             </View>
-            <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
+            {/* The result card covers the touch area exactly. */}
+            <View style={styles.padArea}>
+              <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
+              <ResultCard
+                won={won}
+                result={result}
+                isLastLevel={isLastLevel}
+                language={language}
+                seamColour={boardPalette.seamColour}
+                nextTileColours={nextPaletteId ? boardPalettes[nextPaletteId].tileColours : null}
+                skipCount={skipCount}
+                onNext={goToNextLevel}
+                onPlayAgain={playAgain}
+                onUndo={undo}
+                onLevels={openLevels}
+              />
+            </View>
             {Platform.OS === 'web' && <Text style={[styles.help, paletteStyles.quiet]}>{t(language, 'help')}</Text>}
-            <ResultCard
-              won={won}
-              result={result}
-              isLastLevel={isLastLevel}
-              language={language}
-              seamColour={boardPalette.seamColour}
-              nextTileColours={nextPaletteId ? boardPalettes[nextPaletteId].tileColours : null}
-              skipCount={skipCount}
-              onNext={goToNextLevel}
-              onPlayAgain={playAgain}
-              onUndo={undo}
-              onLevels={openLevels}
-            />
           </View>
           <LevelPicker
             visible={pickerVisible}
@@ -246,7 +254,8 @@ const styles = StyleSheet.create({
   },
   languageText: { fontSize: 13, fontWeight: '600' },
   pressed: { opacity: 0.6 },
-  boardArea: { alignItems: 'center' },
+  boardArea: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  padArea: { height: TOUCH_PAD_HEIGHT },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   status: { flex: 1, textAlign: 'center', fontSize: 16 },
   wonStatus: { fontWeight: '600' },

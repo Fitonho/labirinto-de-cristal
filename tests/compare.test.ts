@@ -14,6 +14,8 @@ import { LegacyGame, legacyLevelNames } from './legacy/rules';
 
 const legacyLevels = new Levels() as any;
 const legacyNames = legacyLevelNames(legacyLevels);
+// The original game had only the draft levels, in this order.
+const draftLevels = levels.filter((level) => level.chapter === 'drafts');
 const legacySidesByDirection = { up: side.Top, right: side.Right, down: side.Bottom, left: side.Left };
 const sideNames = ['up', 'right', 'down', 'left'] as const;
 const rowOffsets = [-1, 0, 1, 0];
@@ -82,7 +84,7 @@ function engineSnapshot(state: GameState) {
 
 describe('engine matches the original rules', () => {
   legacyNames.forEach((legacyName, levelIndex) => {
-    const levelData = levels[levelIndex];
+    const levelData = draftLevels[levelIndex];
     it(`${legacyName} (${levelData.id})`, () => {
       const random = seededRandom(levelIndex + 1);
       let comparedStateCount = 0;
