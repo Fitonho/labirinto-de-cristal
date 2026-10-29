@@ -2,7 +2,7 @@
 // what it teaches, how much of it is solved and its stars. A locked chapter
 // says how many more solves open it. Reset progress sits quietly at the bottom,
 // behind a confirm step. It takes the current level's colours. Its back arrow
-// returns to the game until the home screen exists; see levelsNavigation.ts.
+// goes up to home; see levelsNavigation.ts.
 import { useCallback, useState } from 'react';
 import { BackHandler, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useFocusEffect } from 'expo-router';
@@ -15,7 +15,7 @@ import { AppColoursProvider, useAppColours } from '../src/ui/AppColours';
 import { BoardPicture } from '../src/ui/BoardPicture';
 import { t, tFilled, type StringKey } from '../src/ui/i18n';
 import { IconButton } from '../src/ui/IconButton';
-import { backToGame, openChapterFromChapters } from '../src/ui/levelsNavigation';
+import { backToGame, backToHome, openChapterFromChapters } from '../src/ui/levelsNavigation';
 import { PickerSheet, SheetButton } from '../src/ui/PickerSheet';
 import type { BoardPalette } from '../src/ui/theme';
 import { useKeyboardCommands } from '../src/ui/useKeyboardCommands';
@@ -33,24 +33,29 @@ export default function ChaptersScreen() {
   const starCount = summaries.reduce((total, summary) => total + summary.starCount, 0);
   const parCount = summaries.reduce((total, summary) => total + summary.parCount, 0);
 
-  // L, the key that opens the levels, closes them again.
+  const goBack = useCallback(() => backToHome(dispatch), [dispatch]);
+  // L, the key that opens the levels, closes them again; Escape goes up, like the back arrow.
   useKeyboardCommands(
-    useCallback((command) => {
-      if (command.type !== 'levels') return false;
-      backToGame();
-      return true;
-    }, []),
+    useCallback(
+      (command) => {
+        if (command.type === 'levels') backToGame(dispatch);
+        else if (command.type === 'back') goBack();
+        else return false;
+        return true;
+      },
+      [dispatch, goBack],
+    ),
     Platform.OS === 'web' && !confirmVisible,
   );
   // Android's back button does what the back arrow does.
   useFocusEffect(
     useCallback(() => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-        backToGame();
+        goBack();
         return true;
       });
       return () => subscription.remove();
-    }, []),
+    }, [goBack]),
   );
 
   return (
@@ -58,7 +63,7 @@ export default function ChaptersScreen() {
       <SafeAreaView style={[styles.page, { backgroundColor: appColours.page }]}>
         <View style={styles.column}>
           <View style={styles.header}>
-            <IconButton icon="back" label={t(language, 'backToGame')} onPress={backToGame} size={44} />
+            <IconButton icon="back" label={t(language, 'backToHome')} onPress={goBack} size={44} />
             <Text accessibilityRole="header" style={[styles.heading, { color: appColours.ink }]}>
               {t(language, 'chapters')}
             </Text>

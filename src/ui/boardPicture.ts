@@ -1,8 +1,9 @@
-// A level's start drawn small, for the levels screens: one floor rectangle,
+// A board drawn small: a level's start for the levels screens, or the board
+// the player left for home: one floor rectangle,
 // one path for every box, one for every portal and a star per crystal. A
 // picture is a handful of SVG shapes whatever the board's size, so a screen
 // of them stays cheap. No React here, so Vitest tests it.
-import { loadLevel, opposite, type Colour, type LevelData } from '../core';
+import { loadLevel, opposite, type Colour, type GameState, type LevelData } from '../core';
 import { starPoints } from './pieceLooks';
 import { BOX_CORNER_RADIUS, BOX_INSET, PEBBLE_RADIUS, STAR_INNER_RADIUS, STAR_OUTER_RADIUS } from './theme';
 
@@ -34,12 +35,20 @@ function roundedSquarePath(left: number, top: number, size: number, cornerRadius
 
 /** The largest whole tile size that fits the level in the box, but at least 2. */
 export function pictureTileSizeFor(levelData: LevelData, maxWidth: number, maxHeight: number): number {
-  const columnCount = levelData.grid[0].split(' ').length;
-  return Math.max(2, Math.floor(Math.min(maxWidth / columnCount, maxHeight / levelData.grid.length)));
+  return pictureTileSizeForGrid(levelData.grid[0].split(' ').length, levelData.grid.length, maxWidth, maxHeight);
+}
+
+/** The same for a board of the given size. */
+export function pictureTileSizeForGrid(columnCount: number, rowCount: number, maxWidth: number, maxHeight: number): number {
+  return Math.max(2, Math.floor(Math.min(maxWidth / columnCount, maxHeight / rowCount)));
 }
 
 export function boardPictureShapesFor(levelData: LevelData, tileSize: number): BoardPictureShapes {
-  const state = loadLevel(levelData);
+  return boardPictureShapesForState(loadLevel(levelData), tileSize);
+}
+
+/** A board as it stands, with its pushed boxes, moved portals and the Pebble where it is. Collected stars are left out. */
+export function boardPictureShapesForState(state: GameState, tileSize: number): BoardPictureShapes {
   const boxColour = state.player.colour;
   const inset = tileSize * BOX_INSET;
   const boxSize = tileSize - 2 * inset;
@@ -49,7 +58,7 @@ export function boardPictureShapesFor(levelData: LevelData, tileSize: number): B
     const left = (tileIndex % state.columnCount) * tileSize;
     const top = Math.floor(tileIndex / state.columnCount) * tileSize;
     if (tile.colour === boxColour) boxPaths.push(roundedSquarePath(left + inset, top + inset, boxSize, boxSize * BOX_CORNER_RADIUS));
-    if (tile.goal) {
+    if (tile.goal && !state.collectedGoalIds.includes(tile.id)) {
       const centreX = left + tileSize / 2;
       const centreY = top + tileSize / 2;
       // Below about 8 points a star is a blur; it still shows as a dot of its colour.

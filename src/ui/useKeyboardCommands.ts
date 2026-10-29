@@ -1,4 +1,4 @@
-// Arrow keys, WASD, Z, Backspace, R, M, V, Enter, Space and L on the web. Phones have no keyboard
+// Arrow keys, WASD, Z, Backspace, R, M, V, Enter, Space, L and Escape on the web. Phones have no keyboard
 // listener; hardware keyboards on native come later.
 import { useEffect } from 'react';
 import { Platform } from 'react-native';

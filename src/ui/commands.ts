@@ -8,7 +8,8 @@ export type Command =
   | { type: 'toggleSound' }
   | { type: 'toggleVibration' }
   | { type: 'next' } // the next level, once this one is won
-  | { type: 'levels' };
+  | { type: 'levels' }
+  | { type: 'back' }; // up one screen, like the back arrow
 
 export const commandsByKey: Record<string, Command> = {
   arrowup: { type: 'move', direction: 'up' },
@@ -27,6 +28,7 @@ export const commandsByKey: Record<string, Command> = {
   enter: { type: 'next' },
   ' ': { type: 'next' },
   l: { type: 'levels' },
+  escape: { type: 'back' },
 };
 
 export const MIN_SWIPE_PIXELS = 24;

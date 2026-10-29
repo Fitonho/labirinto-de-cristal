@@ -1,24 +1,30 @@
-// A small still picture of a level's start, in the level screen's palette:
-// the floor, the boxes, the portal seams, the stars and the Pebble. Each picture
-// is one SVG of a few shapes (see boardPicture.ts), drawn once. Uses
-// react-native-svg.
+// A small still picture of a level's start, or of a board as it stands, in
+// the screen's palette: the floor, the boxes, the portal seams, the stars and
+// the Pebble. Each picture is one SVG of a few shapes (see boardPicture.ts),
+// drawn once. Uses react-native-svg.
 import { memo, useMemo } from 'react';
 import Svg, { Circle, Path, Polygon, Rect } from 'react-native-svg';
-import type { LevelData } from '../core';
-import { boardPictureShapesFor, pictureTileSizeFor } from './boardPicture';
+import type { GameState, LevelData } from '../core';
+import { boardPictureShapesFor, boardPictureShapesForState, pictureTileSizeFor, pictureTileSizeForGrid } from './boardPicture';
 import type { BoardPalette } from './theme';
 
 interface BoardPictureProps {
+  /** The level whose start is drawn, unless `state` is given. */
   levelData: LevelData;
+  /** A board as it stands, drawn instead of the level's start. */
+  state?: GameState;
   maxWidth: number;
   maxHeight: number;
   palette: BoardPalette;
 }
 
-export const BoardPicture = memo(function BoardPicture({ levelData, maxWidth, maxHeight, palette }: BoardPictureProps) {
+export const BoardPicture = memo(function BoardPicture({ levelData, state, maxWidth, maxHeight, palette }: BoardPictureProps) {
   const shapes = useMemo(
-    () => boardPictureShapesFor(levelData, pictureTileSizeFor(levelData, maxWidth, maxHeight)),
-    [levelData, maxWidth, maxHeight],
+    () =>
+      state
+        ? boardPictureShapesForState(state, pictureTileSizeForGrid(state.columnCount, state.rowCount, maxWidth, maxHeight))
+        : boardPictureShapesFor(levelData, pictureTileSizeFor(levelData, maxWidth, maxHeight)),
+    [levelData, state, maxWidth, maxHeight],
   );
   const { tileColours, seamColour } = palette;
   return (

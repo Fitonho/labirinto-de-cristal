@@ -1,6 +1,7 @@
 // App state: the current level, its undo history and the steps that built it
 // (for resuming), the last move's events, the level's board palette, the
-// player's settings and their progress (best moves).
+// player's settings, their progress (best moves) and what this run shows
+// above the game (session.ts).
 // The game reducers only call the engine; all game rules live in src/core.
 import { configureStore, createSlice, type Middleware, type PayloadAction } from '@reduxjs/toolkit';
 import {
@@ -19,6 +20,7 @@ import { logger } from './logger';
 import { drawPalette, randomSeed, type PaletteId } from './palettes';
 import { EMPTY_PROGRESS, progressActions, progressReducer, type Progress } from './progress';
 import { RESTART_STEP_LETTER, replaySteps, STEP_LETTER_BY_DIRECTION } from './resume';
+import { INITIAL_SESSION, sessionReducer, type Session } from './session';
 import { DEFAULT_SETTINGS, settingsActions, settingsReducer, type Settings } from './settings';
 
 export type Language = 'pt' | 'en';
@@ -138,14 +140,19 @@ const recordWins: Middleware<{}, RootState> = (store) => (next) => (action) => {
 /** `paletteSeed` starts the palette draws; tests pass one to get the same palettes every run. */
 export function createStore(language: Language, paletteSeed: number = randomSeed()) {
   return configureStore({
-    reducer: { game: game.reducer, settings: settingsReducer, progress: progressReducer },
-    preloadedState: { game: initialState(language, paletteSeed), settings: DEFAULT_SETTINGS, progress: EMPTY_PROGRESS },
+    reducer: { game: game.reducer, settings: settingsReducer, progress: progressReducer, session: sessionReducer },
+    preloadedState: {
+      game: initialState(language, paletteSeed),
+      settings: DEFAULT_SETTINGS,
+      progress: EMPTY_PROGRESS,
+      session: INITIAL_SESSION,
+    },
     middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(recordWins, logActions),
   });
 }
 
 export type AppStore = ReturnType<typeof createStore>;
-export type RootState = { game: GameSlice; settings: Settings; progress: Progress };
+export type RootState = { game: GameSlice; settings: Settings; progress: Progress; session: Session };
 
 /** The palette the board is drawn in: the player's favourite if they chose one, otherwise the level's draw. */
 export function selectPaletteId(rootState: RootState): PaletteId {

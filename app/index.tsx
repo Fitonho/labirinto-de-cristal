@@ -1,16 +1,19 @@
-// The game screen: on top the back arrow up to the chapter's levels, the level and
-// its chapter, and the sound, colours and ⋯ buttons; then the board, Restart,
-// the move counter and Undo over the touch area, and the result sheet that
-// rises over two thirds of the screen once the level is won. Plays the
-// move's sound and vibration. All game changes go through the Redux store. The
-// board and the app around it take their colours from the level's palette.
+// The game screen: on top the back arrow up to the chapter's levels, the level's
+// number, name and chapter, and the sound, colours and ⋯ buttons; then the
+// board, Restart, the move counter and Undo over the touch area, and the result
+// sheet that rises over two thirds of the screen once the level is won. Levels
+// that bring in an idea open with the new-idea card. Home is drawn over all of
+// it, so its Continue reveals this screen as it is. Plays the move's sound and
+// vibration. All game changes go through the Redux store. The board and the app
+// around it take their colours from the level's palette.
 import { useFocusEffect, useIsFocused } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { BackHandler, PixelRatio, Platform, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { BackHandler, PixelRatio, Platform, Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useDispatch, useSelector } from 'react-redux';
 import { levels } from '../src/levels/index';
+import { sessionActions } from '../src/state/session';
 import { settingsActions } from '../src/state/settings';
 import { actions, selectNextPaletteId, selectPaletteId, type RootState } from '../src/state/store';
 import { AppColoursProvider } from '../src/ui/AppColours';
@@ -18,9 +21,13 @@ import { Board } from '../src/ui/Board';
 import { tileSizeFor, touchPadHeightFor } from '../src/ui/boardLayout';
 import { ColourPicker } from '../src/ui/ColourPicker';
 import type { Command } from '../src/ui/commands';
-import { t, type StringKey } from '../src/ui/i18n';
+import { Home } from '../src/ui/Home';
+import { levelNameFor, t, type StringKey } from '../src/ui/i18n';
 import { IconButton } from '../src/ui/IconButton';
-import { openChapterFromGame } from '../src/ui/levelsNavigation';
+import { IdeaCard } from '../src/ui/IdeaCard';
+import { IdeaGlow } from '../src/ui/IdeaGlow';
+import { ideaByLevelId, ideaHighlightFor, opensIdeaCard, type IdeaHighlight } from '../src/ui/levelIdeas';
+import { openChapterFromGame, openChapters } from '../src/ui/levelsNavigation';
 import { MoreSheet } from '../src/ui/MoreSheet';
 import { ResultCard } from '../src/ui/ResultCard';
 import { appColoursFor, boardPalettes, PALETTE_FADE_DURATION } from '../src/ui/theme';
@@ -40,7 +47,9 @@ const CONTROLS_HEIGHT = 172;
 
 export default function GameScreen() {
   const dispatch = useDispatch();
-  const { history, events, language, levelIndex } = useSelector((rootState: RootState) => rootState.game);
+  const { history, events, language, levelIndex, steps } = useSelector((rootState: RootState) => rootState.game);
+  const { homeOpen, homeExit } = useSelector((rootState: RootState) => rootState.session);
+  const bestMovesByLevelId = useSelector((rootState: RootState) => rootState.progress.bestMovesByLevelId);
   const state = history.present;
   const level = levels[levelIndex];
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
@@ -54,6 +63,41 @@ export default function GameScreen() {
   const lastWin = useSelector((rootState: RootState) => rootState.progress.lastWin);
   const won = state.status === 'won';
   const isLastLevel = levelIndex === levels.length - 1;
+  const chapterDone = isLastLevel || levels[levelIndex + 1].chapter !== level.chapter;
+  const levelName = levelNameFor(language, level.id, level.order);
+  const chapterName = t(language, `chapter.${level.chapter}` as StringKey);
+  const idea = ideaByLevelId[level.id] ?? null;
+  const [ideaCardOpen, setIdeaCardOpen] = useState(false);
+  const [ideaKeyPressCount, setIdeaKeyPressCount] = useState(0);
+  const [ideaGlowCount, setIdeaGlowCount] = useState(0);
+  const [ideaHighlight, setIdeaHighlight] = useState<IdeaHighlight | null>(null);
+  // Read through refs, so the card opens only when the level changes or home closes, not on every move.
+  const openingFacts = useRef({ bestMovesByLevelId, steps });
+  openingFacts.current = { bestMovesByLevelId, steps };
+  useEffect(() => {
+    if (homeOpen) return;
+    setIdeaCardOpen(opensIdeaCard(level.id, openingFacts.current.bestMovesByLevelId, openingFacts.current.steps));
+  }, [level.id, homeOpen]);
+  // The board is read through a ref, so a move doesn't hand the card a new handler and redraw it.
+  const presentStateRef = useRef(state);
+  presentStateRef.current = state;
+  const closeIdeaCard = useCallback(() => {
+    setIdeaCardOpen(false);
+    if (idea) setIdeaHighlight(ideaHighlightFor(idea, presentStateRef.current));
+    setIdeaGlowCount((count) => count + 1);
+  }, [idea]);
+  const ideaCardOpenRef = useRef(ideaCardOpen);
+  ideaCardOpenRef.current = ideaCardOpen;
+  const homeOpenRef = useRef(homeOpen);
+  homeOpenRef.current = homeOpen;
+  const { starCount, parCount, allSolved } = useMemo(() => {
+    const levelsWithPar = levels.filter((eachLevel) => eachLevel.par !== undefined);
+    return {
+      starCount: levelsWithPar.filter((eachLevel) => (bestMovesByLevelId[eachLevel.id] ?? Infinity) <= (eachLevel.par ?? 0)).length,
+      parCount: levelsWithPar.length,
+      allSolved: levels.every((eachLevel) => bestMovesByLevelId[eachLevel.id] !== undefined),
+    };
+  }, [bestMovesByLevelId]);
   const result = useMemo(
     () => (won && lastWin && lastWin.levelId === level.id ? winResultFor(lastWin.moveCount, level.par, lastWin.previousBestMoves) : null),
     [won, lastWin, level],
@@ -66,6 +110,7 @@ export default function GameScreen() {
     choiceBeforePicker.current = paletteChoice;
     setColourPickerVisible(true);
   }, [paletteChoice]);
+  const openMore = useCallback(() => setMoreVisible(true), []);
   const appColours = useMemo(() => appColoursFor(boardPalette), [boardPalette]);
   // Built once per palette, so a move hands the same style objects to the screen and restyles nothing.
   const paletteStyles = useMemo(
@@ -90,10 +135,12 @@ export default function GameScreen() {
     [dispatch],
   );
   const openLevels = useCallback(() => openChapterFromGame(level.chapter), [level.chapter]);
+  // After a chapter's last level the chapters come next, where the next chapter's card waits.
   const goToNextLevel = useCallback(() => {
-    if (isLastLevel) openLevels();
+    if (chapterDone) openChapters();
     else goToLevel(levelIndex + 1);
-  }, [isLastLevel, openLevels, goToLevel, levelIndex]);
+  }, [chapterDone, goToLevel, levelIndex]);
+  const continueGame = useCallback(() => dispatch(sessionActions.closeHome({ animated: true })), [dispatch]);
   const playAgain = useCallback(() => dispatch(actions.reset()), [dispatch]);
   const undo = useCallback(() => dispatch(actions.undo()), [dispatch]);
 
@@ -102,6 +149,21 @@ export default function GameScreen() {
   wonRef.current = won;
   const run = useCallback(
     (command: Command) => {
+      // Home takes only Enter (Continue) and L (the chapters); the rest waits for the game.
+      if (homeOpenRef.current) {
+        if (command.type === 'next') continueGame();
+        else if (command.type === 'levels') openChapters();
+        else return false;
+        return true;
+      }
+      // A key on the new-idea card counts as a tap on it; Undo and Restart wait until it's gone.
+      if (ideaCardOpenRef.current) {
+        if (command.type === 'move' || command.type === 'next') setIdeaKeyPressCount((count) => count + 1);
+        else if (command.type === 'toggleSound') toggleSound();
+        else if (command.type === 'toggleVibration') toggleVibration();
+        else return false;
+        return true;
+      }
       const won = wonRef.current;
       // Once the level is won a move does nothing but land the result card.
       if (command.type === 'move' && won) setSkipCount((count) => count + 1);
@@ -111,17 +173,18 @@ export default function GameScreen() {
       if (command.type === 'toggleSound') toggleSound();
       if (command.type === 'toggleVibration') toggleVibration();
       if (command.type === 'next' && won) goToNextLevel();
-      if (command.type === 'levels') openLevels();
+      if (command.type === 'levels' || command.type === 'back') openLevels();
       // Enter and Space only mean Next once the level is won; before that they press the focused button.
       return command.type !== 'next' || won;
     },
-    [dispatch, undo, playAgain, toggleSound, toggleVibration, goToNextLevel, openLevels],
+    [dispatch, undo, playAgain, toggleSound, toggleVibration, goToNextLevel, openLevels, continueGame],
   );
   useKeyboardCommands(run, isFocused && !moreVisible && !colourPickerVisible);
-  // Android's back button goes up one screen, to the levels, as the back arrow does.
+  // Android's back button goes up one screen, to the levels, as the back arrow does. On home it closes the app.
   useFocusEffect(
     useCallback(() => {
       const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+        if (homeOpenRef.current) return false;
         openLevels();
         return true;
       });
@@ -152,21 +215,29 @@ export default function GameScreen() {
           <View style={styles.column}>
             <View style={styles.header}>
               <IconButton icon="back" label={t(language, 'levels')} onPress={openLevels} size={44} />
-              <View style={styles.titleBlock}>
+              {/* On a level with an idea, the name opens its card again. */}
+              <Pressable
+                accessibilityRole={idea ? 'button' : undefined}
+                accessibilityLabel={idea ? `${level.order} · ${levelName}, ${t(language, 'showIdea')}` : undefined}
+                disabled={!idea}
+                onPress={() => setIdeaCardOpen(true)}
+                style={styles.titleBlock}
+              >
                 <Text accessibilityRole="header" numberOfLines={1} style={[styles.levelName, paletteStyles.ink]}>
-                  {`${t(language, 'level')} ${level.order}`}
+                  {`${level.order} · ${levelName}`}
                 </Text>
                 <Text numberOfLines={1} style={[styles.chapterName, paletteStyles.quiet]}>
-                  {t(language, `chapter.${level.chapter}` as StringKey)}
+                  {chapterName}
                 </Text>
-              </View>
+              </Pressable>
               <IconButton icon="sound" label={t(language, 'sound')} switchedOn={soundOn} onPress={toggleSound} size={40} />
               <IconButton icon="colours" label={t(language, 'colours')} onPress={openColourPicker} size={40} />
-              <IconButton icon="more" label={t(language, 'moreOptions')} onPress={() => setMoreVisible(true)} size={40} />
+              <IconButton icon="more" label={t(language, 'moreOptions')} onPress={openMore} size={40} />
             </View>
             <View style={styles.boardArea}>
               <View style={paletteStyles.boardEdge}>
                 <Board state={state} events={events} tileSize={tileSize} palette={boardPalette} onCommand={run} />
+                <IdeaGlow highlight={ideaHighlight} tileSize={tileSize} seamColour={boardPalette.seamColour} glowCount={ideaGlowCount} />
               </View>
             </View>
             {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping.
@@ -189,6 +260,7 @@ export default function GameScreen() {
             won={won}
             result={result}
             isLastLevel={isLastLevel}
+            chapterDone={chapterDone}
             language={language}
             seamColour={boardPalette.seamColour}
             nextTileColours={nextPaletteId ? boardPalettes[nextPaletteId].tileColours : null}
@@ -198,6 +270,35 @@ export default function GameScreen() {
             onPlayAgain={playAgain}
             onUndo={undo}
             onLevels={openLevels}
+            onChapters={openChapters}
+          />
+          <IdeaCard
+            open={ideaCardOpen}
+            idea={idea}
+            levelName={levelName}
+            levelPlace={`${chapterName} ${level.order}`}
+            language={language}
+            tileColours={boardPalette.tileColours}
+            seamColour={boardPalette.seamColour}
+            keyPressCount={ideaKeyPressCount}
+            onClose={closeIdeaCard}
+          />
+          <Home
+            open={homeOpen}
+            exit={homeExit}
+            state={homeOpen ? state : null}
+            level={level}
+            language={language}
+            palette={boardPalette}
+            starCount={starCount}
+            parCount={parCount}
+            allSolved={allSolved}
+            soundOn={soundOn}
+            onToggleSound={toggleSound}
+            onOpenColours={openColourPicker}
+            onOpenMore={openMore}
+            onContinue={continueGame}
+            onOpenChapters={openChapters}
           />
           <MoreSheet
             visible={moreVisible}
