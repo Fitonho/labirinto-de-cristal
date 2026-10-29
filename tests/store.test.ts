@@ -32,14 +32,14 @@ describe('web store', () => {
 describe('settings', () => {
   it('starts with sound, vibration and tap moves on and switches each one separately', () => {
     const store = createStore('en');
-    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone' });
+    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone', stuckTipSeen: false });
     store.dispatch(settingsActions.setSoundOn(false));
-    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone' });
+    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone', stuckTipSeen: false });
     store.dispatch(settingsActions.setTapMovesOn(false));
-    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: false, paletteChoice: 'random', languageChoice: 'phone' });
+    expect(store.getState().settings).toEqual({ soundOn: false, vibrationOn: true, tapMovesOn: false, paletteChoice: 'random', languageChoice: 'phone', stuckTipSeen: false });
     store.dispatch(settingsActions.setVibrationOn(false));
-    store.dispatch(settingsActions.loadedSettings({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss', languageChoice: 'phone' }));
-    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss', languageChoice: 'phone' });
+    store.dispatch(settingsActions.loadedSettings({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss', languageChoice: 'phone', stuckTipSeen: false }));
+    expect(store.getState().settings).toEqual({ soundOn: true, vibrationOn: false, tapMovesOn: true, paletteChoice: 'moss', languageChoice: 'phone', stuckTipSeen: false });
   });
 
   it('loads saved settings, filling anything missing, mistyped or unreadable with its default', () => {
@@ -49,6 +49,7 @@ describe('settings', () => {
       tapMovesOn: false,
       paletteChoice: 'teal',
       languageChoice: 'phone',
+      stuckTipSeen: false,
     });
     // A save from before tap moves and palettes existed gets tap moves on and random colours.
     expect(settingsFromSaved(JSON.stringify({ soundOn: false, vibrationOn: true }))).toEqual({
@@ -57,6 +58,7 @@ describe('settings', () => {
       tapMovesOn: true,
       paletteChoice: 'random',
       languageChoice: 'phone',
+      stuckTipSeen: false,
     });
     // A palette that no longer exists falls back to random.
     expect(settingsFromSaved(JSON.stringify({ paletteChoice: 'classic' })).paletteChoice).toBe('random');

@@ -86,6 +86,12 @@ export function openLevelIdsFor(summaries: ChapterSummary[], bestMovesByLevelId:
   return openLevelIds;
 }
 
+/** Whether the player can open an unsolved level other than the one they are on, so moving on is a real choice. */
+export function otherUnsolvedLevelOpen(chapters: readonly string[], levels: LevelData[], bestMovesByLevelId: Record<string, number>, currentLevelId: string): boolean {
+  const openLevelIds = openLevelIdsFor(chapterSummariesFor(chapters, levels, bestMovesByLevelId), bestMovesByLevelId, currentLevelId);
+  return [...openLevelIds].some((levelId) => levelId !== currentLevelId && bestMovesByLevelId[levelId] === undefined);
+}
+
 /** The level the chapter's Play button opens: the one the player is on if it's here, else the first open unsolved one. */
 export function levelToPlayIn(summary: ChapterSummary, openLevelIds: Set<string>, bestMovesByLevelId: Record<string, number>, currentLevelId: string): LevelData | null {
   return (

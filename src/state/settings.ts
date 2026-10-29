@@ -1,5 +1,5 @@
 // The player's settings: sound, vibration and tap moves on or off, the board
-// colours and the language. The whole slice is saved as one object, so a new setting only needs a
+// colours and the language, and whether the once-only stuck tip was shown. The whole slice is saved as one object, so a new setting only needs a
 // field here and a default.
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isPaletteChoice, type PaletteChoice } from './palettes';
@@ -17,9 +17,11 @@ export interface Settings {
   /** 'random' gives every level a new palette; a palette id keeps that one on every level. */
   paletteChoice: PaletteChoice;
   languageChoice: LanguageChoice;
+  /** Not a switch: the stuck tip shows once ever, and this keeps it from coming back. Here because settings are saved whole. */
+  stuckTipSeen: boolean;
 }
 
-export const DEFAULT_SETTINGS: Settings = { soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone' };
+export const DEFAULT_SETTINGS: Settings = { soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone', stuckTipSeen: false };
 
 /**
  * Settings from saved JSON. Anything missing or of the wrong type takes its
@@ -62,6 +64,9 @@ const settings = createSlice({
     },
     setLanguageChoice(state, action: PayloadAction<LanguageChoice>) {
       state.languageChoice = action.payload;
+    },
+    stuckTipShown(state) {
+      state.stuckTipSeen = true;
     },
     /** Replaces every setting at once, after loading them from storage. */
     loadedSettings(state, action: PayloadAction<Settings>) {

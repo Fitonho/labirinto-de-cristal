@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { DIRECTIONS, move, type LevelData } from '../src/core';
 import { chapters, levels } from '../src/levels/index';
-import { chapterSummariesFor, levelMarkFor, levelToPlayIn, openLevelIdsFor } from '../src/state/levelProgress';
+import { chapterSummariesFor, levelMarkFor, levelToPlayIn, openLevelIdsFor, otherUnsolvedLevelOpen } from '../src/state/levelProgress';
 import { replaySteps, resumeFromSaved, resumeToSave } from '../src/state/resume';
 import { actions, createStore } from '../src/state/store';
 import { boardPictureShapesFor, pictureTileSizeFor } from '../src/ui/boardPicture';
@@ -139,19 +139,11 @@ describe('unlocking', () => {
     expect(summaries.filter((summary) => summary.open).map((summary) => summary.chapter)).toEqual(['first-steps', 'labyrinths']);
   });
 
-  it('has the moving portals open whenever Neighbours is, as its skip tip says', () => {
-    const earlierBests = Object.fromEntries(levels.filter((level) => ['first-steps', 'portals'].includes(level.chapter)).map((level) => [level.id, 99]));
-    const otherCrystalIds = levels.filter((level) => level.chapter === 'crystals' && level.id !== 'neighbours').map((level) => level.id);
-    // Every mix of solved and unsolved crystal levels before it.
-    for (let solvedMask = 0; solvedMask < 2 ** otherCrystalIds.length; solvedMask++) {
-      const bests: Record<string, number> = { ...earlierBests };
-      otherCrystalIds.forEach((levelId, levelIndex) => {
-        if (solvedMask & (2 ** levelIndex)) bests[levelId] = 99;
-      });
-      const summaries = chapterSummariesFor(chapters, levels, bests);
-      if (!openLevelIdsFor(summaries, bests, 'sample-a').has('neighbours')) continue;
-      expect(summaries.find((summary) => summary.chapter === 'moving-portals')?.open).toBe(true);
-    }
+  it('knows when a level other than the current one is open and unsolved', () => {
+    expect(otherUnsolvedLevelOpen(chapters, levels, {}, 'sample-a')).toBe(true);
+    // A made-up game of one chapter with one level: nowhere else to go.
+    const onlyLevels = [level('only-1', 'only', 1)];
+    expect(otherUnsolvedLevelOpen(['only'], onlyLevels, {}, 'only-1')).toBe(false);
   });
 });
 

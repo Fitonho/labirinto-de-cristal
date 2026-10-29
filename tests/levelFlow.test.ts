@@ -9,7 +9,7 @@ import { createStore } from '../src/state/store';
 import { boardPictureShapesForState } from '../src/ui/boardPicture';
 import { commandsByKey } from '../src/ui/commands';
 import { levelNameFor, t } from '../src/ui/i18n';
-import { ideaCardsByLevelId, ideaHighlightFor, IDEA_CARD_FILL_START, IDEA_CARD_HOLD, opensIdeaCard } from '../src/ui/levelIdeas';
+import { ideaCardsByLevelId, ideaHighlightFor, IDEA_CARD_FILL_START, IDEA_CARD_HOLD, opensIdeaCard, opensStuckTip } from '../src/ui/levelIdeas';
 import { customLevelState } from './helpers';
 
 const noProgress = { bestMovesByLevelId: {}, currentLevelId: null };
@@ -64,9 +64,19 @@ describe('new-idea card', () => {
     }
   });
 
+  it('opens the stuck tip on the third restart of an unsolved level, once ever, with somewhere else to go', () => {
+    const anotherLevel = () => true;
+    expect(opensStuckTip('urxlxd', false, false, anotherLevel)).toBe(false);
+    expect(opensStuckTip('urxlxdx', false, false, anotherLevel)).toBe(true);
+    expect(opensStuckTip('urxlxdx', true, false, anotherLevel)).toBe(false);
+    expect(opensStuckTip('urxlxdx', false, true, anotherLevel)).toBe(false);
+    expect(opensStuckTip('urxlxdx', false, false, () => false)).toBe(false);
+    expect(t('pt', 'idea.skip')).not.toBe(t('en', 'idea.skip'));
+  });
+
   it('brings in the ideas in the order the chapters teach them', () => {
     const ideas = levels.filter((level) => level.id in ideaCardsByLevelId).map((level) => ideaCardsByLevelId[level.id].idea);
-    expect(ideas).toEqual(['push', 'oneBox', 'undo', 'portal', 'bridge', 'crystalColour', 'allStars', 'skip', 'portalPush']);
+    expect(ideas).toEqual(['push', 'oneBox', 'undo', 'portal', 'bridge', 'crystalColour', 'allStars', 'portalPush']);
   });
 
   it('fills Play before it can be pressed', () => {
