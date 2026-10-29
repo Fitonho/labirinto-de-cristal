@@ -207,6 +207,8 @@ interface Scene {
   pebble: { path: SceneCell[]; colourBefore: Colour; colourAfter: Colour };
   /** A box the Pebble pushes one cell on its first step, which may carry a portal on its right side. */
   box: { fromCell: SceneCell; colour: Colour; carriesPortal: boolean } | null;
+  /** Draws tiles in the Pebble's colour as boxes even with nothing pushed (a scene with a push always does). */
+  showsBoxes?: boolean;
   /** A portal that stays on the edge between two side-by-side cells. */
   portal: { between: [SceneCell, SceneCell] } | null;
   star: { cell: SceneCell; colour: Colour } | null;
@@ -236,28 +238,28 @@ const SCENES: Record<LevelIdea, Scene> = {
     portal: { between: [{ row: 0, column: 1 }, { row: 0, column: 2 }] },
     star: null,
   },
-  // Sample 3 in small: the push fills the gap in the top line of boxes, the
-  // portal flips the Pebble, and that line of its old colour is now the bridge to the star.
+  // The rule behind sample 3's bridge, not its recipe: the line of boxes is
+  // already whole, and the flip alone turns it into the path to the star.
+  // Filling the gap in the level is left for the player to find.
   bridge: {
-    tileRows: ['wbww', 'bwbb', 'bbbb'],
+    tileRows: ['bbb', 'www', 'bbb'],
     pebble: {
       path: [
+        { row: 2, column: 0 },
         { row: 2, column: 1 },
-        { row: 1, column: 1 },
+        { row: 2, column: 2 },
         { row: 1, column: 2 },
-        { row: 1, column: 3 },
-        { row: 0, column: 3 },
-        { row: 0, column: 2 },
-        { row: 0, column: 1 },
-        { row: 0, column: 0 },
+        { row: 1, column: 1 },
+        { row: 1, column: 0 },
       ],
       colourBefore: 'white',
       colourAfter: 'black',
     },
-    box: { fromCell: { row: 1, column: 1 }, colour: 'white', carriesPortal: false },
-    portal: { between: [{ row: 0, column: 3 }, { row: 1, column: 3 }] },
-    star: { cell: { row: 0, column: 0 }, colour: 'black' },
-    loopDuration: 4400,
+    box: null,
+    showsBoxes: true,
+    portal: { between: [{ row: 1, column: 2 }, { row: 2, column: 2 }] },
+    star: { cell: { row: 1, column: 0 }, colour: 'black' },
+    loopDuration: 3600,
   },
   crystalColour: {
     tileRows: ['wwbb'],
@@ -393,7 +395,8 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
     : -1;
   const crossing = crossingStepIndex > 0 ? MOVE_START + (crossingStepIndex - 0.5) * stepDuration : null;
   // With boxes on the board, a flip turns them all: the Pebble's old colour is floor now, and the other colour is boxes.
-  const flipsBoxes = scene.box !== null && crossing !== null && colourAfter !== colourBefore;
+  const showsBoxes = scene.box !== null || scene.showsBoxes === true;
+  const flipsBoxes = showsBoxes && crossing !== null && colourAfter !== colourBefore;
   const tileColourRowsBefore = scene.tileRows.map((tileRow) => [...tileRow].map((letter) => TILE_COLOURS_BY_LETTER[letter]));
   const tileColourRowsAfter = flipsBoxes ? tileColoursAfterPush(scene) : null;
 
@@ -444,7 +447,7 @@ function IdeaScene({ idea, tileColours, seamColour, playing }: IdeaSceneProps) {
     <View style={[styles.scene, { width: SCENE_CELL * scene.tileRows[0].length, height: SCENE_CELL * scene.tileRows.length }]}>
       <SceneTiles
         tileColourRows={tileColourRowsBefore}
-        boxColour={scene.box ? colourBefore : null}
+        boxColour={showsBoxes ? colourBefore : null}
         skippedBoxCell={scene.box?.fromCell ?? null}
         tileColours={tileColours}
       />
