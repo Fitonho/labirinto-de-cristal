@@ -102,13 +102,14 @@ export default function GameScreen() {
         <View style={styles.boardArea}>
           <Board state={state} events={events} tileSize={tileSize} onCommand={run} />
         </View>
-        {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping. */}
+        {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping.
+            Undo, pressed far more often, is on the right, under most players' thumb. */}
         <View style={styles.statusRow}>
-          <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
+          <IconButton icon="restart" label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} size={48} />
           <Text accessibilityLiveRegion="polite" style={[styles.status, won && styles.wonStatus]}>
             {won ? `${t(language, 'won')} ${moveText}` : moveText}
           </Text>
-          <IconButton icon="restart" label={t(language, 'reset')} onPress={() => run({ type: 'reset' })} size={48} />
+          <IconButton icon="undo" label={t(language, 'undo')} onPress={() => run({ type: 'undo' })} size={48} />
         </View>
         <TouchPad tapMovesOn={tapMovesOn} hint={hint} label={t(language, 'touchArea')} onCommand={run} />
         {Platform.OS === 'web' && <Text style={styles.help}>{t(language, 'help')}</Text>}
