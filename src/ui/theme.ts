@@ -37,3 +37,14 @@ export const SEAM_FRAME_WIDTH = 12;
 export const SEAM_OVERLAP = 1;
 /** How long the seam's rounded ends are, along the edge. */
 export const SEAM_CAP_LENGTH = SEAM_WIDTH * 3;
+
+/** The Pebble's size, as a share of the tile size: its radius across, and how much less tall it is. */
+export const PEBBLE_RADIUS = 0.26;
+export const PEBBLE_HEIGHT_RATIO = 0.94;
+/** The Beacon star's points and waist, as shares of the tile size. */
+export const STAR_OUTER_RADIUS = 0.27;
+export const STAR_INNER_RADIUS = 0.07;
+/** A ring starts this far out and grows by this much before it fades, as shares of the tile size. */
+export const RING_START_RADIUS = 0.14;
+export const RING_GROWTH = 0.3;
+export const RING_WIDTH = 0.03;
