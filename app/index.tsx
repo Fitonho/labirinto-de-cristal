@@ -31,7 +31,7 @@ import { winResultFor } from '../src/ui/winResult';
  * The touch area keeps one size on every level, so a small board doesn't hand
  * it the rest of the screen. Spare height goes round the board instead.
  */
-const TOUCH_PAD_HEIGHT = 240;
+const TOUCH_PAD_HEIGHT = 290;
 /**
  * Height kept free of the board for everything else: the header, the Undo and
  * Restart row, the touch area, and the padding and gaps between them.

@@ -26,6 +26,12 @@ export interface CollectBurstProps {
   colour: string; // the star's colour on screen
   /** How long after mounting it bursts; by default when the Pebble's slide ends. */
   delay?: number;
+  /**
+   * Whether its star shows while it waits. On the board it stands in for the
+   * collected star; over an emblem that already draws one, a second star while
+   * the emblem spins would show through as an eight-point star.
+   */
+  starBeforeBurst?: boolean;
 }
 
 /** `burst` is a new object for each move that collected a star, and null after any other action. */
@@ -44,13 +50,16 @@ export function CollectBurstLayer({ burst }: { burst: CollectBurstProps | null }
 }
 
 // Mounted a frame after the move, so by default it waits a frame less for the slide to end.
-export function CollectBurst({ size, left, top, colour, delay = SLIDE_DURATION - 16 }: CollectBurstProps) {
+export function CollectBurst({ size, left, top, colour, delay = SLIDE_DURATION - 16, starBeforeBurst = true }: CollectBurstProps) {
   const progress = useSharedValue(0);
   useLayoutEffect(() => {
     progress.value = withDelay(delay, withTiming(1, { duration: COLLECT_BURST_DURATION, easing: Easing.linear }));
   }, [progress, delay]);
   const points = useMemo(() => starPoints(size / 2, size / 2, size * STAR_OUTER_RADIUS, size * STAR_INNER_RADIUS), [size]);
-  const starStyle = useAnimatedStyle(() => ({ opacity: 1 - progress.value, transform: [{ scale: 1 + progress.value * 0.7 }] }));
+  const starStyle = useAnimatedStyle(() => ({
+    opacity: progress.value > 0 || starBeforeBurst ? 1 - progress.value : 0,
+    transform: [{ scale: 1 + progress.value * 0.7 }],
+  }));
   return (
     <Animated.View pointerEvents="none" style={{ position: 'absolute', left, top, width: size, height: size }}>
       {shardDirections(SHARD_COUNT).map((shardDirection, shardIndex) => (

@@ -168,7 +168,7 @@ export const ResultCard = memo(function ResultCard({
       <View
         style={[
           styles.sheet,
-          { backgroundColor: appColours.control, borderColor: appColours.controlBorder, paddingBottom: 14 + bottomInset },
+          { backgroundColor: appColours.control, borderColor: appColours.controlBorder, paddingBottom: 28 + bottomInset },
         ]}
       >
         <View style={styles.emblemSlot}>
@@ -181,6 +181,7 @@ export const ResultCard = memo(function ResultCard({
               top={(EMBLEM_SLOT_HEIGHT - EMBLEM_BOX_SIZE) / 2}
               colour={appColours.accent}
               delay={emblemBurst.delay}
+              starBeforeBurst={false}
             />
           )}
           <Animated.View style={[styles.emblem, emblemStyle]}>
@@ -288,13 +289,13 @@ const styles = StyleSheet.create({
   details: { fontSize: 15, textAlign: 'center' },
   newBest: { fontWeight: '700' },
   // The buttons sit at the bottom of the sheet, under the thumb.
-  actions: { marginTop: 'auto', width: '100%', gap: 8 },
-  primary: { borderRadius: 16, paddingVertical: 15, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
+  actions: { marginTop: 'auto', width: '100%', gap: 10 },
+  primary: { borderRadius: 16, paddingVertical: 18, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 10 },
   primaryText: { fontSize: 18, fontWeight: '800' },
   peek: { width: 18, height: 18, borderRadius: 9, overflow: 'hidden', borderWidth: 1.5, borderColor: PEEK_RING_COLOUR, transform: [{ rotate: '45deg' }] },
   peekHalf: { position: 'absolute', left: 0, top: 0, bottom: 0, width: '50%' },
   secondaryRow: { flexDirection: 'row', gap: 8 },
-  secondary: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 7, alignItems: 'center', gap: 2 },
+  secondary: { flex: 1, borderWidth: 1, borderRadius: 12, paddingVertical: 11, alignItems: 'center', gap: 2 },
   secondaryText: { fontSize: 13 },
   pressed: { opacity: 0.6 },
 });
