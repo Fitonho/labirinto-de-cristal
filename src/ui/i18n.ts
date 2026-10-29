@@ -42,6 +42,24 @@ const strings = {
     language: 'Idioma',
     'chapter.drafts': 'Rascunhos',
     'chapter.samples': 'Exemplos',
+    'chapterIdea.drafts': 'tabuleiros grandes e abertos',
+    'chapterIdea.samples': 'andar, empurrar, trocar de cor',
+    chapters: 'Capítulos',
+    backToChapters: 'Voltar aos capítulos',
+    solvedOfTotal: '{solved} / {total} resolvidos',
+    noParsYet: 'sem metas ainda',
+    chapterLocked: 'Resolva mais {count} em {chapter} para abrir',
+    levelsSolved: '{solved} de {total} níveis resolvidos',
+    starsLabel: '{count} estrelas',
+    levelLegend: '✓ resolvido · ★ na meta ou melhor',
+    playLevel: 'Jogar nível {number}',
+    levelLocked: 'bloqueado',
+    levelSolved: 'resolvido',
+    levelAtPar: 'resolvido na meta',
+    resetProgress: 'Apagar progresso',
+    resetProgressQuestion: 'Apagar todo o progresso?',
+    resetProgressDetail: 'Os níveis resolvidos ({solved}) e as estrelas ({stars}) serão apagados. As configurações continuam. Não dá para desfazer.',
+    resetProgressConfirm: 'Apagar',
     colours: 'Cores do tabuleiro',
     randomColours: 'Aleatórias: cores novas a cada nível',
     'palette.ink': 'Tinta e Papel',
@@ -98,6 +116,24 @@ const strings = {
     language: 'Language',
     'chapter.drafts': 'Drafts',
     'chapter.samples': 'Samples',
+    'chapterIdea.drafts': 'big open boards',
+    'chapterIdea.samples': 'walk, push, flip',
+    chapters: 'Chapters',
+    backToChapters: 'Back to the chapters',
+    solvedOfTotal: '{solved} / {total} solved',
+    noParsYet: 'no pars yet',
+    chapterLocked: 'Solve {count} more in {chapter} to open',
+    levelsSolved: '{solved} of {total} levels solved',
+    starsLabel: '{count} stars',
+    levelLegend: '✓ solved · ★ at par or better',
+    playLevel: 'Play level {number}',
+    levelLocked: 'locked',
+    levelSolved: 'solved',
+    levelAtPar: 'solved at par',
+    resetProgress: 'Reset progress',
+    resetProgressQuestion: 'Reset all progress?',
+    resetProgressDetail: 'Your solved levels ({solved}) and stars ({stars}) will be cleared. Settings stay as they are. You can\'t undo this.',
+    resetProgressConfirm: 'Reset',
     colours: 'Board colours',
     randomColours: 'Random: new colours every level',
     'palette.ink': 'Ink & Paper',
@@ -120,6 +156,11 @@ export type StringKey = keyof (typeof strings)['pt'];
 
 export function t(language: Language, key: StringKey): string {
   return strings[language][key];
+}
+
+/** A string with its {name} gaps filled in. */
+export function tFilled(language: Language, key: StringKey, valuesByName: Record<string, string | number>): string {
+  return t(language, key).replace(/\{(\w+)\}/g, (gap, name: string) => (name in valuesByName ? String(valuesByName[name]) : gap));
 }
 
 /** Portuguese for any Portuguese locale tag (pt, pt-BR, pt-PT), English otherwise. */

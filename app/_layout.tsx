@@ -1,6 +1,6 @@
 // Root of the Expo app: one Redux store, in the phone's language, with the
 // saved settings and progress, and gesture support for every screen. The game
-// is the first screen; the levels screen opens over it.
+// is the first screen; the chapters and a chapter's levels open over it.
 import { getLocales } from 'expo-localization';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           {/* The levels sit one step up from the game, so they come in from the side the back arrow points to. */}
           <Stack.Screen name="levels" options={{ animation: 'slide_from_left' }} />
+          <Stack.Screen name="chapter/[chapterId]" options={{ animation: 'slide_from_left' }} />
         </Stack>
       </Provider>
     </GestureHandlerRootView>

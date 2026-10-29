@@ -1,8 +1,13 @@
-// The player's settings: sound, vibration and tap moves on or off, and the board
-// colours. The whole slice is saved as one object, so a new setting only needs a
+// The player's settings: sound, vibration and tap moves on or off, the board
+// colours and the language. The whole slice is saved as one object, so a new setting only needs a
 // field here and a default.
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import { isPaletteChoice, type PaletteChoice } from './palettes';
+
+/** 'phone' follows the phone's language; the other two are the player's own pick. */
+export type LanguageChoice = 'phone' | 'pt' | 'en';
+
+const LANGUAGE_CHOICES: readonly LanguageChoice[] = ['phone', 'pt', 'en'];
 
 export interface Settings {
   soundOn: boolean;
@@ -11,9 +16,10 @@ export interface Settings {
   tapMovesOn: boolean;
   /** 'random' gives every level a new palette; a palette id keeps that one on every level. */
   paletteChoice: PaletteChoice;
+  languageChoice: LanguageChoice;
 }
 
-export const DEFAULT_SETTINGS: Settings = { soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random' };
+export const DEFAULT_SETTINGS: Settings = { soundOn: true, vibrationOn: true, tapMovesOn: true, paletteChoice: 'random', languageChoice: 'phone' };
 
 /**
  * Settings from saved JSON. Anything missing or of the wrong type takes its
@@ -34,6 +40,7 @@ export function settingsFromSaved(savedText: string | null): Settings {
   }
   // A palette that was renamed or removed falls back to random.
   if (!isPaletteChoice(settings.paletteChoice)) settings.paletteChoice = DEFAULT_SETTINGS.paletteChoice;
+  if (!LANGUAGE_CHOICES.includes(settings.languageChoice)) settings.languageChoice = DEFAULT_SETTINGS.languageChoice;
   return settings;
 }
 
@@ -52,6 +59,9 @@ const settings = createSlice({
     },
     setPaletteChoice(state, action: PayloadAction<PaletteChoice>) {
       state.paletteChoice = action.payload;
+    },
+    setLanguageChoice(state, action: PayloadAction<LanguageChoice>) {
+      state.languageChoice = action.payload;
     },
     /** Replaces every setting at once, after loading them from storage. */
     loadedSettings(state, action: PayloadAction<Settings>) {

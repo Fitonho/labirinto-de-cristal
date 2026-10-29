@@ -1,6 +1,9 @@
 // The player's progress: the fewest moves each level has been won in. A level
-// with a best is a level the player has finished, so the level menu can read
-// this too. Only the bests are saved; the last win is kept for the result card.
+// with a best is a level the player has finished, and one with a best at or
+// under its par has a star; both are worked out from the bests, never saved,
+// so a par changed later regrades old wins. The saved file also names the
+// level the player was on, which comes from the game slice. The last win is
+// only kept for the result card.
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 
 export interface LastWin {
@@ -17,26 +20,41 @@ export interface Progress {
 
 export const EMPTY_PROGRESS: Progress = { bestMovesByLevelId: {}, lastWin: null };
 
-/** What gets saved: the bests only. */
-export function progressToSave(progress: Progress): string {
-  return JSON.stringify({ bestMovesByLevelId: progress.bestMovesByLevelId });
+/** Version 1 (PR #15) saved only the bests and had no version field. */
+export const PROGRESS_VERSION = 2;
+
+export interface SavedProgress {
+  bestMovesByLevelId: Record<string, number>;
+  /** The level the player was on, or null when the file doesn't say. */
+  currentLevelId: string | null;
 }
 
-/** The bests from saved JSON. Anything that isn't a whole number of moves is left out, so a broken file still loads. */
-export function bestMovesFromSaved(savedText: string | null): Record<string, number> {
+/** What gets saved: the bests and the level the player is on. */
+export function progressToSave(progress: Progress, currentLevelId: string): string {
+  return JSON.stringify({ version: PROGRESS_VERSION, bestMovesByLevelId: progress.bestMovesByLevelId, currentLevelId });
+}
+
+/**
+ * Progress from saved JSON, of any version. Anything that isn't a whole
+ * number of moves is left out, so a broken file still loads.
+ */
+export function progressFromSaved(savedText: string | null): SavedProgress {
   let saved: unknown = null;
   try {
     saved = savedText ? JSON.parse(savedText) : null;
   } catch {
     saved = null;
   }
-  const savedBests = saved && typeof saved === 'object' ? (saved as Record<string, unknown>).bestMovesByLevelId : null;
+  const savedFields = saved && typeof saved === 'object' ? (saved as Record<string, unknown>) : {};
+  const savedBests = savedFields.bestMovesByLevelId;
   const bestMovesByLevelId: Record<string, number> = {};
-  if (!savedBests || typeof savedBests !== 'object') return bestMovesByLevelId;
-  for (const [levelId, bestMoves] of Object.entries(savedBests)) {
-    if (Number.isInteger(bestMoves) && (bestMoves as number) > 0) bestMovesByLevelId[levelId] = bestMoves as number;
+  if (savedBests && typeof savedBests === 'object') {
+    for (const [levelId, bestMoves] of Object.entries(savedBests)) {
+      if (Number.isInteger(bestMoves) && (bestMoves as number) > 0) bestMovesByLevelId[levelId] = bestMoves as number;
+    }
   }
-  return bestMovesByLevelId;
+  const currentLevelId = typeof savedFields.currentLevelId === 'string' ? savedFields.currentLevelId : null;
+  return { bestMovesByLevelId, currentLevelId };
 }
 
 const progress = createSlice({
@@ -55,6 +73,10 @@ const progress = createSlice({
         const currentBestMoves = state.bestMovesByLevelId[levelId];
         state.bestMovesByLevelId[levelId] = currentBestMoves === undefined ? savedBestMoves : Math.min(currentBestMoves, savedBestMoves);
       }
+    },
+    /** Forgets every win. Settings are kept. */
+    resetProgress() {
+      return EMPTY_PROGRESS;
     },
   },
 });
