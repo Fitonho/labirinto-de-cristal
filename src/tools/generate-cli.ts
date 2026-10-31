@@ -14,19 +14,19 @@ const HELP = `Finds new levels and writes them to the Lab chapter (src/levels/la
   --size     columns x rows, e.g. 5x5 or 6x5 (required; 7x7 is about the largest that stays quick)
   --needs    mechanics the level can't be won without: ${MECHANICS.join(', ')}
   --stars    1 or 2 (default 1; with 2, each star alone needs a push and both together take longer)
-  --portals  how many portals (default 1 when --needs has portal or carry, else 0); every one must be needed
+  --portals  how many portals (default 1 when --needs has portal, carry or star-push, else 0); every one must be needed
   --par      shortest solution range, e.g. 15-30 (default ${DEFAULT_GENERATOR_OPTIONS.minMoves}-${DEFAULT_GENERATOR_OPTIONS.maxMoves})
   --count    how many levels to find (default 10)
   --time     stop after this many seconds (default 300)
   --seed     start of the random numbers, to repeat a run (default: the clock)
+  --tag      a word for the level ids and names, e.g. portals-5x5 (default: the seed)
   --append   add to the Lab instead of replacing it
+  --out      write here instead of src/levels/lab.json (generate-batches.mjs runs several at once this way)
   --url      where the app runs, for the links (default http://localhost:8081/)
 
 Every board is tidied (calmer colours, same solution length) before it is written.
 In the app the Lab shows in dev, in Expo Go and on the web with ?debug; each Lab level has a Solve button.`;
 
-// npm runs scripts from the repo's root folder.
-const labFile = resolve('src/levels/lab.json');
 
 function optionValues(argumentList: string[]): Map<string, string> {
   const valuesByName = new Map<string, string>();
@@ -58,7 +58,8 @@ const starCount = Number(valuesByName.get('stars') ?? DEFAULT_GENERATOR_OPTIONS.
 if (starCount !== 1 && starCount !== 2) fail('--stars is 1 or 2');
 const [minMoves, maxMoves] = (valuesByName.get('par') ?? `${DEFAULT_GENERATOR_OPTIONS.minMoves}-${DEFAULT_GENERATOR_OPTIONS.maxMoves}`).split('-').map(Number);
 if (!(minMoves <= maxMoves)) fail(`Can't read --par ${valuesByName.get('par')}`);
-const needsPortal = mechanics.includes('portal') || mechanics.includes('carry');
+// A star can only be pushed while it is in your colour, and only collected from the other one, so pushing a star needs a flip too.
+const needsPortal = mechanics.some((mechanic) => mechanic === 'portal' || mechanic === 'carry' || mechanic === 'star-push');
 
 const options: GeneratorOptions = {
   ...DEFAULT_GENERATOR_OPTIONS,
@@ -73,8 +74,11 @@ const options: GeneratorOptions = {
 const levelCount = Number(valuesByName.get('count') ?? 10);
 const timeLimitMs = Number(valuesByName.get('time') ?? 300) * 1000;
 const seed = Number(valuesByName.get('seed') ?? Date.now() % 1_000_000);
+const tag = valuesByName.get('tag') ?? String(seed);
 const appUrl = valuesByName.get('url') ?? 'http://localhost:8081/';
 const appending = valuesByName.has('append');
+// npm runs scripts from the repo's root folder.
+const labFile = resolve(valuesByName.get('out') ?? 'src/levels/lab.json');
 
 const labLevels: LabLevel[] = appending ? JSON.parse(readFileSync(labFile, 'utf8')) : [];
 const boardKeys = new Set(labLevels.map((labLevel) => JSON.stringify([labLevel.grid, labLevel.start, labLevel.portals])));
@@ -85,7 +89,7 @@ let tryCount = 0;
 console.error(`Seed ${seed}. Looking for ${levelCount} levels, ${columnCount}x${rowCount}, needing ${mechanics.join(', ') || 'nothing in particular'}, ${minMoves} to ${maxMoves} moves...`);
 while (foundCount < levelCount && Date.now() - startedAt < timeLimitMs) {
   tryCount++;
-  const generated = generateLevel(options, random);
+  const generated = generateLevel(options, random, () => Date.now() - startedAt >= timeLimitMs);
   if (!generated) continue;
   const boardKey = JSON.stringify([generated.level.grid, generated.level.start, generated.level.portals]);
   if (boardKeys.has(boardKey)) continue;
@@ -93,7 +97,7 @@ while (foundCount < levelCount && Date.now() - startedAt < timeLimitMs) {
   foundCount++;
   const labLevel: LabLevel = {
     ...generated.level,
-    id: `lab-${seed}-${foundCount}`,
+    id: `lab-${tag}-${seed}-${foundCount}`,
     chapter: 'lab',
     order: labLevels.length + 1,
     solution: solutionLettersFor(generated.solution),

@@ -101,6 +101,10 @@ describe('level names', () => {
     }
   });
 
+  it('names a generated Lab level by its id', () => {
+    expect(levelNameFor('en', 'lab-portals-5x5-42-3', 1)).toBe('portals-5x5-42-3');
+  });
+
   it('falls back to the level number for a level without a name', () => {
     expect(levelNameFor('en', 'not-a-level', 7)).toBe('Level 7');
   });
