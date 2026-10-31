@@ -6,6 +6,15 @@ import { tileAt, type Direction, type GameEvent, type GameState } from '../core'
 
 /** How long a slide to the next tile takes, in milliseconds. */
 export const SLIDE_DURATION = 120;
+/**
+ * A held key, tap, swipe or seek repeats its move at one steady beat: the
+ * first repeat after a short pause, then one move per interval, so each slide
+ * lands and rests a moment before the next.
+ */
+export const HOLD_FIRST_REPEAT_DELAY = 220;
+export const HOLD_REPEAT_INTERVAL = 150;
+/** A finger that rests this long on or around the board, without swiping, starts a seek. */
+export const SEEK_START_DELAY = 150;
 /** A bump goes out quickly and settles back a little slower. */
 export const BUMP_OUT_DURATION = 60;
 export const BUMP_BACK_DURATION = 90;

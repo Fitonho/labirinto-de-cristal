@@ -40,7 +40,8 @@ import {
   RESULT_CARD_DELAY,
   SLIDE_DURATION,
 } from '../src/ui/motion';
-import { customLevelState, levelById } from './helpers';
+import { customLevelState, levelById, play } from './helpers';
+import { cellAtPoint, seekDirection } from '../src/ui/seek';
 
 describe('board layout', () => {
   it('lists a portal on both tiles beside it, so either can show it after a flip', () => {
@@ -404,5 +405,34 @@ describe('win result', () => {
     // The card rises after the collect burst has started, and the chime comes after the card.
     expect(RESULT_CARD_DELAY).toBeGreaterThan(SLIDE_DURATION);
     expect(PAR_CUE_DELAY).toBeGreaterThan(RESULT_CARD_DELAY);
+  });
+});
+
+describe('seek', () => {
+  it('walks round a box to reach the tile under the finger', () => {
+    const state = customLevelState(['b w b', 'b b b', 'w w W'], [0, 0]);
+    expect(seekDirection(state, { row: 0, column: 2 })).toBe('down');
+  });
+
+  it('pushes or goes through a portal only when the finger is on the next tile', () => {
+    const state = customLevelState(['b w b', 'b b b', 'w w W'], [0, 0], [[0, 0, 'right']]);
+    expect(seekDirection(state, { row: 0, column: 1 })).toBe('right');
+    expect(seekDirection(state, { row: 0, column: 2 })).toBe('down');
+  });
+
+  it('walks to the reachable tile closest to an unreachable finger, then waits', () => {
+    const state = customLevelState(['b b w b', 'b b w b', 'w w w W'], [0, 0]);
+    expect(seekDirection(state, { row: 0, column: 3 })).toBe('right');
+    expect(seekDirection(play(state, 'R'), { row: 0, column: 3 })).toBeNull();
+    expect(seekDirection(state, { row: 0, column: 0 })).toBeNull();
+  });
+
+  it('counts a finger beside the board as the nearest edge tile', () => {
+    const board = { rowCount: 3, columnCount: 3 };
+    // A 3 x 3 board of 50 px tiles, centred in a 300 x 400 area, starts at (75, 125).
+    expect(cellAtPoint(80, 130, 300, 400, board, 50)).toEqual({ row: 0, column: 0 });
+    expect(cellAtPoint(0, 0, 300, 400, board, 50)).toEqual({ row: 0, column: 0 });
+    expect(cellAtPoint(299, 399, 300, 400, board, 50)).toEqual({ row: 2, column: 2 });
+    expect(cellAtPoint(175, 200, 300, 400, board, 50)).toEqual({ row: 1, column: 2 });
   });
 });

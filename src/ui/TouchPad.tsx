@@ -2,14 +2,17 @@
 // and with tap moves on, a tap moves toward the side it lands on: the two
 // diagonals split the area into four triangles, drawn faintly with an arrow
 // in each. A tap counts when the finger lifts, so a tap and a swipe can share
-// the space. Its colours follow the level's palette.
+// the space; a finger held still walks that way at the hold beat, and sliding
+// it into another triangle turns. A held swipe keeps moving too. Its colours
+// follow the level's palette.
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
-import { GestureDetector, useCompetingGestures, useTapGesture } from 'react-native-gesture-handler';
+import { GestureDetector } from 'react-native-gesture-handler';
 import Svg, { Line, Polygon } from 'react-native-svg';
-import { MIN_SWIPE_PIXELS, tapDirection, type Command } from './commands';
+import { tapDirection, type Command } from './commands';
 import { useAppColours } from './AppColours';
-import { useSwipeGesture } from './useSwipeGesture';
+import { HOLD_FIRST_REPEAT_DELAY } from './motion';
+import { useHoldGesture } from './useHoldGesture';
 
 interface TouchPadProps {
   tapMovesOn: boolean;
@@ -33,25 +36,26 @@ export function TouchPad({ tapMovesOn, hint, label, onCommand }: TouchPadProps) 
     [appColours],
   );
   const [padSize, setPadSize] = useState({ width: 0, height: 0 });
-  // The tap reads the size from a ref, so it always uses the latest layout.
   const padSizeRef = useRef(padSize);
   const onLayout = useCallback((layoutEvent: LayoutChangeEvent) => {
     const { width, height } = layoutEvent.nativeEvent.layout;
     padSizeRef.current = { width, height };
     setPadSize({ width, height });
   }, []);
-  const tap = useTapGesture({
-    runOnJS: true,
-    enabled: tapMovesOn,
-    // Further than a swipe needs, and it is a swipe, not a tap.
-    maxDistance: MIN_SWIPE_PIXELS,
-    onActivate: (tapEvent) => {
-      const direction = tapDirection(tapEvent.x, tapEvent.y, padSizeRef.current.width, padSizeRef.current.height);
+  // Reads the size from a ref, so it always uses the latest layout.
+  const directionAt = useCallback(
+    (x: number, y: number) => tapDirection(x, y, padSizeRef.current.width, padSizeRef.current.height),
+    [],
+  );
+  const gestures = useHoldGesture({
+    onCommand,
+    restingDirectionAt: tapMovesOn ? directionAt : null,
+    restDelay: HOLD_FIRST_REPEAT_DELAY,
+    onLift: (x, y, wasTap) => {
+      const direction = wasTap && tapMovesOn ? directionAt(x, y) : null;
       if (direction) onCommand({ type: 'move', direction });
     },
   });
-  const swipe = useSwipeGesture(onCommand);
-  const gestures = useCompetingGestures(tap, swipe);
 
   const { width, height } = padSize;
   const centreX = width / 2;
