@@ -1,8 +1,9 @@
-// The area round the board, the board included. A finger that rests here walks
-// the Pebble toward the tile under it (seek & hold), following the finger as
-// it moves; outside the board it counts as the nearest edge tile. A thin ring
-// marks that tile while seeking, since the finger covers it. A quick stroke
-// is a swipe instead, held or not.
+// The area round the board, the board included. A tap walks the Pebble to the
+// tapped tile, and it keeps walking after the finger lifts; a finger that
+// rests instead walks it toward the tile under it, following the finger as it
+// moves (seek & hold). Outside the board the finger counts as the nearest edge
+// tile. A thin ring marks the tile while the Pebble heads there. A quick
+// stroke is a swipe instead, held or not.
 import { useCallback, useRef, type ReactNode } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import { GestureDetector } from 'react-native-gesture-handler';
@@ -12,6 +13,7 @@ import type { RootState } from '../state/store';
 import type { Command } from './commands';
 import { SEEK_START_DELAY } from './motion';
 import { cellAtPoint, seekDirection } from './seek';
+import { useHeldMove } from './useHeldMove';
 import { useHoldGesture } from './useHoldGesture';
 
 interface SeekAreaProps {
@@ -53,12 +55,17 @@ export function SeekArea({ tileSize, ringColour, onCommand, children }: SeekArea
     },
     [store, ringLeft, ringTop, ringOpacity],
   );
+  const hideRing = useCallback(() => {
+    ringOpacity.value = 0;
+  }, [ringOpacity]);
+  const { startWalk } = useHeldMove(onCommand);
   const gesture = useHoldGesture({
     onCommand,
     restingDirectionAt: seekDirectionAt,
     restDelay: SEEK_START_DELAY,
-    onLift: () => {
-      ringOpacity.value = 0;
+    onLift: (x, y, wasTap) => {
+      hideRing();
+      if (wasTap) startWalk(() => seekDirectionAt(x, y), hideRing);
     },
   });
 

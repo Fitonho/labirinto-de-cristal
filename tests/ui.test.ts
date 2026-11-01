@@ -414,6 +414,23 @@ describe('seek', () => {
     expect(seekDirection(state, { row: 0, column: 2 })).toBe('down');
   });
 
+  it('walks up to a box or portal further away, and takes that last step only once beside it', () => {
+    const state = customLevelState(['b b w', 'b b b', 'w w W'], [0, 0]);
+    expect(seekDirection(state, { row: 0, column: 2 })).toBe('right');
+    expect(seekDirection(play(state, 'R'), { row: 0, column: 2 })).toBe('right');
+    const portalState = customLevelState(['b b b', 'b b w', 'w w W'], [0, 0], [[1, 1, 'right']]);
+    // The tile across the portal is a box from this side. Pushing it down from above is refused (a star is behind it),
+    // so the walk goes to the portal instead and steps through.
+    let walkedState = portalState;
+    for (let stepIndex = 0; stepIndex < 5; stepIndex += 1) {
+      const direction = seekDirection(walkedState, { row: 1, column: 2 });
+      if (!direction) break;
+      walkedState = move(walkedState, direction).state;
+    }
+    expect(walkedState.player).toEqual({ row: 1, column: 2, colour: 'black' });
+    expect(walkedState.moveCount).toBe(3);
+  });
+
   it('pushes or goes through a portal only when the finger is on the next tile', () => {
     const state = customLevelState(['b w b', 'b b b', 'w w W'], [0, 0], [[0, 0, 'right']]);
     expect(seekDirection(state, { row: 0, column: 1 })).toBe('right');
