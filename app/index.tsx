@@ -32,6 +32,7 @@ import { IDEA_CARD_CLOSE_DURATION, ideaCardsByLevelId, ideaHighlightFor, opensId
 import { openChapterFromGame, openChapters } from '../src/ui/levelsNavigation';
 import { MoreSheet } from '../src/ui/MoreSheet';
 import { ResultCard } from '../src/ui/ResultCard';
+import { SeekArea } from '../src/ui/SeekArea';
 import { appColoursFor, boardPalettes, PALETTE_FADE_DURATION } from '../src/ui/theme';
 import { TouchPad } from '../src/ui/TouchPad';
 import { useHaptics } from '../src/ui/useHaptics';
@@ -278,12 +279,12 @@ export default function GameScreen() {
               <IconButton icon="colours" label={t(language, 'colours')} onPress={openColourPicker} size={40} />
               <IconButton icon="more" label={t(language, 'moreOptions')} onPress={openMore} size={40} />
             </View>
-            <View style={styles.boardArea}>
+            <SeekArea tileSize={tileSize} ringColour={boardPalette.seamColour} onCommand={run}>
               <View style={paletteStyles.boardEdge}>
-                <Board state={state} events={events} tileSize={tileSize} palette={boardPalette} onCommand={run} />
+                <Board state={state} events={events} tileSize={tileSize} palette={boardPalette} />
                 <IdeaGlow highlight={ideaHighlight} tileSize={tileSize} seamColour={boardPalette.seamColour} glowCount={ideaGlowCount} />
               </View>
-            </View>
+            </SeekArea>
             {/* Undo and Restart sit at the top of the touch area, away from where a thumb rests while tapping.
                 Undo, pressed far more often, is on the right, under most players' thumb. */}
             <View style={styles.statusRow}>
@@ -385,7 +386,6 @@ const styles = StyleSheet.create({
   titleBlock: { flex: 1, minWidth: 0 },
   levelName: { fontSize: 17, fontWeight: '600' },
   chapterName: { fontSize: 13 },
-  boardArea: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   statusBlock: { flex: 1, alignItems: 'center', gap: 2 },
   status: { textAlign: 'center', fontSize: 16 },
