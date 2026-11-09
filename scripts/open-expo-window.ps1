@@ -3,8 +3,11 @@
 # Windows PC; a server started as a hidden background job shows neither.
 # Stops this project's running Expo and ngrok first, since only one server
 # can own the tunnel. -Dev serves a development build instead of the
-# production-like one (no dev checks, minified).
-param([switch]$Dev)
+# production-like one (no dev checks, minified). -Lan serves the
+# production-like build on the home network only, without the tunnel: Expo Go
+# opens it at exp://<this PC's address>:8081, and it can't serve a stale
+# tunnel copy.
+param([switch]$Dev, [switch]$Lan)
 
 $projectFolder = Split-Path -Parent $PSScriptRoot
 # Only processes launched from this project's node_modules: its Expo command line and the tunnel's ngrok.
@@ -17,12 +20,12 @@ foreach ($runningProcess in $runningProcesses) {
   Stop-Process -Id $runningProcess.ProcessId -Force -ErrorAction SilentlyContinue
 }
 
-$scriptName = if ($Dev) { 'phone:dev' } else { 'phone' }
-$windowTitle = if ($Dev) { 'Expo (dev)' } else { 'Expo' }
+$scriptName = if ($Dev) { 'phone:dev' } elseif ($Lan) { 'phone:lan' } else { 'phone' }
+$windowTitle = if ($Dev) { 'Expo (dev)' } elseif ($Lan) { 'Expo (LAN)' } else { 'Expo' }
 if (Get-Command wt.exe -ErrorAction SilentlyContinue) {
   # A new tab in the most recent Windows Terminal window.
   Start-Process wt.exe -ArgumentList "-w 0 new-tab --title `"$windowTitle`" -d `"$projectFolder`" powershell -NoExit -Command npm run $scriptName"
 } else {
   Start-Process powershell.exe -WorkingDirectory $projectFolder -ArgumentList '-NoExit', '-Command', "npm run $scriptName"
 }
-Write-Output "Started npm run $scriptName in a new window. The exp:// address and QR code appear there once the tunnel connects."
+Write-Output "Started npm run $scriptName in a new window. The exp:// address and QR code appear there once it is ready."
