@@ -26,12 +26,10 @@ Filipe tests in Expo Go on his phone and shouldn't have to go to the PC. You sta
    ```
    powershell -ExecutionPolicy Bypass -File scripts/open-expo-window.ps1
    ```
-   This uses the ngrok tunnel, which works from any network.
-4. Find the address and send it. The tunnel address is `exp://<name>.exp.direct`. It appears in the new tab once the tunnel connects (give it 20 to 40 s). If you can't read the tab, ngrok's local page `http://127.0.0.1:4040/api/tunnels` lists it under `public_url` (swap `https://` for `exp://`). Send Filipe the exp:// address, which branch and commit it serves, and a short list of what to try.
-5. If Expo Go shows an old version (the tunnel has served a stale cached copy before) or the tunnel won't connect, restart on the home network instead:
-   ```
-   powershell -ExecutionPolicy Bypass -File scripts/open-expo-window.ps1 -Lan
-   ```
-   The address is `exp://<PC's IPv4 address>:8081`, which was `exp://192.168.15.18:8081`. Check the address with `ipconfig`. It works only while the phone is on the same Wi-Fi. If the old version still shows, Filipe should force-stop Expo Go or clear its cache, then type the address in again.
+   This serves on the home network (Filipe tests on the same Wi-Fi, without the tunnel).
+4. Find the address and send it: `exp://<PC's IPv4 address>:8081`, which was `exp://192.168.15.18:8081`. Check the current address with `ipconfig` (the Wi-Fi or Ethernet adapter's IPv4 address) or in the new tab once Metro is ready. Send Filipe the exp:// address, which branch and commit it serves, and a short list of what to try.
+5. If Expo Go still shows an old version, Filipe should force-stop Expo Go or clear its cache, then type the address in again.
+
+Only if Filipe is away from home, add `-Tunnel` to go through ngrok. The address is then `exp://<name>.exp.direct`, shown in the tab once the tunnel connects, or under `public_url` at `http://127.0.0.1:4040/api/tunnels` (swap `https://` for `exp://`). The tunnel has served stale copies before.
 
 When Filipe is done, leave Expo running. The next run of the script stops it.
